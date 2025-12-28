@@ -54,6 +54,7 @@ h1 {
 .status-card,
 .quote-card,
 .info-card,
+.about-card,
 .tech-card,
 .debug-card {
     background: white;
@@ -66,11 +67,18 @@ h1 {
 .status-card h2,
 .quote-card h2,
 .info-card h2,
+.about-card h2,
 .tech-card h2,
 .debug-card h2 {
     color: #667eea;
     margin-bottom: 16px;
     font-size: 1.5rem;
+}
+
+.about-card p {
+    margin-bottom: 12px;
+    line-height: 1.8;
+    color: #555;
 }
 
 #install-status {
@@ -177,6 +185,7 @@ cite {
     .status-card,
     .quote-card,
     .info-card,
+    .about-card,
     .tech-card,
     .debug-card {
         padding: 16px;

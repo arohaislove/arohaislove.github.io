@@ -1,8 +1,9 @@
 {
   "template": "quote-template",
   "data": {
-    "quote": "The only way to do great work is to love what you do.",
-    "author": "Steve Jobs",
+    "quote": "Whāia te iti kahurangi ki te tūohu koe me he maunga teitei",
+    "translation": "Seek the treasure you value most dearly: if you bow your head, let it be to a lofty mountain",
+    "author": "Māori Whakataukī",
     "timestamp": "2025-12-28T00:00:00Z"
   }
 }

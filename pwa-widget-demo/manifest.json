@@ -1,11 +1,11 @@
 {
-  "name": "Quote Widget Demo",
-  "short_name": "QuoteWidget",
-  "description": "A PWA demo with Android widget support showing daily quotes",
+  "name": "Indigenisation",
+  "short_name": "Indigenisation",
+  "description": "Māori philosophical wisdom through whakataukī - Android widget support",
   "start_url": "/pwa-widget-demo/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4CAF50",
+  "theme_color": "#8B4513",
   "orientation": "portrait",
   "icons": [
     {
@@ -23,10 +23,10 @@
   ],
   "widgets": [
     {
-      "name": "Daily Quote",
-      "short_name": "Quote",
-      "description": "Shows an inspiring quote",
-      "tag": "quote-widget",
+      "name": "Indigenisation",
+      "short_name": "Whakataukī",
+      "description": "Māori wisdom and philosophy",
+      "tag": "indigenisation-widget",
       "template": "quote-template",
       "ms_ac_template": "widget-template.json",
       "data": "widget-data.json",
@@ -35,7 +35,7 @@
         {
           "src": "widget-screenshot.png",
           "sizes": "600x400",
-          "label": "Quote Widget"
+          "label": "Indigenisation Widget"
         }
       ]
     }
