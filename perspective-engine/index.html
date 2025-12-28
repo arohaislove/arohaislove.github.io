@@ -117,7 +117,7 @@
             const remainingMonths = totalMonths - livedMonths;
 
             const daysRemaining = Math.floor(remainingMonths * 30.44);
-            const weekendsRemaining = Math.floor(remainingMonths * 0.5);
+            const weekendsRemaining = Math.floor(daysRemaining / 7); // One weekend per week
             const healthyYearsThreshold = 75;
             const healthyYearsRemaining = Math.max(0, healthyYearsThreshold - currentAge);
             const percentageLived = ((livedMonths / totalMonths) * 100).toFixed(1);
