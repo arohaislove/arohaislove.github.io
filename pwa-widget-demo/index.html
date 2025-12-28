@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PWA with Android widget support demo">
+    <meta name="theme-color" content="#4CAF50">
+    <title>Quote Widget PWA - Aroha's Projects</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <div class="container">
+            <h1>📱 Quote Widget PWA</h1>
+            <p class="subtitle">Progressive Web App with Android Widget Support</p>
+
+            <div class="status-card">
+                <h2>Installation Status</h2>
+                <p id="install-status">Checking...</p>
+                <button id="install-btn" style="display: none;">Install App</button>
+            </div>
+
+            <div class="quote-card">
+                <h2>Today's Quote</h2>
+                <blockquote id="quote-text">
+                    "The only way to do great work is to love what you do."
+                </blockquote>
+                <cite id="quote-author">— Steve Jobs</cite>
+                <button id="new-quote-btn">Get New Quote</button>
+            </div>
+
+            <div class="info-card">
+                <h2>🎯 How to Use This Demo</h2>
+                <ol>
+                    <li>
+                        <strong>Install the App:</strong>
+                        <ul>
+                            <li>On Android Chrome: Tap the "Install App" button above, or use the browser menu → "Add to Home Screen"</li>
+                            <li>On Desktop Chrome: Look for the install icon in the address bar</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Add Widget (Android 12+):</strong>
+                        <ul>
+                            <li>After installing, long-press on your home screen</li>
+                            <li>Tap "Widgets"</li>
+                            <li>Find "Quote Widget Demo" in the list</li>
+                            <li>Drag the widget to your home screen</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Note:</strong> Widget support is experimental and requires:
+                        <ul>
+                            <li>Android 12 or higher</li>
+                            <li>Chrome 108+ or Edge 108+</li>
+                            <li>The PWA must be installed</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="tech-card">
+                <h2>🛠️ Technologies Used</h2>
+                <ul>
+                    <li><strong>Web App Manifest:</strong> Defines app metadata and widget configuration</li>
+                    <li><strong>Service Worker:</strong> Enables offline functionality and background updates</li>
+                    <li><strong>Widget API:</strong> Experimental API for Android home screen widgets</li>
+                    <li><strong>BeforeInstallPrompt:</strong> Detects PWA installability</li>
+                </ul>
+            </div>
+
+            <div class="debug-card">
+                <h2>🔍 Debug Info</h2>
+                <div id="debug-info">
+                    <p><strong>User Agent:</strong> <span id="user-agent"></span></p>
+                    <p><strong>Standalone Mode:</strong> <span id="standalone"></span></p>
+                    <p><strong>Service Worker:</strong> <span id="sw-status"></span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
