@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Perspective Engine - Aroha's Projects</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { Calendar, Heart, Clock, TrendingUp } = lucide;
+
+        const PerspectiveEngine = () => {
+          const [currentAge, setCurrentAge] = useState(30);
+          const [goalAge, setGoalAge] = useState(85);
+          const [quoteIndex, setQuoteIndex] = useState(0);
+
+          const handleCurrentAgeChange = (value) => {
+            const age = value === '' ? 0 : Number(value);
+            const validAge = Math.max(0, Math.min(120, age));
+            setCurrentAge(validAge);
+            if (validAge >= goalAge) {
+              setGoalAge(validAge + 1);
+            }
+          };
+
+          const handleGoalAgeChange = (value) => {
+            const age = value === '' ? currentAge : Number(value);
+            const validAge = Math.max(currentAge + 1, Math.min(120, age));
+            setGoalAge(validAge);
+          };
+
+          const quotes = [
+            { text: "You could leave life right now. Let that determine what you do and say and think.", author: "Marcus Aurelius", stage: "early" },
+            { text: "The trouble is, you think you have time.", author: "Buddha", stage: "middle" },
+            { text: "Time is the coin of your life. It is the only coin you have, and only you can determine how it will be spent.", author: "Carl Sandburg", stage: "middle" },
+            { text: "The days are long but the decades are short.", author: "Sam Altman", stage: "late" },
+            { text: "We are always getting ready to live but never living.", author: "Ralph Waldo Emerson", stage: "early" },
+            { text: "Do not act as if you had ten thousand years to live.", author: "Marcus Aurelius", stage: "middle" }
+          ];
+
+          useEffect(() => {
+            const interval = setInterval(() => {
+              setQuoteIndex((prev) => (prev + 1) % quotes.length);
+            }, 8000);
+            return () => clearInterval(interval);
+          }, []);
+
+          const calculateMetrics = () => {
+            const totalMonths = goalAge * 12;
+            const livedMonths = currentAge * 12;
+            const remainingMonths = totalMonths - livedMonths;
+
+            const daysRemaining = Math.floor(remainingMonths * 30.44);
+            const weekendsRemaining = Math.floor(remainingMonths * 0.5);
+            const healthyYearsThreshold = 75;
+            const healthyYearsRemaining = Math.max(0, healthyYearsThreshold - currentAge);
+            const percentageLived = ((livedMonths / totalMonths) * 100).toFixed(1);
+
+            return {
+              totalMonths,
+              livedMonths,
+              remainingMonths,
+              daysRemaining,
+              weekendsRemaining,
+              healthyYearsRemaining,
+              percentageLived
+            };
+          };
+
+          const metrics = calculateMetrics();
+          const currentQuote = quotes[quoteIndex];
+
+          const getHealthColor = (monthIndex) => {
+            const age = monthIndex / 12;
+
+            // Peak health: 20-40 years
+            if (age < 20) return 'bg-blue-400';
+            if (age >= 20 && age < 40) return 'bg-green-400';
+            // Good health: 40-60 years
+            if (age >= 40 && age < 60) return 'bg-yellow-400';
+            // Declining health: 60-75 years
+            if (age >= 60 && age < 75) return 'bg-orange-400';
+            // Significant decline: 75+ years
+            return 'bg-red-400';
+          };
+
+          const renderLifeGrid = () => {
+            const squares = [];
+            const currentMonth = Math.floor(currentAge * 12);
+
+            for (let i = 0; i < metrics.totalMonths; i++) {
+              const isPast = i < currentMonth;
+              const isCurrent = i === currentMonth;
+              const healthColor = getHealthColor(i);
+
+              squares.push(
+                <div
+                  key={i}
+                  className={`w-2 h-2 transition-all duration-300 ${
+                    isCurrent
+                      ? 'bg-green-400 shadow-lg shadow-green-400/50 scale-125'
+                      : isPast
+                      ? 'bg-gray-700/30'
+                      : `${healthColor} hover:opacity-80`
+                  }`}
+                  title={`Month ${i + 1} - Age ${Math.floor(i / 12)}`}
+                />
+              );
+            }
+            return squares;
+          };
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 text-gray-100 p-8">
+              <div className="max-w-7xl mx-auto space-y-12">
+                {/* Header */}
+                <header className="text-center space-y-4">
+                  <h1 className="text-5xl font-extralight tracking-wider text-gray-100">
+                    The Perspective Engine
+                  </h1>
+                  <p className="text-gray-400 text-lg font-light max-w-2xl mx-auto">
+                    A visual meditation on time, mortality, and intentional living
+                  </p>
+                  <nav className="pt-4">
+                    <a href="/" className="text-green-400 hover:text-green-300 transition-colors">
+                      ← Back to Projects
+                    </a>
+                  </nav>
+                </header>
+
+                {/* Input Section */}
+                <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
+                  <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
+                    <div className="space-y-3">
+                      <label className="block text-sm font-light text-gray-300 tracking-wide">
+                        Current Age
+                      </label>
+                      <input
+                        type="number"
+                        value={currentAge}
+                        onChange={(e) => handleCurrentAgeChange(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-6 py-4 text-2xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400/50 transition-all"
+                        min="0"
+                        max="120"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="block text-sm font-light text-gray-300 tracking-wide">
+                        Goal Age
+                      </label>
+                      <input
+                        type="number"
+                        value={goalAge}
+                        onChange={(e) => handleGoalAgeChange(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-600 rounded-lg px-6 py-4 text-2xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-400/50 transition-all"
+                        min={currentAge + 1}
+                        max="120"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Metrics Dashboard */}
+                <div className="grid md:grid-cols-4 gap-6">
+                  <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 space-y-3">
+                    <div className="flex items-center gap-3 text-gray-400">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-sm font-light tracking-wide">Days Remaining</span>
+                    </div>
+                    <p className="text-4xl font-extralight text-gray-100">
+                      {metrics.daysRemaining.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 space-y-3">
+                    <div className="flex items-center gap-3 text-gray-400">
+                      <Calendar className="w-5 h-5" />
+                      <span className="text-sm font-light tracking-wide">Weekends Left</span>
+                    </div>
+                    <p className="text-4xl font-extralight text-gray-100">
+                      {metrics.weekendsRemaining.toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 space-y-3">
+                    <div className="flex items-center gap-3 text-gray-400">
+                      <Heart className="w-5 h-5" />
+                      <span className="text-sm font-light tracking-wide">Healthy Years</span>
+                    </div>
+                    <p className="text-4xl font-extralight text-gray-100">
+                      {metrics.healthyYearsRemaining}
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/50 space-y-3">
+                    <div className="flex items-center gap-3 text-gray-400">
+                      <TrendingUp className="w-5 h-5" />
+                      <span className="text-sm font-light tracking-wide">Life Lived</span>
+                    </div>
+                    <p className="text-4xl font-extralight text-gray-100">
+                      {metrics.percentageLived}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-sm text-gray-400 font-light">
+                      <span>Birth</span>
+                      <span className="text-green-400">Now</span>
+                      <span>Age {goalAge}</span>
+                    </div>
+                    <div className="h-3 bg-gray-900/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-gray-600 to-green-400 transition-all duration-1000"
+                        style={{ width: `${metrics.percentageLived}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Life Grid */}
+                <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                  <h2 className="text-2xl font-extralight text-gray-100 mb-6 text-center">
+                    Your Life in Months
+                  </h2>
+                  <div className="flex flex-wrap gap-1 justify-center max-w-5xl mx-auto">
+                    {renderLifeGrid()}
+                  </div>
+                  <div className="flex justify-center gap-8 mt-8 text-sm text-gray-400 font-light flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-gray-700/30" />
+                      <span>Past</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-400 shadow-lg shadow-green-400/50" />
+                      <span>Current</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-400" />
+                      <span>Youth (0-20)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-400" />
+                      <span>Peak (20-40)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-yellow-400" />
+                      <span>Prime (40-60)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-orange-400" />
+                      <span>Mature (60-75)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-red-400" />
+                      <span>Elder (75+)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quote Section */}
+                <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/20 backdrop-blur-sm rounded-2xl p-12 border border-gray-700/50">
+                  <blockquote className="space-y-6 text-center max-w-3xl mx-auto">
+                    <p className="text-2xl font-light text-gray-200 leading-relaxed transition-all duration-500">
+                      "{currentQuote.text}"
+                    </p>
+                    <footer className="text-gray-400 text-lg font-light">
+                      — {currentQuote.author}
+                    </footer>
+                  </blockquote>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PerspectiveEngine />);
+    </script>
+</body>
+</html>

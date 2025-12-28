@@ -1,1 +1,121 @@
-hello
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aroha's Projects</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .project-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+
+        .project-card p {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .project-tag {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 4rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aroha's Projects</h1>
+            <p class="subtitle">A portfolio of interactive tools and experiments</p>
+        </header>
+
+        <main>
+            <div class="projects-grid">
+                <a href="/perspective-engine/" class="project-card">
+                    <h2>The Perspective Engine</h2>
+                    <p>A visual meditation on time, mortality, and intentional living. Visualize your life in months and gain perspective on how you spend your time.</p>
+                    <span class="project-tag">Interactive Tool</span>
+                </a>
+
+                <!-- Future projects will be added here -->
+            </div>
+        </main>
+
+        <footer>
+            <p>Built with care and curiosity</p>
+        </footer>
+    </div>
+</body>
+</html>
