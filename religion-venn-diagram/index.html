@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Religion Venn Diagram - Aroha's Projects</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header>
+            <h1>Religion Venn Diagram</h1>
+            <p class="description">Explore the shared principles and unique aspects of major world religions</p>
+        </header>
+
+        <div class="controls">
+            <button class="religion-btn active" data-religion="all">Show All</button>
+            <button class="religion-btn" data-religion="christianity">Christianity</button>
+            <button class="religion-btn" data-religion="islam">Islam</button>
+            <button class="religion-btn" data-religion="judaism">Judaism</button>
+            <button class="religion-btn" data-religion="buddhism">Buddhism</button>
+            <button class="religion-btn" data-religion="hinduism">Hinduism</button>
+        </div>
+
+        <div class="diagram-container">
+            <svg id="venn-diagram" viewBox="0 0 1000 800" preserveAspectRatio="xMidYMid meet">
+                <!-- Venn diagram circles will be drawn here -->
+            </svg>
+        </div>
+
+        <div class="info-panel" id="info-panel">
+            <h2 id="info-title">Click on any region to learn more</h2>
+            <div id="info-content">
+                <p>Hover over or click the overlapping regions to discover shared principles between religions, or click individual circles to see unique beliefs and practices.</p>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Understanding the Diagram</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color overlap"></div>
+                    <span>Overlapping areas show shared principles and beliefs</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color unique"></div>
+                    <span>Non-overlapping areas show unique aspects of each religion</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
