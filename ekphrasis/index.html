@@ -449,26 +449,30 @@
                 <p id="apiKeyStatus" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent); display: none;"></p>
 
                 <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle);">
-                    <h3 style="margin-bottom: 0.5rem;">CORS Proxy (Required)</h3>
-                    <p style="margin-bottom: 1rem;">Due to browser security, we need a proxy to connect to Claude API. Use one of these options:</p>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                            <input type="radio" name="proxyOption" value="allorigins" checked style="margin-right: 0.5rem;">
-                            AllOrigins (Public, free)
-                        </label>
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                            <input type="radio" name="proxyOption" value="corsproxy" style="margin-right: 0.5rem;">
-                            CORS Proxy (corsproxy.io)
-                        </label>
-                        <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
-                            <input type="radio" name="proxyOption" value="custom" style="margin-right: 0.5rem;">
-                            Custom proxy URL:
-                        </label>
-                    </div>
-                    <input type="text" id="customProxyInput" placeholder="https://your-proxy.com/" style="width: 100%; padding: 0.75rem; background: var(--bg-dark); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); display: none; margin-top: 0.5rem;">
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem; opacity: 0.7;">
-                        ⚠️ For best results, consider deploying your own proxy using <a href="https://github.com/Rob--W/cors-anywhere" target="_blank" style="color: var(--accent);">CORS Anywhere</a>
-                    </p>
+                    <h3 style="margin-bottom: 0.5rem;">⚠️ Important: CORS Workaround Needed</h3>
+                    <p style="margin-bottom: 1rem; font-size: 0.95rem;">Browsers block direct API calls to Anthropic. Choose a solution:</p>
+
+                    <details style="margin-bottom: 1rem; background: rgba(201, 169, 97, 0.05); padding: 1rem; border-radius: 6px; cursor: pointer;">
+                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">Option 1: Use Custom Proxy URL (Recommended)</summary>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Enter your own CORS proxy URL below (e.g., Cloudflare Worker, your own server):</p>
+                        <input type="text" id="proxyUrlInput" placeholder="https://your-worker.workers.dev/" style="width: 100%; padding: 0.75rem; background: var(--bg-dark); border: 1px solid var(--border-subtle); border-radius: 6px; color: var(--text-primary); margin-bottom: 0.5rem;">
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8;">See <a href="https://github.com/anthropics/anthropic-quickstarts/tree/main/cors-proxy" target="_blank" style="color: var(--accent);">Anthropic's CORS proxy guide</a> or deploy a free <a href="https://workers.cloudflare.com/" target="_blank" style="color: var(--accent);">Cloudflare Worker</a></p>
+                    </details>
+
+                    <details style="margin-bottom: 1rem; background: rgba(201, 169, 97, 0.05); padding: 1rem; border-radius: 6px; cursor: pointer;">
+                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">Option 2: Browser Extension (Quick Testing)</summary>
+                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Install a CORS-disabling extension temporarily:</p>
+                        <ul style="font-size: 0.85rem; color: var(--text-secondary); margin-left: 1.5rem; line-height: 1.6;">
+                            <li>Chrome: <a href="https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank" style="color: var(--accent);">Allow CORS</a></li>
+                            <li>Firefox: <a href="https://addons.mozilla.org/en-US/firefox/addon/cors-everywhere/" target="_blank" style="color: var(--accent);">CORS Everywhere</a></li>
+                        </ul>
+                        <p style="font-size: 0.8rem; color: #fca5a5; margin-top: 0.5rem;">⚠️ Remember to disable after testing (security risk)</p>
+                    </details>
+
+                    <details style="background: rgba(201, 169, 97, 0.05); padding: 1rem; border-radius: 6px; cursor: pointer;">
+                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">Option 3: Run Locally</summary>
+                        <p style="font-size: 0.9rem; color: var(--text-secondary);">Download the HTML file and open it directly in your browser (file:// URLs bypass CORS)</p>
+                    </details>
                 </div>
             </div>
 
@@ -572,36 +576,31 @@
         const apiKeyInput = document.getElementById('apiKeyInput');
         const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
         const apiKeyStatus = document.getElementById('apiKeyStatus');
-        const customProxyInput = document.getElementById('customProxyInput');
+        const proxyUrlInput = document.getElementById('proxyUrlInput');
 
-        // Initialize API key
+        // Initialize API key and proxy URL from storage
         if (apiKey) {
             apiKeyInput.value = apiKey;
             showApiKeyStatus('API key loaded from storage', true);
         }
 
-        // Proxy selection handling
-        document.querySelectorAll('input[name="proxyOption"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                customProxyInput.style.display = e.target.value === 'custom' ? 'block' : 'none';
-            });
+        const savedProxyUrl = localStorage.getItem('proxyUrl') || '';
+        if (savedProxyUrl) {
+            proxyUrlInput.value = savedProxyUrl;
+        }
+
+        // Save proxy URL when it changes
+        proxyUrlInput.addEventListener('blur', () => {
+            const proxyUrl = proxyUrlInput.value.trim();
+            if (proxyUrl) {
+                localStorage.setItem('proxyUrl', proxyUrl);
+            }
         });
 
-        function getProxyUrl() {
-            const selected = document.querySelector('input[name="proxyOption"]:checked').value;
-            const apiUrl = 'https://api.anthropic.com/v1/messages';
-
-            switch(selected) {
-                case 'allorigins':
-                    return `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`;
-                case 'corsproxy':
-                    return `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`;
-                case 'custom':
-                    const customUrl = customProxyInput.value.trim();
-                    return customUrl ? `${customUrl}${apiUrl}` : apiUrl;
-                default:
-                    return apiUrl;
-            }
+        function getApiUrl() {
+            const proxyUrl = proxyUrlInput.value.trim();
+            // If user provided a proxy URL, use it; otherwise use direct API URL
+            return proxyUrl || 'https://api.anthropic.com/v1/messages';
         }
 
         // API Key handling
@@ -726,9 +725,22 @@
                 console.error('Error generating poetry:', error);
                 let errorMsg = error.message;
 
-                // Handle CORS errors specifically
+                // Handle CORS/network errors specifically
                 if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                    errorMsg = 'Connection failed. This might be a CORS issue. Try:\n1. Switching to a different proxy option above\n2. Checking your internet connection\n3. Verifying your API key is correct';
+                    const hasProxyUrl = proxyUrlInput.value.trim();
+                    if (!hasProxyUrl) {
+                        errorMsg = '🚫 <strong>CORS Error:</strong> Browser blocked the request.<br><br>' +
+                                   'You need to use one of the workarounds above:<br>' +
+                                   '• <strong>Quick fix:</strong> Install a CORS browser extension (Option 2 above)<br>' +
+                                   '• <strong>Best solution:</strong> Set up a proxy URL (Option 1 above)<br>' +
+                                   '• <strong>Or:</strong> Download and run this file locally (Option 3 above)';
+                    } else {
+                        errorMsg = '❌ <strong>Connection Failed</strong><br><br>' +
+                                   'Check that:<br>' +
+                                   '• Your proxy URL is correct and running<br>' +
+                                   '• Your API key is valid<br>' +
+                                   '• You have internet connection';
+                    }
                 }
 
                 showError(errorMsg);
@@ -738,8 +750,8 @@
         }
 
         async function analyzeImage() {
-            const proxyUrl = getProxyUrl();
-            const response = await fetch(proxyUrl, {
+            const apiUrl = getApiUrl();
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -810,8 +822,8 @@ Be specific and evocative. This analysis will be used to generate poetry.`
                 'letter': 'Write a short letter (6-10 lines) addressed to someone or something in the image. Make it intimate and personal.'
             };
 
-            const proxyUrl = getProxyUrl();
-            const response = await fetch(proxyUrl, {
+            const apiUrl = getApiUrl();
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
