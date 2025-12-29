@@ -194,27 +194,37 @@ Before pushing:
 - **Push when done:** Always push your completed work to the designated branch
 - **Never push to main directly:** Always use your assigned branch
 
-### Creating Pull Requests - SIMPLE WORKFLOW
+### Creating Pull Requests - DIRECT LINK METHOD
 
-After you push your commits, the EASIEST way to create a pull request is:
+After you push your commits, use this **DIRECT LINK** format to create a pull request:
 
-1. **Go directly to the repository on GitHub:**
+```
+https://github.com/arohaislove/arohaislove.github.io/compare/main...BRANCH_NAME?expand=1
+```
+
+**Replace `BRANCH_NAME` with your actual branch name.** For example:
+```
+https://github.com/arohaislove/arohaislove.github.io/compare/main...claude/chromesthesia-watercolor-app-wFgPS?expand=1
+```
+
+**This is the RECOMMENDED method** - it directly opens the PR creation page with your branch pre-selected.
+
+#### Alternative: Yellow Banner Method
+
+If you prefer, you can also:
+
+1. **Go to the main repository page:**
    ```
    https://github.com/arohaislove/arohaislove.github.io
    ```
 
-2. **GitHub will automatically show a yellow banner** at the top of the page saying:
+2. **GitHub may show a yellow banner** at the top saying:
    - "Your recently pushed branches: claude/branch-name (X minutes ago)"
-   - With a big green **"Compare & pull request"** button
+   - With a green **"Compare & pull request"** button
 
-3. **Click that green button** - it's the simplest way!
+3. **Click that button** if it appears
 
-4. **If you don't see the banner:**
-   - Click the "Pull requests" tab at the top
-   - Click the green "New pull request" button
-   - Select your branch from the dropdown
-
-**IMPORTANT: Do NOT use the `/pull/new/branch-name` URL pattern** - it doesn't work reliably after the first PR.
+**Note:** The banner doesn't always appear, especially after the first PR or after some time has passed. The direct link method above is more reliable.
 
 ### Handling Follow-Up Changes After a PR is Merged
 
