@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ekphrasis - Image to Poetry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-elevated: #1a1a1a;
+            --border-subtle: #2a2a2a;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --accent: #c9a961;
+            --accent-dim: #8a7544;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 4rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            letter-spacing: 0.02em;
+        }
+
+        .nav-link {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--accent);
+        }
+
+        .upload-section {
+            max-width: 700px;
+            margin: 0 auto 3rem;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 4rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-elevated);
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(201, 169, 97, 0.05);
+        }
+
+        .upload-zone.has-image {
+            padding: 0;
+            border: none;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        #imageInput {
+            display: none;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 8px;
+            display: none;
+            margin: 0 auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .api-key-section {
+            max-width: 700px;
+            margin: 0 auto 3rem;
+            background: var(--bg-elevated);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .api-key-section h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+            font-weight: 400;
+        }
+
+        .api-key-section p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .api-key-input-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        #apiKeyInput {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-subtle);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Inter', monospace;
+            font-size: 0.9rem;
+        }
+
+        #apiKeyInput:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: var(--accent-dim);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-elevated);
+            border-color: var(--accent);
+        }
+
+        .style-selector {
+            max-width: 700px;
+            margin: 2rem auto;
+            display: none;
+        }
+
+        .style-selector.visible {
+            display: block;
+        }
+
+        .style-selector h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            color: var(--accent);
+            font-weight: 400;
+        }
+
+        .style-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .style-option {
+            padding: 1rem;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .style-option:hover {
+            border-color: var(--accent);
+            background: rgba(201, 169, 97, 0.05);
+        }
+
+        .style-option.selected {
+            border-color: var(--accent);
+            background: rgba(201, 169, 97, 0.1);
+        }
+
+        .style-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .style-description {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .generate-btn-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 1rem;
+            border: 3px solid var(--border-subtle);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .output-section {
+            display: none;
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 3rem 0;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .output-section.visible {
+            display: block;
+        }
+
+        .output-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .image-display {
+            position: sticky;
+            top: 2rem;
+        }
+
+        .image-display img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .text-display {
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .text-content {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            color: var(--text-primary);
+            margin-bottom: 2rem;
+        }
+
+        .text-content.haiku {
+            font-size: 1.6rem;
+            line-height: 2;
+            text-align: center;
+        }
+
+        .text-content.quote {
+            font-size: 1.8rem;
+            font-style: italic;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .text-content.lyrics {
+            font-size: 1.3rem;
+            line-height: 2;
+        }
+
+        .output-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .error-message {
+            display: none;
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: rgba(220, 38, 38, 0.1);
+            border: 1px solid rgba(220, 38, 38, 0.3);
+            border-radius: 8px;
+            color: #fca5a5;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 2rem 0;
+            }
+
+            .output-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .image-display {
+                position: static;
+            }
+
+            .text-content {
+                font-size: 1.2rem;
+            }
+
+            .style-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .nav-link {
+                position: static;
+                display: block;
+                text-align: center;
+                margin-bottom: 1rem;
+            }
+
+            .api-key-input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="/" class="nav-link">← Back to Projects</a>
+
+    <div class="container">
+        <header>
+            <h1>Ekphrasis</h1>
+            <p class="subtitle">Where images find their voice — AI-generated poetry from your photos</p>
+        </header>
+
+        <main>
+            <div class="api-key-section">
+                <h3>Claude API Key</h3>
+                <p>This app uses Claude AI to analyze your images and generate creative writing. To get started, you'll need an API key from Anthropic.</p>
+                <p style="font-size: 0.85rem; opacity: 0.8;">Get your API key at: <a href="https://console.anthropic.com/" target="_blank" style="color: var(--accent);">console.anthropic.com</a></p>
+                <div class="api-key-input-group">
+                    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+                    <button class="btn" id="saveApiKeyBtn">Save Key</button>
+                </div>
+                <p id="apiKeyStatus" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent); display: none;"></p>
+            </div>
+
+            <div class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-content">
+                        <div class="upload-icon">🖼️</div>
+                        <p class="upload-text">Drop an image here, click to browse, or paste from clipboard</p>
+                        <p class="upload-hint">Supports JPG, PNG, WebP</p>
+                    </div>
+                    <img id="imagePreview" alt="Preview">
+                </div>
+                <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp">
+            </div>
+
+            <div class="style-selector" id="styleSelector">
+                <h3>Choose a style</h3>
+                <div class="style-grid">
+                    <div class="style-option selected" data-style="free-verse">
+                        <div class="style-name">Free Verse</div>
+                        <div class="style-description">Flowing, natural</div>
+                    </div>
+                    <div class="style-option" data-style="haiku">
+                        <div class="style-name">Haiku</div>
+                        <div class="style-description">5-7-5 syllables</div>
+                    </div>
+                    <div class="style-option" data-style="sonnet">
+                        <div class="style-name">Sonnet-inspired</div>
+                        <div class="style-description">Formal, romantic</div>
+                    </div>
+                    <div class="style-option" data-style="spoken-word">
+                        <div class="style-name">Spoken Word</div>
+                        <div class="style-description">Rhythmic, bold</div>
+                    </div>
+                    <div class="style-option" data-style="lyrics">
+                        <div class="style-name">Song Lyrics</div>
+                        <div class="style-description">Verse/chorus</div>
+                    </div>
+                    <div class="style-option" data-style="quote">
+                        <div class="style-name">Philosophical Quote</div>
+                        <div class="style-description">Wise, contemplative</div>
+                    </div>
+                    <div class="style-option" data-style="prose">
+                        <div class="style-name">Flash Prose</div>
+                        <div class="style-description">Micro-story</div>
+                    </div>
+                    <div class="style-option" data-style="letter">
+                        <div class="style-name">Letter</div>
+                        <div class="style-description">Intimate, personal</div>
+                    </div>
+                </div>
+                <div class="generate-btn-container">
+                    <button class="btn" id="generateBtn">Generate Poetry</button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p class="loading-text">Contemplating the image...</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="output-section" id="outputSection">
+                <div class="output-container">
+                    <div class="image-display">
+                        <img id="outputImage" alt="Your image">
+                    </div>
+                    <div class="text-display">
+                        <div class="text-content" id="textContent"></div>
+                        <div class="output-actions">
+                            <button class="btn" id="regenerateBtn">Regenerate (Same Style)</button>
+                            <button class="btn btn-secondary" id="newStyleBtn">Try Different Style</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // State management
+        let currentImage = null;
+        let currentImageBase64 = null;
+        let selectedStyle = 'free-verse';
+        let apiKey = localStorage.getItem('claudeApiKey') || '';
+
+        // Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const styleSelector = document.getElementById('styleSelector');
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const errorMessage = document.getElementById('errorMessage');
+        const outputSection = document.getElementById('outputSection');
+        const outputImage = document.getElementById('outputImage');
+        const textContent = document.getElementById('textContent');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const newStyleBtn = document.getElementById('newStyleBtn');
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
+        const apiKeyStatus = document.getElementById('apiKeyStatus');
+
+        // Initialize API key
+        if (apiKey) {
+            apiKeyInput.value = apiKey;
+            showApiKeyStatus('API key loaded from storage', true);
+        }
+
+        // API Key handling
+        saveApiKeyBtn.addEventListener('click', () => {
+            const key = apiKeyInput.value.trim();
+            if (key) {
+                apiKey = key;
+                localStorage.setItem('claudeApiKey', key);
+                showApiKeyStatus('API key saved successfully!', true);
+            } else {
+                showApiKeyStatus('Please enter a valid API key', false);
+            }
+        });
+
+        function showApiKeyStatus(message, success) {
+            apiKeyStatus.textContent = message;
+            apiKeyStatus.style.color = success ? 'var(--accent)' : '#fca5a5';
+            apiKeyStatus.style.display = 'block';
+            setTimeout(() => {
+                apiKeyStatus.style.display = 'none';
+            }, 3000);
+        }
+
+        // File upload handling
+        uploadZone.addEventListener('click', () => imageInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+        });
+
+        // Paste from clipboard
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData.items;
+            for (let item of items) {
+                if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    handleImageFile(file);
+                    break;
+                }
+            }
+        });
+
+        function handleImageFile(file) {
+            currentImage = file;
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+                uploadZone.classList.add('has-image');
+                uploadZone.querySelector('.upload-content').style.display = 'none';
+                styleSelector.classList.add('visible');
+                outputSection.classList.remove('visible');
+
+                // Convert to base64 for Claude API
+                currentImageBase64 = e.target.result.split(',')[1];
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        // Style selection
+        document.querySelectorAll('.style-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
+                selectedStyle = option.dataset.style;
+            });
+        });
+
+        // Generate poetry
+        generateBtn.addEventListener('click', () => generatePoetry());
+        regenerateBtn.addEventListener('click', () => generatePoetry());
+        newStyleBtn.addEventListener('click', () => {
+            outputSection.classList.remove('visible');
+            styleSelector.classList.add('visible');
+            window.scrollTo({ top: styleSelector.offsetTop - 100, behavior: 'smooth' });
+        });
+
+        async function generatePoetry() {
+            if (!apiKey) {
+                showError('Please enter your Claude API key first');
+                return;
+            }
+
+            if (!currentImageBase64) {
+                showError('Please upload an image first');
+                return;
+            }
+
+            hideError();
+            loading.classList.add('visible');
+            styleSelector.classList.remove('visible');
+            outputSection.classList.remove('visible');
+
+            try {
+                const analysis = await analyzeImage();
+                const poetry = await generateCreativeText(analysis);
+                displayOutput(poetry);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loading.classList.remove('visible');
+            }
+        }
+
+        async function analyzeImage() {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-5-sonnet-20241022',
+                    max_tokens: 1024,
+                    messages: [{
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'image',
+                                source: {
+                                    type: 'base64',
+                                    media_type: currentImage.type,
+                                    data: currentImageBase64
+                                }
+                            },
+                            {
+                                type: 'text',
+                                text: `Analyze this image for creative writing inspiration. Provide a detailed analysis covering:
+
+1. Color Analysis: Dominant colors and their emotional associations (warm/cool, high contrast/muted, etc.)
+2. Subjects: What you see (nature, people, urban elements, objects, abstract elements)
+3. Mood & Atmosphere: Light quality, weather feeling, energy level, emotional tone
+4. Composition: What draws the eye, sense of movement or stillness
+5. Overall Feeling: The essence you want to capture in words
+
+Be specific and evocative. This analysis will be used to generate poetry.`
+                            }
+                        ]
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Failed to analyze image');
+            }
+
+            const data = await response.json();
+            return data.content[0].text;
+        }
+
+        async function generateCreativeText(analysis) {
+            const stylePrompts = {
+                'free-verse': 'Write a free verse poem (8-12 lines) with flowing, natural language. No strict structure, but make it lyrical and evocative.',
+                'haiku': 'Write a traditional haiku (5-7-5 syllable structure) that captures the essence. Make it contemplative and nature-focused.',
+                'sonnet': 'Write a sonnet-inspired poem (14 lines) with formal, romantic language. Use flowing rhythm and elevated diction.',
+                'spoken-word': 'Write spoken word poetry (10-15 lines) with strong rhythm and contemporary voice. Make it bold and performance-ready.',
+                'lyrics': 'Write song lyrics with verse/chorus structure. Make it singable and emotionally resonant. Include [Verse] and [Chorus] labels.',
+                'quote': 'Write a single powerful philosophical quote (1-3 sentences) that captures the wisdom of this image. Make it profound and memorable.',
+                'prose': 'Write flash prose (2-4 sentences) - a micro-story or meditation inspired by the image. Make it vivid and complete.',
+                'letter': 'Write a short letter (6-10 lines) addressed to someone or something in the image. Make it intimate and personal.'
+            };
+
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-3-5-sonnet-20241022',
+                    max_tokens: 1024,
+                    messages: [{
+                        role: 'user',
+                        content: `Based on this image analysis:
+
+${analysis}
+
+${stylePrompts[selectedStyle]}
+
+IMPORTANT:
+- Create ORIGINAL writing inspired by the image analysis
+- Make it genuinely connected to the specific details in the analysis
+- Be creative, evocative, and emotionally resonant
+- Do NOT use existing quotes or poems
+- Just output the creative text, no explanations or labels unless it's part of the format (like [Verse] for lyrics)`
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'Failed to generate text');
+            }
+
+            const data = await response.json();
+            return data.content[0].text.trim();
+        }
+
+        function displayOutput(poetry) {
+            outputImage.src = imagePreview.src;
+            textContent.textContent = poetry;
+
+            // Apply style-specific formatting
+            textContent.className = 'text-content';
+            if (selectedStyle === 'haiku') {
+                textContent.classList.add('haiku');
+            } else if (selectedStyle === 'quote') {
+                textContent.classList.add('quote');
+            } else if (selectedStyle === 'lyrics') {
+                textContent.classList.add('lyrics');
+            }
+
+            outputSection.classList.add('visible');
+            setTimeout(() => {
+                window.scrollTo({ top: outputSection.offsetTop - 100, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('visible');
+            setTimeout(() => {
+                window.scrollTo({ top: errorMessage.offsetTop - 100, behavior: 'smooth' });
+            }, 100);
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('visible');
+        }
+    </script>
+</body>
+</html>
