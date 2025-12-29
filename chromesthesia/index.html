@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chromesthesia - Words as Watercolor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-text: #2c2c2c;
+            --secondary-text: #666;
+            --subtle-border: #e0e0e0;
+            --paper-bg: #faf8f3;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--paper-bg);
+            background-image:
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,.02) 2px, rgba(0,0,0,.02) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,.02) 2px, rgba(0,0,0,.02) 4px);
+            color: var(--primary-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        nav {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--subtle-border);
+        }
+
+        nav a {
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--primary-text);
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 4rem;
+            font-weight: 300;
+            letter-spacing: 0.02em;
+            margin-bottom: 0.5rem;
+            color: var(--primary-text);
+        }
+
+        .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            font-style: italic;
+            color: var(--secondary-text);
+            font-weight: 300;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .controls-panel {
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        .canvas-container {
+            background: white;
+            border: 1px solid var(--subtle-border);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+        }
+
+        #watercolorCanvas {
+            width: 100%;
+            height: 600px;
+            display: block;
+            cursor: crosshair;
+        }
+
+        .section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--subtle-border);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+            color: var(--primary-text);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid var(--subtle-border);
+            background: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #999;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--primary-text);
+            background: var(--primary-text);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.02em;
+        }
+
+        button:hover {
+            background: transparent;
+            color: var(--primary-text);
+        }
+
+        button.secondary {
+            background: transparent;
+            color: var(--primary-text);
+        }
+
+        button.secondary:hover {
+            background: var(--primary-text);
+            color: white;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .example-btn {
+            padding: 0.6rem 1rem;
+            background: white;
+            color: var(--primary-text);
+            border: 1px solid var(--subtle-border);
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .example-btn:hover {
+            border-color: var(--primary-text);
+            background: var(--paper-bg);
+        }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .speed-control input[type="range"] {
+            flex: 1;
+            height: 2px;
+            background: var(--subtle-border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .speed-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-text);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        .speed-control input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--primary-text);
+            cursor: pointer;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .speed-label {
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            min-width: 60px;
+        }
+
+        .current-word {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid var(--subtle-border);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .current-word-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            font-style: italic;
+            color: var(--secondary-text);
+        }
+
+        .legend {
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 20px;
+            border: 1px solid var(--subtle-border);
+        }
+
+        .canvas-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            color: var(--secondary-text);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            font-style: italic;
+        }
+
+        .canvas-overlay.hidden {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-panel {
+                position: static;
+            }
+
+            h1 {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            main {
+                padding: 2rem 1rem;
+            }
+
+            #watercolorCanvas {
+                height: 400px;
+            }
+        }
+
+        .info-text {
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            line-height: 1.6;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header>
+            <h1>Chromesthesia</h1>
+            <p class="subtitle">Where words become watercolor</p>
+        </header>
+
+        <div class="main-container">
+            <div class="controls-panel">
+                <div class="section">
+                    <h2>Your Text</h2>
+                    <textarea id="textInput" placeholder="Paste or type your text here...
+
+Try a poem, a quote, or a passage that moves you."></textarea>
+                    <div class="button-group">
+                        <button id="paintBtn">Paint</button>
+                        <button id="clearBtn" class="secondary">Clear Canvas</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Examples</h2>
+                    <div class="examples-grid">
+                        <button class="example-btn" data-example="mlk">I Have a Dream (MLK)</button>
+                        <button class="example-btn" data-example="jfk">Ask Not (JFK)</button>
+                        <button class="example-btn" data-example="angelou">Still I Rise (Angelou)</button>
+                        <button class="example-btn" data-example="mandela">Invictus (Mandela)</button>
+                        <button class="example-btn" data-example="rumi">Rumi - Love</button>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Painting Speed</h2>
+                    <div class="speed-control">
+                        <input type="range" id="speedSlider" min="1" max="10" value="5" step="1">
+                        <span class="speed-label" id="speedLabel">Medium</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Current Word</h2>
+                    <div class="current-word">
+                        <span class="current-word-text" id="currentWord">—</span>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Color Legend</h2>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #FFD700, #FFA500, #FF8C94);"></div>
+                            <span>Joy & Love</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #4A90E2, #7B8B9A);"></div>
+                            <span>Sadness & Melancholy</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #DC143C, #8B0000);"></div>
+                            <span>Anger & Intensity</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #6A4C93, #2C2C2C);"></div>
+                            <span>Fear & Anxiety</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #87CEEB, #90EE90, #E6E6FA);"></div>
+                            <span>Calm & Peace</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: linear-gradient(to right, #FFFACD, #F0E68C);"></div>
+                            <span>Hope & Inspiration</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <button id="downloadBtn" class="secondary" style="width: 100%;">Download Painting</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="watercolorCanvas"></canvas>
+                <div class="canvas-overlay" id="canvasOverlay">
+                    Your painting will appear here
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Emotion-to-color mapping dictionary
+        const emotionColors = {
+            // Joy & Positive
+            joy: ['#FFD700', '#FFA500', '#FFB347'],
+            happy: ['#FFD700', '#FFA500', '#FFE5B4'],
+            love: ['#FF6B9D', '#FF8C94', '#FFB6C1'],
+            beautiful: ['#FFB6C1', '#FFA07A', '#F0E68C'],
+            wonderful: ['#FFD700', '#FFE4B5', '#FFA500'],
+            peace: ['#87CEEB', '#B0E0E6', '#E0F6FF'],
+            hope: ['#FFFACD', '#F0E68C', '#FFD700'],
+
+            // Sadness & Melancholy
+            sad: ['#4A90E2', '#708090', '#4682B4'],
+            tears: ['#5F9EA0', '#4682B4', '#B0C4DE'],
+            lonely: ['#778899', '#708090', '#696969'],
+            melancholy: ['#6495ED', '#7B8B9A', '#A9A9A9'],
+            sorrow: ['#4169E1', '#6A7B8C', '#556B2F'],
+
+            // Anger & Intensity
+            anger: ['#DC143C', '#B22222', '#8B0000'],
+            rage: ['#8B0000', '#A52A2A', '#CD5C5C'],
+            hate: ['#8B0000', '#800000', '#4B0000'],
+            fierce: ['#FF4500', '#FF6347', '#DC143C'],
+
+            // Fear & Anxiety
+            fear: ['#6A4C93', '#4A4A4A', '#2F2F2F'],
+            anxiety: ['#483D8B', '#2F4F4F', '#36454F'],
+            dark: ['#2C2C2C', '#1C1C1C', '#0A0A0A'],
+            shadow: ['#36454F', '#2F4F4F', '#1C1C1C'],
+
+            // Calm & Peace
+            calm: ['#B0E0E6', '#ADD8E6', '#E0F6FF'],
+            serene: ['#E6E6FA', '#D8BFD8', '#DDA0DD'],
+            tranquil: ['#98D8C8', '#7FFFD4', '#AFEEEE'],
+            gentle: ['#F0E68C', '#EEE8AA', '#FAFAD2'],
+
+            // Hope & Inspiration
+            dream: ['#FFE4B5', '#F0E68C', '#FFFACD'],
+            inspire: ['#FFD700', '#FFA500', '#FFE5B4'],
+            faith: ['#F0E68C', '#FFFACD', '#E6E6FA'],
+            glory: ['#FFD700', '#FFA500', '#FF8C00'],
+
+            // Nature & Life
+            life: ['#90EE90', '#98FB98', '#00FA9A'],
+            nature: ['#228B22', '#32CD32', '#7CFC00'],
+            sun: ['#FFD700', '#FFA500', '#FF8C00'],
+            sky: ['#87CEEB', '#00BFFF', '#1E90FF'],
+            ocean: ['#4682B4', '#5F9EA0', '#20B2AA'],
+
+            // Neutral
+            neutral: ['#D3D3D3', '#C0C0C0', '#B8B8B8']
+        };
+
+        // Sentiment word lists
+        const sentimentWords = {
+            positive: ['good', 'great', 'excellent', 'perfect', 'amazing', 'wonderful', 'fantastic', 'brilliant', 'magnificent', 'beautiful', 'lovely', 'delightful', 'charming', 'pleasant', 'joyful', 'cheerful', 'bright', 'radiant', 'glorious', 'blessed', 'grateful', 'thankful', 'appreciate', 'admire', 'adore', 'treasure', 'cherish'],
+            negative: ['bad', 'terrible', 'awful', 'horrible', 'dreadful', 'poor', 'worse', 'worst', 'ugly', 'nasty', 'evil', 'wicked', 'cruel', 'harsh', 'bitter', 'painful', 'hurt', 'harm', 'damage', 'destroy', 'ruin', 'devastate', 'miserable', 'suffering', 'agony', 'torment'],
+            intensity: ['very', 'extremely', 'incredibly', 'absolutely', 'completely', 'totally', 'utterly', 'deeply', 'profoundly', 'intensely', 'powerfully', 'strongly', 'fiercely', 'passionately', 'fervently'],
+            action: ['fight', 'battle', 'struggle', 'strive', 'rise', 'stand', 'march', 'triumph', 'conquer', 'overcome', 'achieve', 'accomplish', 'succeed', 'win', 'victory']
+        };
+
+        // Example texts
+        const examples = {
+            mlk: `I have a dream that one day this nation will rise up and live out the true meaning of its creed: "We hold these truths to be self-evident, that all men are created equal." I have a dream that my four little children will one day live in a nation where they will not be judged by the color of their skin but by the content of their character.`,
+
+            jfk: `And so, my fellow Americans: ask not what your country can do for you — ask what you can do for your country. My fellow citizens of the world: ask not what America will do for you, but what together we can do for the freedom of man.`,
+
+            angelou: `You may write me down in history with your bitter, twisted lies. You may trod me in the very dirt, but still, like dust, I'll rise. Does my sassiness upset you? Why are you beset with gloom? Just like moons and like suns, with the certainty of tides, just like hopes springing high, still I'll rise.`,
+
+            mandela: `Out of the night that covers me, black as the pit from pole to pole, I thank whatever gods may be for my unconquerable soul. In the fell clutch of circumstance I have not winced nor cried aloud. Under the bludgeonings of chance my head is bloody, but unbowed.`,
+
+            rumi: `Let yourself be silently drawn by the strange pull of what you really love. It will not lead you astray. The wound is the place where the Light enters you. Don't grieve. Anything you lose comes round in another form. Love is the bridge between you and everything.`
+        };
+
+        // Canvas setup
+        const canvas = document.getElementById('watercolorCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('canvasOverlay');
+
+        let isAnimating = false;
+        let animationSpeed = 500; // milliseconds per word
+
+        function setupCanvas() {
+            const container = canvas.parentElement;
+            const rect = container.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = 600;
+
+            // Create paper texture background
+            ctx.fillStyle = '#FFFFF8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Add subtle paper texture
+            for (let i = 0; i < 1000; i++) {
+                ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.02})`;
+                ctx.fillRect(
+                    Math.random() * canvas.width,
+                    Math.random() * canvas.height,
+                    1, 1
+                );
+            }
+        }
+
+        // Get color for a word
+        function getColorForWord(word) {
+            word = word.toLowerCase().trim();
+
+            // Check direct emotion mapping
+            for (const [emotion, colors] of Object.entries(emotionColors)) {
+                if (word.includes(emotion) || emotion.includes(word)) {
+                    return colors[Math.floor(Math.random() * colors.length)];
+                }
+            }
+
+            // Check sentiment
+            if (sentimentWords.positive.some(w => word.includes(w) || w.includes(word))) {
+                return emotionColors.joy[Math.floor(Math.random() * emotionColors.joy.length)];
+            }
+            if (sentimentWords.negative.some(w => word.includes(w) || w.includes(word))) {
+                return emotionColors.sad[Math.floor(Math.random() * emotionColors.sad.length)];
+            }
+            if (sentimentWords.intensity.some(w => word.includes(w) || w.includes(word))) {
+                return emotionColors.fierce[Math.floor(Math.random() * emotionColors.fierce.length)];
+            }
+            if (sentimentWords.action.some(w => word.includes(w) || w.includes(word))) {
+                return emotionColors.anger[Math.floor(Math.random() * emotionColors.anger.length)];
+            }
+
+            // Default to neutral
+            return emotionColors.neutral[Math.floor(Math.random() * emotionColors.neutral.length)];
+        }
+
+        // Paint a watercolor blob
+        function paintWatercolorBlob(x, y, color, size) {
+            const layers = 5 + Math.floor(Math.random() * 3);
+
+            for (let layer = 0; layer < layers; layer++) {
+                const layerSize = size * (1 - layer * 0.15);
+                const layerOpacity = 0.3 - (layer * 0.05);
+                const offsetX = (Math.random() - 0.5) * size * 0.3;
+                const offsetY = (Math.random() - 0.5) * size * 0.3;
+
+                // Create gradient for soft edges
+                const gradient = ctx.createRadialGradient(
+                    x + offsetX, y + offsetY, 0,
+                    x + offsetX, y + offsetY, layerSize
+                );
+
+                // Parse color and add transparency
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+
+                gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${layerOpacity})`);
+                gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${layerOpacity * 0.6})`);
+                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
+                ctx.fillStyle = gradient;
+
+                // Draw organic shape
+                ctx.beginPath();
+                const points = 8 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < points; i++) {
+                    const angle = (i / points) * Math.PI * 2;
+                    const radiusVariation = 0.8 + Math.random() * 0.4;
+                    const radius = layerSize * radiusVariation;
+                    const px = x + offsetX + Math.cos(angle) * radius;
+                    const py = y + offsetY + Math.sin(angle) * radius;
+
+                    if (i === 0) {
+                        ctx.moveTo(px, py);
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // Add color pooling effect (darker center)
+            const poolGradient = ctx.createRadialGradient(x, y, 0, x, y, size * 0.3);
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+
+            poolGradient.addColorStop(0, `rgba(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}, 0.2)`);
+            poolGradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
+            ctx.fillStyle = poolGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Main painting function
+        async function paintText(text) {
+            if (isAnimating) return;
+            isAnimating = true;
+            overlay.classList.add('hidden');
+
+            setupCanvas();
+
+            const words = text.split(/\s+/).filter(w => w.length > 0);
+            const currentWordDisplay = document.getElementById('currentWord');
+
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                currentWordDisplay.textContent = word;
+
+                const color = getColorForWord(word);
+
+                // Random position with some clustering
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const size = 30 + Math.random() * 60;
+
+                paintWatercolorBlob(x, y, color, size);
+
+                await new Promise(resolve => setTimeout(resolve, animationSpeed));
+            }
+
+            currentWordDisplay.textContent = '—';
+            isAnimating = false;
+        }
+
+        // Event listeners
+        document.getElementById('paintBtn').addEventListener('click', () => {
+            const text = document.getElementById('textInput').value.trim();
+            if (text) {
+                paintText(text);
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            setupCanvas();
+            overlay.classList.remove('hidden');
+            document.getElementById('currentWord').textContent = '—';
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'chromesthesia-painting.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+
+        // Example buttons
+        document.querySelectorAll('.example-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const example = btn.dataset.example;
+                document.getElementById('textInput').value = examples[example];
+            });
+        });
+
+        // Speed control
+        const speedSlider = document.getElementById('speedSlider');
+        const speedLabel = document.getElementById('speedLabel');
+        const speedLabels = ['Slowest', 'Slower', 'Slow', 'Medium-Slow', 'Medium', 'Medium-Fast', 'Fast', 'Faster', 'Fastest', 'Instant'];
+
+        speedSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            speedLabel.textContent = speedLabels[value - 1];
+
+            // Speed from 1000ms (slowest) to 50ms (fastest)
+            animationSpeed = 1100 - (value * 100);
+        });
+
+        // Initialize
+        setupCanvas();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (!isAnimating) {
+                setupCanvas();
+            }
+        });
+    </script>
+</body>
+</html>
