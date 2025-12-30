@@ -5,5 +5,3 @@ compatibility_date = "2024-01-01"
 # Workers are deployed to *.workers.dev subdomain
 # This will be available at: https://cors-proxy.arohaislove.workers.dev
 
-[env.production]
-name = "cors-proxy"

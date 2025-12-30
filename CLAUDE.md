@@ -39,7 +39,7 @@ This repository has automated deployment for Cloudflare Workers to support proje
 The following secrets are configured in GitHub Actions and available for CI/CD tasks:
 
 - **`CF_ACCOUNT_ID`** - Cloudflare account ID for deploying workers
-- **`CF_API_TOKEN`** - Cloudflare API token with permissions to edit and deploy workers
+- **`CF_API_KEY`** - Cloudflare API key with permissions to edit and deploy workers
 
 These secrets are used by GitHub Actions workflows to automatically deploy Cloudflare Workers when changes are pushed to the main branch.
 
