@@ -30,6 +30,42 @@ arohaislove.github.io/
   - Projects: `https://arohaislove.github.io/project-name/`
 - **Auto-Deploy:** Changes pushed to the main branch are automatically deployed (usually within 1-2 minutes).
 
+## CI/CD and Cloudflare Workers
+
+This repository has automated deployment for Cloudflare Workers to support projects that need CORS proxies (like Ekphrasis).
+
+### Available GitHub Secrets
+
+The following secrets are configured in GitHub Actions and available for CI/CD tasks:
+
+- **`CF_ACCOUNT_ID`** - Cloudflare account ID for deploying workers
+- **`CF_API_TOKEN`** - Cloudflare API token with permissions to edit and deploy workers
+
+These secrets are used by GitHub Actions workflows to automatically deploy Cloudflare Workers when changes are pushed to the main branch.
+
+### Cloudflare Worker Deployment
+
+**Worker Location:** `workers/cors-proxy/`
+
+The CORS proxy worker is automatically deployed via GitHub Actions when changes are merged to main. The deployed worker URL is:
+```
+https://cors-proxy.arohaislove.workers.dev
+```
+
+**To update the worker:**
+1. Modify files in `workers/cors-proxy/`
+2. Commit and push to your branch
+3. Merge to main
+4. GitHub Actions will automatically deploy using Wrangler CLI
+
+**Manual deployment** (if needed):
+```bash
+cd workers/cors-proxy
+npx wrangler deploy
+```
+
+**Note:** Projects like Ekphrasis are configured to use this worker URL by default, so users don't need to set up their own CORS proxy.
+
 ## Instructions for New Claude Agents
 
 When you're assigned to work on this repository, follow these steps:
