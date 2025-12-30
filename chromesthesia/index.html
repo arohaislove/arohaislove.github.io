@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Chromesthesia - Text to Watercolor</title>
+
+    <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+    <script defer data-domain="arohaislove.github.io" src="https://plausible.io/js/script.js"></script>
+    <script src="/shared/analytics.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
@@ -318,7 +323,7 @@
 <body>
     <div class="container">
         <nav>
-            <a href="/">← Back to Projects</a>
+            <a href="/" data-track="Back to Projects">← Back to Projects</a>
         </nav>
 
         <header>
@@ -336,15 +341,15 @@ Or try one of the famous examples below."></textarea>
                 <div class="examples">
                     <div class="example-label">Try a famous speech:</div>
                     <div class="example-buttons">
-                        <button class="example-btn" data-example="mlk">MLK - I Have a Dream</button>
-                        <button class="example-btn" data-example="jfk">JFK - Inaugural</button>
-                        <button class="example-btn" data-example="angelou">Maya Angelou</button>
-                        <button class="example-btn" data-example="dylan">Dylan Thomas</button>
-                        <button class="example-btn" data-example="dickens">Dickens</button>
+                        <button class="example-btn" data-example="mlk" data-track="Example: MLK">MLK - I Have a Dream</button>
+                        <button class="example-btn" data-example="jfk" data-track="Example: JFK">JFK - Inaugural</button>
+                        <button class="example-btn" data-example="angelou" data-track="Example: Maya Angelou">Maya Angelou</button>
+                        <button class="example-btn" data-example="dylan" data-track="Example: Dylan Thomas">Dylan Thomas</button>
+                        <button class="example-btn" data-example="dickens" data-track="Example: Dickens">Dickens</button>
                     </div>
                 </div>
 
-                <button class="paint-btn" id="paintBtn">Paint My Words</button>
+                <button class="paint-btn" id="paintBtn" data-track="Paint My Words">Paint My Words</button>
 
                 <div class="status-message" id="statusMessage"></div>
             </div>
@@ -355,8 +360,8 @@ Or try one of the famous examples below."></textarea>
                     <canvas id="watercolorCanvas" width="1200" height="800"></canvas>
                 </div>
                 <div class="controls">
-                    <button class="control-btn" id="downloadBtn">Download Painting</button>
-                    <button class="control-btn" id="clearBtn">Clear Canvas</button>
+                    <button class="control-btn" id="downloadBtn" data-track="Download Painting">Download Painting</button>
+                    <button class="control-btn" id="clearBtn" data-track="Clear Canvas">Clear Canvas</button>
                 </div>
             </div>
         </div>
@@ -835,6 +840,11 @@ Or try one of the famous examples below."></textarea>
                 document.getElementById('textInput').value = FAMOUS_SPEECHES[example];
             });
         });
+
+        // Initialize analytics when DOM is ready
+        if (window.Analytics) {
+            Analytics.init();
+        }
     </script>
 </body>
 </html>

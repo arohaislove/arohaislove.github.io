@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NZ Policy Matcher 2026 - Ko wai tō pāti? - Aroha's Projects</title>
     <meta name="description" content="Find out which NZ political party best matches your values for the 2026 election">
+
+    <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+    <script defer data-domain="arohaislove.github.io" src="https://plausible.io/js/script.js"></script>
+    <script src="/shared/analytics.js"></script>
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Navigation -->
         <nav class="back-nav">
-            <a href="/">← Back to Projects</a>
+            <a href="/" data-track="Back to Projects">← Back to Projects</a>
         </nav>
 
         <!-- Start Screen -->
@@ -43,7 +48,7 @@
                     </div>
                 </div>
 
-                <button id="start-btn" class="primary-btn">Tīmata - Start Quiz</button>
+                <button id="start-btn" class="primary-btn" data-track="Start Quiz">Tīmata - Start Quiz</button>
 
                 <p class="disclaimer">
                     This is an independent educational tool. Not affiliated with any political party.
@@ -67,29 +72,29 @@
                 <h3 id="question-text" class="question-text"></h3>
 
                 <div class="answer-options">
-                    <button class="answer-btn" data-value="1">
+                    <button class="answer-btn" data-value="1" data-track="Answer: Strongly Agree">
                         <span class="answer-label">Strongly Agree</span>
                         <span class="answer-sublabel">Āe rawa</span>
                     </button>
-                    <button class="answer-btn" data-value="0.5">
+                    <button class="answer-btn" data-value="0.5" data-track="Answer: Somewhat Agree">
                         <span class="answer-label">Somewhat Agree</span>
                         <span class="answer-sublabel">Āe</span>
                     </button>
-                    <button class="answer-btn" data-value="0">
+                    <button class="answer-btn" data-value="0" data-track="Answer: Neutral">
                         <span class="answer-label">Neutral</span>
                         <span class="answer-sublabel">Kāore he whakaaro</span>
                     </button>
-                    <button class="answer-btn" data-value="-0.5">
+                    <button class="answer-btn" data-value="-0.5" data-track="Answer: Somewhat Disagree">
                         <span class="answer-label">Somewhat Disagree</span>
                         <span class="answer-sublabel">Kāo</span>
                     </button>
-                    <button class="answer-btn" data-value="-1">
+                    <button class="answer-btn" data-value="-1" data-track="Answer: Strongly Disagree">
                         <span class="answer-label">Strongly Disagree</span>
                         <span class="answer-sublabel">Kāo rawa</span>
                     </button>
                 </div>
 
-                <button id="back-btn" class="secondary-btn" style="display: none;">← Previous Question</button>
+                <button id="back-btn" class="secondary-btn" style="display: none;" data-track="Previous Question">← Previous Question</button>
             </div>
         </section>
 
@@ -115,8 +120,8 @@
             </div>
 
             <div class="action-buttons">
-                <button id="restart-btn" class="primary-btn">Take Quiz Again</button>
-                <a href="/nz-election-venn/" class="secondary-btn">Explore Policy Overlaps →</a>
+                <button id="restart-btn" class="primary-btn" data-track="Restart Quiz">Take Quiz Again</button>
+                <a href="/nz-election-venn/" class="secondary-btn" data-track="Explore Policy Overlaps">Explore Policy Overlaps →</a>
             </div>
 
             <footer class="results-footer">

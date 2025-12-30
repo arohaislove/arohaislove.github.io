@@ -264,3 +264,8 @@ function restartQuiz() {
 
 // Initialize
 showScreen('start');
+
+// Initialize analytics when DOM is ready
+if (window.Analytics) {
+    Analytics.init();
+}

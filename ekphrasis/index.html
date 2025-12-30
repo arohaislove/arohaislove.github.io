@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ekphrasis — Art Finds Its Voice</title>
+
+    <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+    <script defer data-domain="arohaislove.github.io" src="https://plausible.io/js/script.js"></script>
+    <script src="/shared/analytics.js"></script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
@@ -425,22 +430,22 @@
 
                 <div class="image-preview" id="imagePreview">
                     <img id="previewImg" src="" alt="Preview">
-                    <button class="clear-image" id="clearImage">×</button>
+                    <button class="clear-image" id="clearImage" data-track="Clear Image">×</button>
                 </div>
 
                 <div class="style-selector">
                     <label class="style-label">Choose a voice:</label>
                     <div class="style-options">
-                        <button class="style-btn active" data-style="freeverse">Free Verse</button>
-                        <button class="style-btn" data-style="haiku">Haiku</button>
-                        <button class="style-btn" data-style="sonnet">Sonnet</button>
-                        <button class="style-btn" data-style="lyrics">Song Lyrics</button>
-                        <button class="style-btn" data-style="quote">Quote</button>
-                        <button class="style-btn" data-style="prose">Flash Prose</button>
+                        <button class="style-btn active" data-style="freeverse" data-track="Style: Free Verse">Free Verse</button>
+                        <button class="style-btn" data-style="haiku" data-track="Style: Haiku">Haiku</button>
+                        <button class="style-btn" data-style="sonnet" data-track="Style: Sonnet">Sonnet</button>
+                        <button class="style-btn" data-style="lyrics" data-track="Style: Song Lyrics">Song Lyrics</button>
+                        <button class="style-btn" data-style="quote" data-track="Style: Quote">Quote</button>
+                        <button class="style-btn" data-style="prose" data-track="Style: Flash Prose">Flash Prose</button>
                     </div>
                 </div>
 
-                <button class="generate-btn" id="generateBtn" disabled>Give This Image a Voice</button>
+                <button class="generate-btn" id="generateBtn" disabled data-track="Generate Poem">Give This Image a Voice</button>
 
                 <div class="error-message" id="errorMessage"></div>
             </div>
@@ -462,8 +467,8 @@
                     <div class="poem-text" id="poemText"></div>
                     <div class="poem-style-label" id="poemStyleLabel"></div>
                     <div class="output-actions">
-                        <button class="action-btn" id="copyBtn">Copy</button>
-                        <button class="action-btn" id="regenerateBtn">Try Again</button>
+                        <button class="action-btn" id="copyBtn" data-track="Copy Poem">Copy</button>
+                        <button class="action-btn" id="regenerateBtn" data-track="Regenerate Poem">Try Again</button>
                     </div>
                 </div>
             </div>
@@ -672,6 +677,11 @@
 
         function hideError() {
             errorMessage.classList.remove('active');
+        }
+
+        // Initialize analytics when DOM is ready
+        if (window.Analytics) {
+            Analytics.init();
         }
     </script>
 </body>

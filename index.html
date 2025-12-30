@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aroha's Projects</title>
+
+    <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+    <script defer data-domain="arohaislove.github.io" src="https://plausible.io/js/script.js"></script>
+    <script src="/shared/analytics.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -103,37 +108,37 @@
 
         <main>
             <div class="projects-grid">
-                <a href="/nz-policy-matcher/" class="project-card">
+                <a href="/nz-policy-matcher/" class="project-card" data-track="Project: NZ Policy Matcher">
                     <h2>NZ Policy Matcher 2026</h2>
                     <p>Ko wai tō pāti? Take a 15-question quiz to discover which political party best aligns with your values. Find out how you match with each party and see how close you are to changing your top match with just one policy shift.</p>
                     <span class="project-tag">Political Education</span>
                 </a>
 
-                <a href="/nz-election-venn/" class="project-card">
+                <a href="/nz-election-venn/" class="project-card" data-track="Project: NZ Election Venn">
                     <h2>NZ 2026 Election Policy Venn</h2>
                     <p>Interactive visualization of policy overlaps and differences between NZ political parties. Explore where National, Labour, Greens, ACT, and NZ First agree and diverge on key issues ahead of the 2026 election.</p>
                     <span class="project-tag">Political Education</span>
                 </a>
 
-                <a href="/perspective-engine/" class="project-card">
+                <a href="/perspective-engine/" class="project-card" data-track="Project: Perspective Engine">
                     <h2>The Perspective Engine</h2>
                     <p>A visual meditation on time, mortality, and intentional living. Visualize your life in months and gain perspective on how you spend your time.</p>
                     <span class="project-tag">Interactive Tool</span>
                 </a>
 
-                <a href="/religion-venn-diagram/" class="project-card">
+                <a href="/religion-venn-diagram/" class="project-card" data-track="Project: Religion Venn">
                     <h2>Religion Venn Diagram</h2>
                     <p>Discover the commonalities and differences between major world religions. An interactive visualization showing shared principles and unique aspects of Christianity, Islam, Judaism, Buddhism, and Hinduism.</p>
                     <span class="project-tag">Educational Tool</span>
                 </a>
 
-                <a href="/pwa-widget-demo/" class="project-card">
+                <a href="/pwa-widget-demo/" class="project-card" data-track="Project: PWA Widget">
                     <h2>PWA Widget Demo</h2>
                     <p>A Progressive Web App demonstrating Android home screen widget support. Install this app on your Android device and add an inspirational quote widget to your home screen.</p>
                     <span class="project-tag">PWA Demo</span>
                 </a>
 
-                <a href="/chromesthesia/" class="project-card">
+                <a href="/chromesthesia/" class="project-card" data-track="Project: Chromesthesia">
                     <h2>Chromesthesia</h2>
                     <p>Transform words into watercolor art. This synesthetic web app analyzes text for emotional content and themes, then paints a representational watercolor image using those colors. Watch as speeches, poems, and prose become visual masterpieces.</p>
                     <span class="project-tag">Art & AI</span>
@@ -147,5 +152,20 @@
             <p>Built with care and curiosity</p>
         </footer>
     </div>
+
+    <script>
+        // Initialize analytics when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.Analytics) {
+                    Analytics.init();
+                }
+            });
+        } else {
+            if (window.Analytics) {
+                Analytics.init();
+            }
+        }
+    </script>
 </body>
 </html>

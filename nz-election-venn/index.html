@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NZ 2026 Election - Policy Common Ground - Aroha's Projects</title>
     <meta name="description" content="Interactive visualization of policy overlaps and differences between NZ political parties for the 2026 election">
+
+    <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+    <script defer data-domain="arohaislove.github.io" src="https://plausible.io/js/script.js"></script>
+    <script src="/shared/analytics.js"></script>
+
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <!-- Navigation -->
         <nav class="back-nav">
-            <a href="/">← Back to Projects</a>
+            <a href="/" data-track="Back to Projects">← Back to Projects</a>
         </nav>
 
         <!-- Header -->
@@ -39,6 +44,7 @@
                         role="button"
                         tabindex="0"
                         aria-label="Click to view Labour and Greens shared policies"
+                        data-track="View Left Bloc Policies"
                     />
 
                     <!-- Right Bloc Circle (National + ACT + NZ First) -->
@@ -48,6 +54,7 @@
                         fill="#4B556320"
                         stroke="#4B5563"
                         stroke-width="2"
+                        data-track="View Right Bloc Policies"
                         class="interactive-area"
                         role="button"
                         tabindex="0"
@@ -131,7 +138,7 @@
                         <h3 id="info-title"></h3>
                         <p id="info-subtitle"></p>
                     </div>
-                    <button id="close-panel" class="close-btn" aria-label="Close policy information">✕</button>
+                    <button id="close-panel" class="close-btn" aria-label="Close policy information" data-track="Close Info Panel">✕</button>
                 </div>
                 <ul id="info-policies" class="policy-list"></ul>
             </div>

@@ -149,3 +149,8 @@ async function createWidgetData() {
     // This would be served by the service worker
     return widgetData;
 }
+
+// Initialize analytics when DOM is ready
+if (window.Analytics) {
+    Analytics.init();
+}
