@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ekphrasis - Image to Poetry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ekphrasis — Art Finds Its Voice</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -14,263 +14,269 @@
             box-sizing: border-box;
         }
 
-        :root {
-            --bg-dark: #0a0a0a;
-            --bg-elevated: #1a1a1a;
-            --border-subtle: #2a2a2a;
-            --text-primary: #e8e8e8;
-            --text-secondary: #a0a0a0;
-            --accent: #c9a961;
-            --accent-dim: #8a7544;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-primary);
+            background: #0a0a0a;
+            color: #e8e4df;
             min-height: 100vh;
             line-height: 1.6;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 2rem 1.5rem;
         }
 
         header {
             text-align: center;
-            padding: 3rem 0;
-            border-bottom: 1px solid var(--border-subtle);
             margin-bottom: 3rem;
         }
 
         h1 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 300;
-            letter-spacing: 0.05em;
+            color: #fff;
             margin-bottom: 0.5rem;
-            color: var(--accent);
+            letter-spacing: 2px;
         }
 
         .subtitle {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
+            font-size: 1rem;
+            color: #888;
             font-weight: 300;
-            letter-spacing: 0.02em;
+            font-style: italic;
         }
 
-        .nav-link {
-            position: absolute;
-            top: 2rem;
-            left: 2rem;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link:hover {
-            color: var(--accent);
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
         }
 
         .upload-section {
-            max-width: 700px;
-            margin: 0 auto 3rem;
+            background: #141414;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #2a2a2a;
         }
 
-        .upload-zone {
-            border: 2px dashed var(--border-subtle);
-            border-radius: 12px;
-            padding: 4rem 2rem;
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            font-weight: 400;
+        }
+
+        .drop-zone {
+            border: 2px dashed #3a3a3a;
+            border-radius: 8px;
+            padding: 3rem 2rem;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            background: var(--bg-elevated);
+            background: #0a0a0a;
         }
 
-        .upload-zone:hover,
-        .upload-zone.dragover {
-            border-color: var(--accent);
-            background: rgba(201, 169, 97, 0.05);
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #c9a227;
+            background: #1a1a1a;
         }
 
-        .upload-zone.has-image {
-            padding: 0;
-            border: none;
-        }
-
-        .upload-icon {
+        .drop-zone-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
             opacity: 0.5;
         }
 
-        .upload-text {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-hint {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            opacity: 0.7;
-        }
-
-        #imageInput {
-            display: none;
-        }
-
-        #imagePreview {
-            max-width: 100%;
-            max-height: 600px;
-            border-radius: 8px;
-            display: none;
-            margin: 0 auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .api-key-section {
-            max-width: 700px;
-            margin: 0 auto 3rem;
-            background: var(--bg-elevated);
-            padding: 2rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-subtle);
-        }
-
-        .api-key-section h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            color: var(--accent);
-            font-weight: 400;
-        }
-
-        .api-key-section p {
-            color: var(--text-secondary);
+        .drop-zone-text {
+            color: #888;
             font-size: 0.95rem;
-            margin-bottom: 1rem;
-            line-height: 1.6;
         }
 
-        .api-key-input-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        #apiKeyInput {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background: var(--bg-dark);
-            border: 1px solid var(--border-subtle);
-            border-radius: 6px;
-            color: var(--text-primary);
-            font-family: 'Inter', monospace;
-            font-size: 0.9rem;
-        }
-
-        #apiKeyInput:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            background: var(--accent);
-            color: var(--bg-dark);
-            border: none;
-            border-radius: 6px;
+        .drop-zone-text span {
+            color: #c9a227;
+            text-decoration: underline;
             cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
         }
 
-        .btn:hover {
-            background: var(--accent-dim);
-            transform: translateY(-1px);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 1px solid var(--border-subtle);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-elevated);
-            border-color: var(--accent);
-        }
-
-        .style-selector {
-            max-width: 700px;
-            margin: 2rem auto;
+        #fileInput {
             display: none;
         }
 
-        .style-selector.visible {
+        .image-preview {
+            display: none;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+
+        .image-preview.active {
             display: block;
         }
 
-        .style-selector h3 {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            text-align: center;
-            color: var(--accent);
-            font-weight: 400;
+        .image-preview img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
-        .style-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        .clear-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .style-selector {
+            margin-top: 1.5rem;
+        }
+
+        .style-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .style-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .style-btn {
+            padding: 0.5rem 1rem;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 20px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .style-btn:hover {
+            border-color: #c9a227;
+            color: #fff;
+        }
+
+        .style-btn.active {
+            background: #c9a227;
+            border-color: #c9a227;
+            color: #000;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #c9a227 0%, #a68523 100%);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(201, 162, 39, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #3a3a3a;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .output-section {
+            background: #141414;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #2a2a2a;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .output-placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .output-content {
+            display: none;
+        }
+
+        .output-content.active {
+            display: block;
+        }
+
+        .poem-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            line-height: 1.9;
+            color: #e8e4df;
+            white-space: pre-line;
+            font-weight: 300;
+        }
+
+        .poem-style-label {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a2a;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .output-actions {
+            margin-top: 1.5rem;
+            display: flex;
             gap: 1rem;
         }
 
-        .style-option {
-            padding: 1rem;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #888;
             cursor: pointer;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .style-option:hover {
-            border-color: var(--accent);
-            background: rgba(201, 169, 97, 0.05);
-        }
-
-        .style-option.selected {
-            border-color: var(--accent);
-            background: rgba(201, 169, 97, 0.1);
-        }
-
-        .style-name {
-            font-weight: 500;
-            margin-bottom: 0.25rem;
-        }
-
-        .style-description {
             font-size: 0.85rem;
-            color: var(--text-secondary);
+            transition: all 0.3s;
         }
 
-        .generate-btn-container {
-            text-align: center;
-            margin-top: 2rem;
+        .action-btn:hover {
+            border-color: #c9a227;
+            color: #c9a227;
         }
 
         .loading {
@@ -279,18 +285,18 @@
             padding: 3rem;
         }
 
-        .loading.visible {
+        .loading.active {
             display: block;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            margin: 0 auto 1rem;
-            border: 3px solid var(--border-subtle);
-            border-top-color: var(--accent);
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #2a2a2a;
+            border-top-color: #c9a227;
             border-radius: 50%;
             animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
 
         @keyframes spin {
@@ -298,609 +304,374 @@
         }
 
         .loading-text {
-            color: var(--text-secondary);
+            color: #888;
             font-style: italic;
-        }
-
-        .output-section {
-            display: none;
-            max-width: 1200px;
-            margin: 3rem auto;
-            padding: 3rem 0;
-            border-top: 1px solid var(--border-subtle);
-        }
-
-        .output-section.visible {
-            display: block;
-        }
-
-        .output-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            align-items: start;
-        }
-
-        .image-display {
-            position: sticky;
-            top: 2rem;
-        }
-
-        .image-display img {
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .text-display {
-            padding: 2rem;
-            min-height: 400px;
-        }
-
-        .text-content {
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.4rem;
-            line-height: 1.8;
-            white-space: pre-wrap;
-            color: var(--text-primary);
-            margin-bottom: 2rem;
-        }
-
-        .text-content.haiku {
-            font-size: 1.6rem;
-            line-height: 2;
-            text-align: center;
-        }
-
-        .text-content.quote {
-            font-size: 1.8rem;
-            font-style: italic;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .text-content.lyrics {
-            font-size: 1.3rem;
-            line-height: 2;
-        }
-
-        .output-actions {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
         }
 
         .error-message {
-            display: none;
-            max-width: 700px;
-            margin: 2rem auto;
-            padding: 1.5rem;
-            background: rgba(220, 38, 38, 0.1);
-            border: 1px solid rgba(220, 38, 38, 0.3);
+            background: #2a1515;
+            border: 1px solid #5a2020;
+            color: #ff6b6b;
+            padding: 1rem;
             border-radius: 8px;
-            color: #fca5a5;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9rem;
-            white-space: pre-wrap;
-            user-select: all;
-            position: relative;
+            margin-top: 1rem;
+            display: none;
         }
 
-        .error-message.visible {
+        .error-message.active {
             display: block;
         }
 
-        .copy-error-btn {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            padding: 0.5rem 1rem;
-            background: rgba(220, 38, 38, 0.2);
-            border: 1px solid rgba(220, 38, 38, 0.4);
-            color: #fca5a5;
-            border-radius: 4px;
-            cursor: pointer;
+        .sample-images {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .sample-label {
             font-size: 0.85rem;
-            font-family: 'Inter', sans-serif;
+            color: #666;
+            margin-bottom: 1rem;
         }
 
-        .copy-error-btn:hover {
-            background: rgba(220, 38, 38, 0.3);
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
         }
 
-        @media (max-width: 768px) {
+        .sample-img {
+            aspect-ratio: 1;
+            background-size: cover;
+            background-position: center;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .sample-img:hover {
+            opacity: 1;
+            border-color: #c9a227;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #1a1a1a;
+            color: #444;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #c9a227;
+            text-decoration: none;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
             h1 {
                 font-size: 2.5rem;
             }
 
+            .poem-text {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 500px) {
             .container {
                 padding: 1rem;
             }
 
-            header {
-                padding: 2rem 0;
+            h1 {
+                font-size: 2rem;
             }
 
-            .output-container {
-                grid-template-columns: 1fr;
-                gap: 2rem;
+            .upload-section, .output-section {
+                padding: 1.5rem;
             }
 
-            .image-display {
-                position: static;
-            }
-
-            .text-content {
-                font-size: 1.2rem;
-            }
-
-            .style-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .nav-link {
-                position: static;
-                display: block;
-                text-align: center;
-                margin-bottom: 1rem;
-            }
-
-            .api-key-input-group {
-                flex-direction: column;
+            .style-options {
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
-    <a href="/" class="nav-link">← Back to Projects</a>
-
     <div class="container">
         <header>
             <h1>Ekphrasis</h1>
-            <p class="subtitle">Where images find their voice — AI-generated poetry from your photos</p>
+            <p class="subtitle">Where art finds its voice</p>
         </header>
 
-        <main>
-            <div class="api-key-section">
-                <h3>Claude API Key</h3>
-                <p>This app uses Claude AI to analyze your images and generate creative writing. To get started, you'll need an API key from Anthropic.</p>
-                <p style="font-size: 0.85rem; opacity: 0.8;">Get your API key at: <a href="https://console.anthropic.com/" target="_blank" style="color: var(--accent);">console.anthropic.com</a></p>
-                <div class="api-key-input-group">
-                    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
-                    <button class="btn" id="saveApiKeyBtn">Save Key</button>
-                </div>
-                <p id="apiKeyStatus" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent); display: none;"></p>
-            </div>
-
+        <div class="main-grid">
             <div class="upload-section">
-                <div class="upload-zone" id="uploadZone">
-                    <div class="upload-content">
-                        <div class="upload-icon">🖼️</div>
-                        <p class="upload-text">Drop an image here, click to browse, or paste from clipboard</p>
-                        <p class="upload-hint">Supports JPG, PNG, WebP</p>
-                    </div>
-                    <img id="imagePreview" alt="Preview">
+                <h2 class="section-title">Your Image</h2>
+                
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">🖼️</div>
+                    <p class="drop-zone-text">
+                        Drag & drop an image here<br>
+                        or <span id="browseLink">browse to upload</span>
+                    </p>
                 </div>
-                <input type="file" id="imageInput" accept="image/jpeg,image/png,image/webp">
-            </div>
+                <input type="file" id="fileInput" accept="image/*">
 
-            <div class="style-selector" id="styleSelector">
-                <h3>Choose a style</h3>
-                <div class="style-grid">
-                    <div class="style-option selected" data-style="free-verse">
-                        <div class="style-name">Free Verse</div>
-                        <div class="style-description">Flowing, natural</div>
-                    </div>
-                    <div class="style-option" data-style="haiku">
-                        <div class="style-name">Haiku</div>
-                        <div class="style-description">5-7-5 syllables</div>
-                    </div>
-                    <div class="style-option" data-style="sonnet">
-                        <div class="style-name">Sonnet-inspired</div>
-                        <div class="style-description">Formal, romantic</div>
-                    </div>
-                    <div class="style-option" data-style="spoken-word">
-                        <div class="style-name">Spoken Word</div>
-                        <div class="style-description">Rhythmic, bold</div>
-                    </div>
-                    <div class="style-option" data-style="lyrics">
-                        <div class="style-name">Song Lyrics</div>
-                        <div class="style-description">Verse/chorus</div>
-                    </div>
-                    <div class="style-option" data-style="quote">
-                        <div class="style-name">Philosophical Quote</div>
-                        <div class="style-description">Wise, contemplative</div>
-                    </div>
-                    <div class="style-option" data-style="prose">
-                        <div class="style-name">Flash Prose</div>
-                        <div class="style-description">Micro-story</div>
-                    </div>
-                    <div class="style-option" data-style="letter">
-                        <div class="style-name">Letter</div>
-                        <div class="style-description">Intimate, personal</div>
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button class="clear-image" id="clearImage">×</button>
+                </div>
+
+                <div class="style-selector">
+                    <label class="style-label">Choose a voice:</label>
+                    <div class="style-options">
+                        <button class="style-btn active" data-style="freeverse">Free Verse</button>
+                        <button class="style-btn" data-style="haiku">Haiku</button>
+                        <button class="style-btn" data-style="sonnet">Sonnet</button>
+                        <button class="style-btn" data-style="lyrics">Song Lyrics</button>
+                        <button class="style-btn" data-style="quote">Quote</button>
+                        <button class="style-btn" data-style="prose">Flash Prose</button>
                     </div>
                 </div>
-                <div class="generate-btn-container">
-                    <button class="btn" id="generateBtn">Generate Poetry</button>
+
+                <button class="generate-btn" id="generateBtn" disabled>Give This Image a Voice</button>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">The Voice</h2>
+                
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="output-placeholder-icon">✨</div>
+                    <p>Upload an image and watch<br>as it finds its words...</p>
                 </div>
-            </div>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p class="loading-text">Contemplating the image...</p>
-            </div>
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Listening to the image...</p>
+                </div>
 
-            <div class="error-message" id="errorMessage"></div>
-
-            <div class="output-section" id="outputSection">
-                <div class="output-container">
-                    <div class="image-display">
-                        <img id="outputImage" alt="Your image">
-                    </div>
-                    <div class="text-display">
-                        <div class="text-content" id="textContent"></div>
-                        <div class="output-actions">
-                            <button class="btn" id="regenerateBtn">Regenerate (Same Style)</button>
-                            <button class="btn btn-secondary" id="newStyleBtn">Try Different Style</button>
-                        </div>
+                <div class="output-content" id="outputContent">
+                    <div class="poem-text" id="poemText"></div>
+                    <div class="poem-style-label" id="poemStyleLabel"></div>
+                    <div class="output-actions">
+                        <button class="action-btn" id="copyBtn">Copy</button>
+                        <button class="action-btn" id="regenerateBtn">Try Again</button>
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <footer>
+            <p>A companion to <a href="/chromesthesia/">Chromesthesia</a> — words to art, art to words</p>
+        </footer>
     </div>
 
     <script>
-        // State management
+        // Configuration
+        const WORKER_URL = 'https://mute-moon-54a3.zammel.workers.dev';
+
+        // State
         let currentImage = null;
-        let currentImageBase64 = null;
-        let selectedStyle = 'free-verse';
-        let apiKey = localStorage.getItem('claudeApiKey') || '';
+        let currentStyle = 'freeverse';
 
         // Elements
-        const uploadZone = document.getElementById('uploadZone');
-        const imageInput = document.getElementById('imageInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const browseLink = document.getElementById('browseLink');
         const imagePreview = document.getElementById('imagePreview');
-        const styleSelector = document.getElementById('styleSelector');
+        const previewImg = document.getElementById('previewImg');
+        const clearImage = document.getElementById('clearImage');
         const generateBtn = document.getElementById('generateBtn');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
         const loading = document.getElementById('loading');
+        const outputContent = document.getElementById('outputContent');
+        const poemText = document.getElementById('poemText');
+        const poemStyleLabel = document.getElementById('poemStyleLabel');
         const errorMessage = document.getElementById('errorMessage');
-        const outputSection = document.getElementById('outputSection');
-        const outputImage = document.getElementById('outputImage');
-        const textContent = document.getElementById('textContent');
+        const copyBtn = document.getElementById('copyBtn');
         const regenerateBtn = document.getElementById('regenerateBtn');
-        const newStyleBtn = document.getElementById('newStyleBtn');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
 
-        // Initialize API key from storage
-        if (apiKey) {
-            apiKeyInput.value = apiKey;
-            showApiKeyStatus('API key loaded from storage', true);
-        }
+        // Style descriptions for the prompt
+        const stylePrompts = {
+            freeverse: 'Write a free verse poem (8-16 lines) inspired by this image. Let the words flow naturally without strict meter or rhyme. Be evocative and specific to what you see.',
+            haiku: 'Write 3 haikus (each 5-7-5 syllables) inspired by this image. Capture different aspects or moments within the scene. Separate each haiku with a blank line.',
+            sonnet: 'Write a Shakespearean-style sonnet (14 lines, iambic pentameter, ABAB CDCD EFEF GG rhyme scheme) inspired by this image. Be romantic and contemplative.',
+            lyrics: 'Write song lyrics (2 verses and a chorus) inspired by this image. Make it emotional and singable. Label the sections (Verse 1, Chorus, Verse 2).',
+            quote: 'Write 3 profound, philosophical one-line quotes (like something you\'d find in a museum) inspired by this image. Each should stand alone as wisdom. Separate with blank lines.',
+            prose: 'Write a flash fiction piece (3-4 sentences, ~50 words) inspired by this image. Make it vivid and emotionally resonant, like the opening of a novel.'
+        };
 
-        // Hardcoded proxy URL - no user configuration needed
-        const PROXY_URL = 'https://cors-proxy.arohaislove.workers.dev';
+        const styleLabels = {
+            freeverse: 'Free Verse Poetry',
+            haiku: 'Haiku Collection',
+            sonnet: 'Sonnet',
+            lyrics: 'Song Lyrics',
+            quote: 'Philosophical Quotes',
+            prose: 'Flash Prose'
+        };
 
-        function getApiUrl() {
-            return PROXY_URL;
-        }
+        // Event Listeners
+        browseLink.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => fileInput.click());
 
-        // API Key handling
-        saveApiKeyBtn.addEventListener('click', () => {
-            const key = apiKeyInput.value.trim();
-            if (key) {
-                apiKey = key;
-                localStorage.setItem('claudeApiKey', key);
-                showApiKeyStatus('API key saved successfully!', true);
-            } else {
-                showApiKeyStatus('Please enter a valid API key', false);
-            }
-        });
-
-        function showApiKeyStatus(message, success) {
-            apiKeyStatus.textContent = message;
-            apiKeyStatus.style.color = success ? 'var(--accent)' : '#fca5a5';
-            apiKeyStatus.style.display = 'block';
-            setTimeout(() => {
-                apiKeyStatus.style.display = 'none';
-            }, 3000);
-        }
-
-        // File upload handling
-        uploadZone.addEventListener('click', () => imageInput.click());
-
-        uploadZone.addEventListener('dragover', (e) => {
+        dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadZone.classList.add('dragover');
+            dropZone.classList.add('dragover');
         });
 
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
         });
 
-        uploadZone.addEventListener('drop', (e) => {
+        dropZone.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadZone.classList.remove('dragover');
+            dropZone.classList.remove('dragover');
             const file = e.dataTransfer.files[0];
             if (file && file.type.startsWith('image/')) {
-                handleImageFile(file);
+                handleImage(file);
             }
         });
 
-        imageInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                handleImageFile(file);
+                handleImage(file);
             }
         });
 
-        // Paste from clipboard
-        document.addEventListener('paste', (e) => {
-            const items = e.clipboardData.items;
-            for (let item of items) {
-                if (item.type.startsWith('image/')) {
-                    const file = item.getAsFile();
-                    handleImageFile(file);
-                    break;
-                }
-            }
+        clearImage.addEventListener('click', () => {
+            currentImage = null;
+            imagePreview.classList.remove('active');
+            dropZone.style.display = 'block';
+            generateBtn.disabled = true;
+            fileInput.value = '';
         });
 
-        function handleImageFile(file) {
-            currentImage = file;
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStyle = btn.dataset.style;
+            });
+        });
+
+        generateBtn.addEventListener('click', generatePoem);
+        copyBtn.addEventListener('click', copyPoem);
+        regenerateBtn.addEventListener('click', generatePoem);
+
+        // Functions
+        function handleImage(file) {
             const reader = new FileReader();
-
             reader.onload = (e) => {
-                imagePreview.src = e.target.result;
-                imagePreview.style.display = 'block';
-                uploadZone.classList.add('has-image');
-                uploadZone.querySelector('.upload-content').style.display = 'none';
-                styleSelector.classList.add('visible');
-                outputSection.classList.remove('visible');
-
-                // Convert to base64 for Claude API
-                currentImageBase64 = e.target.result.split(',')[1];
+                currentImage = e.target.result;
+                previewImg.src = currentImage;
+                imagePreview.classList.add('active');
+                dropZone.style.display = 'none';
+                generateBtn.disabled = false;
+                hideError();
             };
-
             reader.readAsDataURL(file);
         }
 
-        // Style selection
-        document.querySelectorAll('.style-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('.style-option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedStyle = option.dataset.style;
-            });
-        });
+        async function generatePoem() {
+            if (!currentImage) return;
 
-        // Generate poetry
-        generateBtn.addEventListener('click', () => generatePoetry());
-        regenerateBtn.addEventListener('click', () => generatePoetry());
-        newStyleBtn.addEventListener('click', () => {
-            outputSection.classList.remove('visible');
-            styleSelector.classList.add('visible');
-            window.scrollTo({ top: styleSelector.offsetTop - 100, behavior: 'smooth' });
-        });
-
-        async function generatePoetry() {
-            if (!apiKey) {
-                showError('Please enter your Claude API key first');
-                return;
-            }
-
-            if (!currentImageBase64) {
-                showError('Please upload an image first');
-                return;
-            }
-
+            // Show loading
+            outputPlaceholder.style.display = 'none';
+            outputContent.classList.remove('active');
+            loading.classList.add('active');
             hideError();
-            loading.classList.add('visible');
-            styleSelector.classList.remove('visible');
-            outputSection.classList.remove('visible');
+            generateBtn.disabled = true;
 
             try {
-                const analysis = await analyzeImage();
-                const poetry = await generateCreativeText(analysis);
-                displayOutput(poetry);
-            } catch (error) {
-                console.error('Error generating poetry:', error);
+                // Extract base64 data and media type
+                const matches = currentImage.match(/^data:(.+);base64,(.+)$/);
+                if (!matches) throw new Error('Invalid image format');
+                
+                const mediaType = matches[1];
+                const base64Data = matches[2];
 
-                // Create detailed error message for easy debugging
-                let errorMsg = '<strong>Error:</strong> ' + error.message;
+                const prompt = stylePrompts[currentStyle] + '\n\nIMPORTANT: Only output the creative writing itself. No introductions, explanations, or commentary. Just the poem/lyrics/quotes/prose.';
 
-                // Add debug info
-                errorMsg += '\n\n<strong>Debug Info:</strong>';
-                errorMsg += '\n• Proxy URL: ' + PROXY_URL;
-                errorMsg += '\n• Error Type: ' + error.name;
-                errorMsg += '\n• Stack: ' + (error.stack || 'Not available');
-
-                showError(errorMsg);
-            } finally {
-                loading.classList.remove('visible');
-            }
-        }
-
-        async function analyzeImage() {
-            const apiUrl = getApiUrl();
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01'
-                },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20241022',
-                    max_tokens: 1024,
-                    messages: [{
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'image',
-                                source: {
-                                    type: 'base64',
-                                    media_type: currentImage.type,
-                                    data: currentImageBase64
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'image',
+                                    source: {
+                                        type: 'base64',
+                                        media_type: mediaType,
+                                        data: base64Data
+                                    }
+                                },
+                                {
+                                    type: 'text',
+                                    text: prompt
                                 }
-                            },
-                            {
-                                type: 'text',
-                                text: `Analyze this image for creative writing inspiration. Provide a detailed analysis covering:
+                            ]
+                        }]
+                    })
+                });
 
-1. Color Analysis: Dominant colors and their emotional associations (warm/cool, high contrast/muted, etc.)
-2. Subjects: What you see (nature, people, urban elements, objects, abstract elements)
-3. Mood & Atmosphere: Light quality, weather feeling, energy level, emotional tone
-4. Composition: What draws the eye, sense of movement or stillness
-5. Overall Feeling: The essence you want to capture in words
-
-Be specific and evocative. This analysis will be used to generate poetry.`
-                            }
-                        ]
-                    }]
-                })
-            });
-
-            if (!response.ok) {
-                let errorMsg = 'Failed to analyze image';
-                try {
-                    const error = await response.json();
-                    errorMsg = error.error?.message || error.message || errorMsg;
-                } catch (e) {
-                    // Response might not be JSON
-                    errorMsg = `API request failed with status ${response.status}`;
+                if (!response.ok) {
+                    throw new Error('Failed to generate. Please try again.');
                 }
-                throw new Error(errorMsg);
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'API error occurred');
+                }
+
+                const poem = data.content[0].text;
+                displayPoem(poem);
+
+            } catch (error) {
+                showError(error.message);
+                outputPlaceholder.style.display = 'flex';
+            } finally {
+                loading.classList.remove('active');
+                generateBtn.disabled = false;
             }
-
-            const data = await response.json();
-
-            if (!data.content || !data.content[0] || !data.content[0].text) {
-                throw new Error('Invalid response format from API');
-            }
-
-            return data.content[0].text;
         }
 
-        async function generateCreativeText(analysis) {
-            const stylePrompts = {
-                'free-verse': 'Write a free verse poem (8-12 lines) with flowing, natural language. No strict structure, but make it lyrical and evocative.',
-                'haiku': 'Write a traditional haiku (5-7-5 syllable structure) that captures the essence. Make it contemplative and nature-focused.',
-                'sonnet': 'Write a sonnet-inspired poem (14 lines) with formal, romantic language. Use flowing rhythm and elevated diction.',
-                'spoken-word': 'Write spoken word poetry (10-15 lines) with strong rhythm and contemporary voice. Make it bold and performance-ready.',
-                'lyrics': 'Write song lyrics with verse/chorus structure. Make it singable and emotionally resonant. Include [Verse] and [Chorus] labels.',
-                'quote': 'Write a single powerful philosophical quote (1-3 sentences) that captures the wisdom of this image. Make it profound and memorable.',
-                'prose': 'Write flash prose (2-4 sentences) - a micro-story or meditation inspired by the image. Make it vivid and complete.',
-                'letter': 'Write a short letter (6-10 lines) addressed to someone or something in the image. Make it intimate and personal.'
-            };
-
-            const apiUrl = getApiUrl();
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01'
-                },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20241022',
-                    max_tokens: 1024,
-                    messages: [{
-                        role: 'user',
-                        content: `Based on this image analysis:
-
-${analysis}
-
-${stylePrompts[selectedStyle]}
-
-IMPORTANT:
-- Create ORIGINAL writing inspired by the image analysis
-- Make it genuinely connected to the specific details in the analysis
-- Be creative, evocative, and emotionally resonant
-- Do NOT use existing quotes or poems
-- Just output the creative text, no explanations or labels unless it's part of the format (like [Verse] for lyrics)`
-                    }]
-                })
-            });
-
-            if (!response.ok) {
-                let errorMsg = 'Failed to generate creative text';
-                try {
-                    const error = await response.json();
-                    errorMsg = error.error?.message || error.message || errorMsg;
-                } catch (e) {
-                    // Response might not be JSON
-                    errorMsg = `API request failed with status ${response.status}`;
-                }
-                throw new Error(errorMsg);
-            }
-
-            const data = await response.json();
-
-            if (!data.content || !data.content[0] || !data.content[0].text) {
-                throw new Error('Invalid response format from API');
-            }
-
-            return data.content[0].text.trim();
+        function displayPoem(poem) {
+            poemText.textContent = poem;
+            poemStyleLabel.textContent = '— ' + styleLabels[currentStyle];
+            outputContent.classList.add('active');
         }
 
-        function displayOutput(poetry) {
-            outputImage.src = imagePreview.src;
-            textContent.textContent = poetry;
-
-            // Apply style-specific formatting
-            textContent.className = 'text-content';
-            if (selectedStyle === 'haiku') {
-                textContent.classList.add('haiku');
-            } else if (selectedStyle === 'quote') {
-                textContent.classList.add('quote');
-            } else if (selectedStyle === 'lyrics') {
-                textContent.classList.add('lyrics');
-            }
-
-            outputSection.classList.add('visible');
-            setTimeout(() => {
-                window.scrollTo({ top: outputSection.offsetTop - 100, behavior: 'smooth' });
-            }, 100);
+        function copyPoem() {
+            const text = poemText.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                }, 2000);
+            });
         }
 
         function showError(message) {
-            // Store the raw message for copying
-            const rawMessage = message.replace(/<[^>]*>/g, '').replace(/<br>/g, '\n');
-
-            // Create error display with copy button
-            errorMessage.innerHTML = `
-                <button class="copy-error-btn" onclick="copyErrorToClipboard()">Copy Error</button>
-                ${message.replace(/\n/g, '<br>')}
-            `;
-
-            // Store raw message for copying
-            errorMessage.dataset.rawError = rawMessage;
-
-            errorMessage.classList.add('visible');
-            setTimeout(() => {
-                window.scrollTo({ top: errorMessage.offsetTop - 100, behavior: 'smooth' });
-            }, 100);
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
         }
 
-        // Global function to copy error
-        window.copyErrorToClipboard = function() {
-            const rawError = errorMessage.dataset.rawError;
-            navigator.clipboard.writeText(rawError).then(() => {
-                const btn = document.querySelector('.copy-error-btn');
-                const originalText = btn.textContent;
-                btn.textContent = '✓ Copied!';
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-            });
-        };
-
         function hideError() {
-            errorMessage.classList.remove('visible');
+            errorMessage.classList.remove('active');
         }
     </script>
 </body>
