@@ -18,19 +18,38 @@ This repository uses **two separate deployment methods**:
 **Deploy Trigger:** Automatic via GitHub Actions when `workers/` changes
 **What it deploys:** Worker code from `workers/cors-proxy/`
 
-## ⚠️ Important: Cloudflare Pages Conflict
+## ⚠️ CRITICAL: Disable Cloudflare Pages Auto-Deploy
 
-**If you're seeing Cloudflare Pages deployment errors**, it's because this repository should NOT be connected to Cloudflare Pages. Here's how to fix it:
+**This repository should NEVER deploy via Cloudflare Pages!** It causes conflicts and failures.
 
-### Disconnect from Cloudflare Pages:
+### How to Disable Cloudflare Pages Completely:
 
+**Option 1: Delete the Pages Project (Recommended)**
 1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. Navigate to **Workers & Pages** → **Pages**
-3. Find the project connected to `arohaislove/arohaislove.github.io`
-4. Click on it → **Settings** → **Delete project**
-5. Or disable the auto-deployment
+2. Navigate to **Workers & Pages** → **Pages** tab
+3. Find the project for `arohaislove/arohaislove.github.io`
+4. Click on it
+5. Scroll down to **Settings** → **Delete deployment**
+6. Confirm deletion
 
-**Why?** This repository uses GitHub Pages for hosting the website. Cloudflare Workers (not Pages) is only used for the CORS proxy, which deploys via GitHub Actions.
+**Option 2: Disable GitHub Integration**
+1. In the Pages project settings
+2. Go to **Builds & deployments**
+3. Click **Configure Production deployments**
+4. Disable the GitHub integration
+5. Or set **Build command** to: `exit 0`
+
+**Option 3: Remove GitHub Connection**
+1. Go to **Account Home** → **Integrations**
+2. Find **GitHub** and click **Configure**
+3. Remove `arohaislove/arohaislove.github.io` from allowed repositories
+
+**Why this matters:**
+- ❌ Cloudflare Pages tries to run `wrangler deploy` from the wrong location
+- ❌ This causes "Missing entry-point" errors
+- ✅ GitHub Pages hosts the website (correct)
+- ✅ GitHub Actions deploys workers (correct)
+- ❌ Cloudflare Pages should do nothing (disable it!)
 
 ## How Workers Deploy
 

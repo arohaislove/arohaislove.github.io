@@ -1,0 +1,13 @@
+{
+  "name": "arohaislove-github-io",
+  "version": "1.0.0",
+  "description": "Portfolio website hosted on GitHub Pages. Cloudflare Workers deployed via GitHub Actions.",
+  "private": true,
+  "scripts": {
+    "build": "echo 'This is a GitHub Pages site - no build needed' && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arohaislove/arohaislove.github.io"
+  }
+}
