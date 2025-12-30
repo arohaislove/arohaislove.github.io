@@ -323,3 +323,8 @@ document.addEventListener('keydown', (e) => {
         document.querySelector(`[data-religion="${religions[prevIndex]}"]`).click();
     }
 });
+
+// Initialize analytics when DOM is ready
+if (window.Analytics) {
+    Analytics.init();
+}

@@ -260,3 +260,8 @@ function announceToScreenReader(message) {
         document.body.removeChild(announcement);
     }, 1000);
 }
+
+// Initialize analytics when DOM is ready
+if (window.Analytics) {
+    Analytics.init();
+}
