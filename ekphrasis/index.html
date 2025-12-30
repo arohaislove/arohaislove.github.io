@@ -379,10 +379,33 @@
             border: 1px solid rgba(220, 38, 38, 0.3);
             border-radius: 8px;
             color: #fca5a5;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            user-select: all;
+            position: relative;
         }
 
         .error-message.visible {
             display: block;
+        }
+
+        .copy-error-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            color: #fca5a5;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .copy-error-btn:hover {
+            background: rgba(220, 38, 38, 0.3);
         }
 
         @media (max-width: 768px) {
@@ -447,33 +470,6 @@
                     <button class="btn" id="saveApiKeyBtn">Save Key</button>
                 </div>
                 <p id="apiKeyStatus" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent); display: none;"></p>
-
-                <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle);">
-                    <h3 style="margin-bottom: 0.5rem;">⚠️ Important: CORS Workaround Needed</h3>
-                    <p style="margin-bottom: 1rem; font-size: 0.95rem;">Browsers block direct API calls to Anthropic. Choose a solution:</p>
-
-                    <details open style="margin-bottom: 1rem; background: rgba(201, 169, 97, 0.1); padding: 1rem; border-radius: 6px; cursor: pointer; border: 1px solid var(--accent);">
-                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">✅ Option 1: Default Proxy (Recommended - Already Set Up!)</summary>
-                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-primary);">We've set up a free CORS proxy for you! Just click "Generate Poetry" to use it.</p>
-                        <input type="text" id="proxyUrlInput" value="https://cors-proxy.arohaislove.workers.dev" style="width: 100%; padding: 0.75rem; background: var(--bg-dark); border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); margin-bottom: 0.5rem; font-weight: 500;">
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); opacity: 0.8;">This default proxy should work out of the box. You can replace it with your own if needed. See <a href="https://github.com/anthropics/anthropic-quickstarts/tree/main/cors-proxy" target="_blank" style="color: var(--accent);">Anthropic's CORS proxy guide</a></p>
-                    </details>
-
-                    <details style="margin-bottom: 1rem; background: rgba(201, 169, 97, 0.05); padding: 1rem; border-radius: 6px; cursor: pointer;">
-                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">Option 2: Browser Extension (Quick Testing)</summary>
-                        <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--text-secondary);">Install a CORS-disabling extension temporarily:</p>
-                        <ul style="font-size: 0.85rem; color: var(--text-secondary); margin-left: 1.5rem; line-height: 1.6;">
-                            <li>Chrome: <a href="https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf" target="_blank" style="color: var(--accent);">Allow CORS</a></li>
-                            <li>Firefox: <a href="https://addons.mozilla.org/en-US/firefox/addon/cors-everywhere/" target="_blank" style="color: var(--accent);">CORS Everywhere</a></li>
-                        </ul>
-                        <p style="font-size: 0.8rem; color: #fca5a5; margin-top: 0.5rem;">⚠️ Remember to disable after testing (security risk)</p>
-                    </details>
-
-                    <details style="background: rgba(201, 169, 97, 0.05); padding: 1rem; border-radius: 6px; cursor: pointer;">
-                        <summary style="font-weight: 500; margin-bottom: 0.5rem; cursor: pointer;">Option 3: Run Locally</summary>
-                        <p style="font-size: 0.9rem; color: var(--text-secondary);">Download the HTML file and open it directly in your browser (file:// URLs bypass CORS)</p>
-                    </details>
-                </div>
             </div>
 
             <div class="upload-section">
@@ -576,38 +572,18 @@
         const apiKeyInput = document.getElementById('apiKeyInput');
         const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
         const apiKeyStatus = document.getElementById('apiKeyStatus');
-        const proxyUrlInput = document.getElementById('proxyUrlInput');
 
-        // Initialize API key and proxy URL from storage
+        // Initialize API key from storage
         if (apiKey) {
             apiKeyInput.value = apiKey;
             showApiKeyStatus('API key loaded from storage', true);
         }
 
-        // Default proxy URL - set if not already configured
-        const defaultProxyUrl = 'https://cors-proxy.arohaislove.workers.dev';
-        const savedProxyUrl = localStorage.getItem('proxyUrl') || defaultProxyUrl;
-
-        // Set the proxy URL input value
-        proxyUrlInput.value = savedProxyUrl;
-
-        // Save default proxy URL if none was saved before
-        if (!localStorage.getItem('proxyUrl')) {
-            localStorage.setItem('proxyUrl', defaultProxyUrl);
-        }
-
-        // Save proxy URL when it changes
-        proxyUrlInput.addEventListener('blur', () => {
-            const proxyUrl = proxyUrlInput.value.trim();
-            if (proxyUrl) {
-                localStorage.setItem('proxyUrl', proxyUrl);
-            }
-        });
+        // Hardcoded proxy URL - no user configuration needed
+        const PROXY_URL = 'https://cors-proxy.arohaislove.workers.dev';
 
         function getApiUrl() {
-            const proxyUrl = proxyUrlInput.value.trim();
-            // If user provided a proxy URL, use it; otherwise use direct API URL
-            return proxyUrl || 'https://api.anthropic.com/v1/messages';
+            return PROXY_URL;
         }
 
         // API Key handling
@@ -730,25 +706,15 @@
                 displayOutput(poetry);
             } catch (error) {
                 console.error('Error generating poetry:', error);
-                let errorMsg = error.message;
 
-                // Handle CORS/network errors specifically
-                if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                    const hasProxyUrl = proxyUrlInput.value.trim();
-                    if (!hasProxyUrl) {
-                        errorMsg = '🚫 <strong>CORS Error:</strong> Browser blocked the request.<br><br>' +
-                                   'You need to use one of the workarounds above:<br>' +
-                                   '• <strong>Quick fix:</strong> Install a CORS browser extension (Option 2 above)<br>' +
-                                   '• <strong>Best solution:</strong> Set up a proxy URL (Option 1 above)<br>' +
-                                   '• <strong>Or:</strong> Download and run this file locally (Option 3 above)';
-                    } else {
-                        errorMsg = '❌ <strong>Connection Failed</strong><br><br>' +
-                                   'Check that:<br>' +
-                                   '• Your proxy URL is correct and running<br>' +
-                                   '• Your API key is valid<br>' +
-                                   '• You have internet connection';
-                    }
-                }
+                // Create detailed error message for easy debugging
+                let errorMsg = '<strong>Error:</strong> ' + error.message;
+
+                // Add debug info
+                errorMsg += '\n\n<strong>Debug Info:</strong>';
+                errorMsg += '\n• Proxy URL: ' + PROXY_URL;
+                errorMsg += '\n• Error Type: ' + error.name;
+                errorMsg += '\n• Stack: ' + (error.stack || 'Not available');
 
                 showError(errorMsg);
             } finally {
@@ -900,13 +866,38 @@ IMPORTANT:
         }
 
         function showError(message) {
-            // Convert newlines to <br> for better formatting
-            errorMessage.innerHTML = message.replace(/\n/g, '<br>');
+            // Store the raw message for copying
+            const rawMessage = message.replace(/<[^>]*>/g, '').replace(/<br>/g, '\n');
+
+            // Create error display with copy button
+            errorMessage.innerHTML = `
+                <button class="copy-error-btn" onclick="copyErrorToClipboard()">Copy Error</button>
+                ${message.replace(/\n/g, '<br>')}
+            `;
+
+            // Store raw message for copying
+            errorMessage.dataset.rawError = rawMessage;
+
             errorMessage.classList.add('visible');
             setTimeout(() => {
                 window.scrollTo({ top: errorMessage.offsetTop - 100, behavior: 'smooth' });
             }, 100);
         }
+
+        // Global function to copy error
+        window.copyErrorToClipboard = function() {
+            const rawError = errorMessage.dataset.rawError;
+            navigator.clipboard.writeText(rawError).then(() => {
+                const btn = document.querySelector('.copy-error-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        };
 
         function hideError() {
             errorMessage.classList.remove('visible');
