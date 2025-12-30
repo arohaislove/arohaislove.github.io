@@ -461,16 +461,7 @@
         </header>
 
         <main>
-            <div class="api-key-section">
-                <h3>Claude API Key</h3>
-                <p>This app uses Claude AI to analyze your images and generate creative writing. To get started, you'll need an API key from Anthropic.</p>
-                <p style="font-size: 0.85rem; opacity: 0.8;">Get your API key at: <a href="https://console.anthropic.com/" target="_blank" style="color: var(--accent);">console.anthropic.com</a></p>
-                <div class="api-key-input-group">
-                    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
-                    <button class="btn" id="saveApiKeyBtn">Save Key</button>
-                </div>
-                <p id="apiKeyStatus" style="margin-top: 1rem; font-size: 0.9rem; color: var(--accent); display: none;"></p>
-            </div>
+            <!-- API key section removed - worker now handles authentication -->
 
             <div class="upload-section">
                 <div class="upload-zone" id="uploadZone">
@@ -569,42 +560,12 @@
         const textContent = document.getElementById('textContent');
         const regenerateBtn = document.getElementById('regenerateBtn');
         const newStyleBtn = document.getElementById('newStyleBtn');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
-        const apiKeyStatus = document.getElementById('apiKeyStatus');
 
-        // Initialize API key from storage
-        if (apiKey) {
-            apiKeyInput.value = apiKey;
-            showApiKeyStatus('API key loaded from storage', true);
-        }
-
-        // Hardcoded proxy URL - no user configuration needed
-        const PROXY_URL = 'https://cors-proxy.arohaislove.workers.dev';
+        // Hardcoded worker URL - uses stored API key, no user key needed
+        const PROXY_URL = 'https://solitary-king-c8b7.zammel.workers.dev';
 
         function getApiUrl() {
             return PROXY_URL;
-        }
-
-        // API Key handling
-        saveApiKeyBtn.addEventListener('click', () => {
-            const key = apiKeyInput.value.trim();
-            if (key) {
-                apiKey = key;
-                localStorage.setItem('claudeApiKey', key);
-                showApiKeyStatus('API key saved successfully!', true);
-            } else {
-                showApiKeyStatus('Please enter a valid API key', false);
-            }
-        });
-
-        function showApiKeyStatus(message, success) {
-            apiKeyStatus.textContent = message;
-            apiKeyStatus.style.color = success ? 'var(--accent)' : '#fca5a5';
-            apiKeyStatus.style.display = 'block';
-            setTimeout(() => {
-                apiKeyStatus.style.display = 'none';
-            }, 3000);
         }
 
         // File upload handling
@@ -685,11 +646,6 @@
         });
 
         async function generatePoetry() {
-            if (!apiKey) {
-                showError('Please enter your Claude API key first');
-                return;
-            }
-
             if (!currentImageBase64) {
                 showError('Please upload an image first');
                 return;
@@ -727,9 +683,7 @@
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01'
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     model: 'claude-3-5-sonnet-20241022',
@@ -799,9 +753,7 @@ Be specific and evocative. This analysis will be used to generate poetry.`
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01'
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     model: 'claude-3-5-sonnet-20241022',
