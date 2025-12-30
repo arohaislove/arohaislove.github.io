@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NZ 2026 Election - Policy Common Ground - Aroha's Projects</title>
+    <meta name="description" content="Interactive visualization of policy overlaps and differences between NZ political parties for the 2026 election">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="back-nav">
+            <a href="/">← Back to Projects</a>
+        </nav>
+
+        <!-- Header -->
+        <header class="header">
+            <h1>New Zealand 2026 Election</h1>
+            <h2>Policy Common Ground Across Parties</h2>
+            <p class="election-date">Election to be held by December 19, 2026</p>
+        </header>
+
+        <!-- Main Venn Diagram -->
+        <main>
+            <div class="venn-container">
+                <svg id="venn-diagram" viewBox="0 0 800 500" role="img" aria-label="Interactive Venn diagram showing policy overlaps between NZ political parties">
+                    <!-- Background -->
+                    <rect width="800" height="500" fill="#0f172a" rx="8"/>
+
+                    <!-- Left Bloc Circle (Labour + Greens) -->
+                    <circle
+                        id="left-bloc"
+                        cx="280" cy="250" r="150"
+                        fill="#DC262620"
+                        stroke="#DC2626"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view Labour and Greens shared policies"
+                    />
+
+                    <!-- Right Bloc Circle (National + ACT + NZ First) -->
+                    <circle
+                        id="right-bloc"
+                        cx="520" cy="250" r="150"
+                        fill="#4B556320"
+                        stroke="#4B5563"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view National, ACT and NZ First shared policies"
+                    />
+
+                    <!-- Center Overlap - All Parties -->
+                    <ellipse
+                        id="all-parties"
+                        cx="400" cy="250" rx="60" ry="80"
+                        fill="#6B728030"
+                        stroke="#9CA3AF"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view policies all major parties agree on"
+                    />
+
+                    <!-- Labels -->
+                    <text x="180" y="250" fill="#DC2626" font-size="14" font-weight="bold" text-anchor="middle">LEFT</text>
+                    <text x="180" y="270" fill="#DC2626" font-size="12" text-anchor="middle">Labour + Greens</text>
+
+                    <text x="620" y="250" fill="#6B7280" font-size="14" font-weight="bold" text-anchor="middle">RIGHT</text>
+                    <text x="620" y="270" fill="#6B7280" font-size="12" text-anchor="middle">Nat + ACT + NZF</text>
+
+                    <text x="400" y="245" fill="#E5E7EB" font-size="12" font-weight="bold" text-anchor="middle">COMMON</text>
+                    <text x="400" y="260" fill="#E5E7EB" font-size="12" font-weight="bold" text-anchor="middle">GROUND</text>
+
+                    <!-- National-Labour overlap -->
+                    <circle
+                        id="national-labour"
+                        cx="400" cy="150" r="30"
+                        fill="#7C3AED30"
+                        stroke="#7C3AED"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view National and Labour centrist overlap"
+                    />
+                    <text x="400" y="155" fill="#C4B5FD" font-size="9" text-anchor="middle">NAT+LAB</text>
+
+                    <!-- ACT-Green overlap -->
+                    <circle
+                        id="act-green"
+                        cx="400" cy="350" r="25"
+                        fill="#65A30D30"
+                        stroke="#65A30D"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view ACT and Greens shared civil liberties policies"
+                    />
+                    <text x="400" y="353" fill="#BEF264" font-size="8" text-anchor="middle">ACT+GRN</text>
+
+                    <!-- National-NZFirst overlap -->
+                    <circle
+                        id="national-nzfirst"
+                        cx="520" cy="150" r="25"
+                        fill="#0369A130"
+                        stroke="#0369A1"
+                        stroke-width="2"
+                        class="interactive-area"
+                        role="button"
+                        tabindex="0"
+                        aria-label="Click to view National and NZ First conservative alliance policies"
+                    />
+                    <text x="520" y="153" fill="#7DD3FC" font-size="8" text-anchor="middle">NAT+NZF</text>
+
+                    <!-- Instruction -->
+                    <text x="400" y="480" fill="#64748B" font-size="11" text-anchor="middle">Click or tap areas to explore policy overlaps</text>
+                </svg>
+            </div>
+
+            <!-- Info Panel -->
+            <div id="info-panel" class="info-panel" style="display: none;" role="region" aria-live="polite">
+                <div class="info-header">
+                    <div>
+                        <h3 id="info-title"></h3>
+                        <p id="info-subtitle"></p>
+                    </div>
+                    <button id="close-panel" class="close-btn" aria-label="Close policy information">✕</button>
+                </div>
+                <ul id="info-policies" class="policy-list"></ul>
+            </div>
+
+            <!-- Party Cards -->
+            <section class="party-section">
+                <h3>Individual Party Positions</h3>
+                <div id="party-cards" class="party-grid"></div>
+            </section>
+
+            <!-- Key Insights -->
+            <section class="insights-section">
+                <h3>Key Insights: Where the Common Ground Lives</h3>
+                <div class="insights-grid">
+                    <div class="insight-column">
+                        <h4 class="agreement-header">Areas of Broad Agreement</h4>
+                        <ul class="insight-list">
+                            <li><strong>Housing:</strong> All parties acknowledge crisis, differ on solutions</li>
+                            <li><strong>Healthcare:</strong> Universal support for improvement</li>
+                            <li><strong>KiwiSaver:</strong> All support increases (3%→6% vs 10%)</li>
+                            <li><strong>Infrastructure:</strong> Labour pledges continuity on coalition projects</li>
+                        </ul>
+                    </div>
+                    <div class="insight-column">
+                        <h4 class="dividing-header">Key Dividing Lines</h4>
+                        <ul class="insight-list">
+                            <li><strong>Tax:</strong> Wealth tax (Left) vs Tax cuts (Right)</li>
+                            <li><strong>Treaty/Māori Policy:</strong> ACT's principles bill vs Labour/Greens' Te Tiriti commitment</li>
+                            <li><strong>Environment:</strong> Greens revoke mining vs Right's Fast-track approvals</li>
+                            <li><strong>Spending:</strong> ACT aggressive cuts vs Greens $8B green investment</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coalition Math -->
+            <section class="coalition-section">
+                <p>
+                    <strong>Current Coalition:</strong> National + ACT + NZ First |
+                    <strong> Potential Left Bloc:</strong> Labour + Greens + Te Pāti Māori |
+                    <strong> Wildcard:</strong> NZ First (has ruled out Hipkins, not Labour entirely)
+                </p>
+            </section>
+
+            <!-- Footer -->
+            <footer class="footer">
+                <p>Data compiled from party announcements, Wikipedia, RNZ, NZ Herald, and official party websites (Dec 2025)</p>
+            </footer>
+        </main>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
