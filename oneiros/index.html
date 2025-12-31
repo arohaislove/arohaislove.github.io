@@ -13,6 +13,9 @@
   </script>
   <script src="/shared/analytics.js"></script>
 
+  <!-- LZString compression library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -108,6 +111,47 @@
       font-style: italic;
       color: var(--accent);
       letter-spacing: 0.05em;
+    }
+
+    /* Storage Warning */
+    .storage-warning {
+      display: none;
+      background: #fffbeb;
+      border: 1px solid #f59e0b;
+      border-radius: 2px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 2rem;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.9rem;
+      color: #92400e;
+    }
+
+    .storage-warning.visible {
+      display: block;
+    }
+
+    .storage-warning strong {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .storage-bar {
+      height: 6px;
+      background: #fef3c7;
+      border-radius: 3px;
+      margin: 0.75rem 0;
+      overflow: hidden;
+    }
+
+    .storage-bar-fill {
+      height: 100%;
+      background: #f59e0b;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .storage-bar-fill.critical {
+      background: #dc2626;
     }
 
     /* Entry Form */
@@ -443,6 +487,8 @@
       align-items: center;
       justify-content: space-between;
       margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
 
     .archive h2 {
@@ -452,10 +498,39 @@
       letter-spacing: 0.05em;
     }
 
+    .archive-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
     .archive-count {
       font-family: 'Instrument Sans', sans-serif;
       font-size: 0.8rem;
       color: var(--accent);
+    }
+
+    .archive-btn {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.75rem;
+      padding: 0.4rem 0.75rem;
+      background: var(--paper-dark);
+      border: 1px solid var(--phantom);
+      border-radius: 2px;
+      cursor: pointer;
+      color: var(--accent);
+      transition: all 0.2s ease;
+    }
+
+    .archive-btn:hover {
+      background: var(--gold);
+      color: white;
+      border-color: var(--gold);
+    }
+
+    .archive-btn.danger:hover {
+      background: #dc2626;
+      border-color: #dc2626;
     }
 
     .archive-empty {
@@ -604,6 +679,11 @@
       .modal {
         padding: 2rem;
       }
+
+      .archive-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
     }
   </style>
 </head>
@@ -617,6 +697,14 @@
       <h1>Oneiros</h1>
       <p class="subtitle">A journal for the territory between waking and sleep</p>
     </header>
+
+    <div class="storage-warning" id="storageWarning">
+      <strong>⚠️ Storage Nearly Full</strong>
+      <div class="storage-bar">
+        <div class="storage-bar-fill" id="storageBarFill"></div>
+      </div>
+      <span id="storageText">Consider exporting and clearing old dreams to free up space.</span>
+    </div>
 
     <div class="entry-form">
       <div class="form-section">
@@ -679,7 +767,12 @@
     <div class="archive" id="archive">
       <div class="archive-header">
         <h2>Archive</h2>
-        <span class="archive-count" id="archiveCount"></span>
+        <div class="archive-actions">
+          <span class="archive-count" id="archiveCount"></span>
+          <button class="archive-btn" id="exportBtn" title="Export dreams as JSON">Export</button>
+          <button class="archive-btn" id="importBtn" title="Import dreams from JSON">Import</button>
+          <button class="archive-btn danger" id="clearBtn" title="Clear all dreams">Clear All</button>
+        </div>
       </div>
       <div class="archive-list" id="archiveList">
         <div class="archive-empty">No dreams recorded yet</div>
@@ -687,6 +780,8 @@
     </div>
   </div>
 
+  <!-- Hidden file input for import -->
+  <input type="file" id="importInput" accept=".json" style="display: none;">
 
   <!-- Modal for viewing entries -->
   <div class="modal-overlay" id="modalOverlay">
@@ -701,15 +796,167 @@
 
 
   <script>
-    // State
+    // ===========================================
+    // STORAGE MANAGEMENT
+    // ===========================================
+    
+    const STORAGE_KEY = 'oneiros_entries';
+    const MAX_IMAGE_WIDTH = 800;  // Compress images to this max width
+    const MAX_IMAGE_QUALITY = 0.7; // JPEG quality
+    const STORAGE_WARNING_THRESHOLD = 0.75; // Warn at 75% full
+    const MAX_ENTRIES = 100; // Keep max 100 entries
+    
+    // Storage helper with compression
+    const Storage = {
+      save(entries) {
+        try {
+          const json = JSON.stringify(entries);
+          const compressed = LZString.compressToUTF16(json);
+          localStorage.setItem(STORAGE_KEY, compressed);
+          this.checkQuota();
+          return true;
+        } catch (e) {
+          if (e.name === 'QuotaExceededError') {
+            showError('Storage Full', 
+              'Your dream journal is full. Please export your dreams and clear some entries to continue.',
+              'You can use the Export button to save your dreams, then Clear All to free up space.');
+            return false;
+          }
+          console.error('Storage error:', e);
+          return false;
+        }
+      },
+      
+      load() {
+        try {
+          const compressed = localStorage.getItem(STORAGE_KEY);
+          if (!compressed) return [];
+          
+          // Try to decompress (new format)
+          const decompressed = LZString.decompressFromUTF16(compressed);
+          if (decompressed) {
+            return JSON.parse(decompressed);
+          }
+          
+          // Fall back to old uncompressed format
+          return JSON.parse(compressed);
+        } catch (e) {
+          console.error('Error loading entries:', e);
+          // Try raw parse as fallback
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return JSON.parse(raw) || [];
+          } catch {
+            return [];
+          }
+        }
+      },
+      
+      getUsage() {
+        let total = 0;
+        for (let key in localStorage) {
+          if (localStorage.hasOwnProperty(key)) {
+            total += localStorage.getItem(key).length * 2; // UTF-16 = 2 bytes per char
+          }
+        }
+        return total;
+      },
+      
+      getQuotaPercent() {
+        // localStorage typically has 5MB limit
+        const used = this.getUsage();
+        const limit = 5 * 1024 * 1024; // 5MB
+        return used / limit;
+      },
+      
+      checkQuota() {
+        const percent = this.getQuotaPercent();
+        const warning = document.getElementById('storageWarning');
+        const fill = document.getElementById('storageBarFill');
+        const text = document.getElementById('storageText');
+        
+        if (percent > STORAGE_WARNING_THRESHOLD) {
+          warning.classList.add('visible');
+          fill.style.width = (percent * 100) + '%';
+          
+          if (percent > 0.9) {
+            fill.classList.add('critical');
+            text.textContent = `Storage is ${Math.round(percent * 100)}% full! Export and clear dreams immediately.`;
+          } else {
+            fill.classList.remove('critical');
+            text.textContent = `Storage is ${Math.round(percent * 100)}% full. Consider exporting and clearing old dreams.`;
+          }
+        } else {
+          warning.classList.remove('visible');
+        }
+      },
+      
+      migrateOldData() {
+        // Check if we have old uncompressed data and migrate it
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          
+          // If it starts with '[', it's likely old JSON format
+          if (raw.startsWith('[')) {
+            console.log('Migrating old uncompressed data...');
+            const entries = JSON.parse(raw);
+            this.save(entries);
+            console.log('Migration complete');
+          }
+        } catch (e) {
+          console.error('Migration error:', e);
+        }
+      }
+    };
+
+    // ===========================================
+    // IMAGE COMPRESSION
+    // ===========================================
+    
+    function compressImage(dataUrl, maxWidth = MAX_IMAGE_WIDTH, quality = MAX_IMAGE_QUALITY) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          
+          // Calculate new dimensions
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+          
+          // Create canvas and draw
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Export as JPEG for better compression
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        };
+        img.src = dataUrl;
+      });
+    }
+
+    // ===========================================
+    // STATE
+    // ===========================================
+    
     let currentImage = null;
     let currentImageData = null;
-    let entries = JSON.parse(localStorage.getItem('oneiros_entries') || '[]');
+    let entries = [];
 
     // Hardcoded API endpoint (worker with baked-in API key)
     const PROXY_URL = 'https://cors-proxy.zammel.workers.dev/anthropic';
 
-    // Elements
+    // ===========================================
+    // ELEMENTS
+    // ===========================================
+    
     const imageInput = document.getElementById('imageInput');
     const uploadArea = document.getElementById('uploadArea');
     const uploadPlaceholder = document.getElementById('uploadPlaceholder');
@@ -733,17 +980,27 @@
     const modalDate = document.getElementById('modalDate');
     const modalPoem = document.getElementById('modalPoem');
     const modalContext = document.getElementById('modalContext');
+    const exportBtn = document.getElementById('exportBtn');
+    const importBtn = document.getElementById('importBtn');
+    const importInput = document.getElementById('importInput');
+    const clearBtn = document.getElementById('clearBtn');
 
-    // Image handling
+    // ===========================================
+    // IMAGE HANDLING
+    // ===========================================
+    
     imageInput.addEventListener('change', handleImageSelect);
 
-    function handleImageSelect(e) {
+    async function handleImageSelect(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        currentImageData = e.target.result;
+      reader.onload = async (e) => {
+        // Compress the image before storing
+        const originalData = e.target.result;
+        currentImageData = await compressImage(originalData);
+        
         previewImage.src = currentImageData;
         previewImage.classList.add('visible');
         uploadPlaceholder.style.display = 'none';
@@ -753,7 +1010,10 @@
       reader.readAsDataURL(file);
     }
 
-    // Helper to show error on screen
+    // ===========================================
+    // ERROR HANDLING
+    // ===========================================
+    
     function showError(title, message, details = '') {
       errorMessage.textContent = message;
       errorDetails.textContent = details;
@@ -762,12 +1022,14 @@
       console.error('Error:', title, message, details);
     }
 
-    // Helper to hide error
     function hideError() {
       errorDisplay.classList.remove('visible');
     }
 
-    // Submit function
+    // ===========================================
+    // SUBMIT DREAM
+    // ===========================================
+    
     async function submitDream() {
       if (!currentImageData) {
         showError('No Image', 'Please upload an image of your dream first');
@@ -898,7 +1160,17 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         };
 
         entries.unshift(entry);
-        localStorage.setItem('oneiros_entries', JSON.stringify(entries));
+        
+        // Limit entries to prevent unbounded growth
+        if (entries.length > MAX_ENTRIES) {
+          entries = entries.slice(0, MAX_ENTRIES);
+        }
+        
+        if (!Storage.save(entries)) {
+          // Storage failed, but we still have the entry in memory
+          console.warn('Failed to save to localStorage');
+        }
+        
         renderArchive();
 
         // Reset form after successful submission
@@ -909,27 +1181,28 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         uploadArea.classList.remove('has-image');
         contextInput.value = '';
         imageInput.value = '';
-        submitBtn.disabled = true; // Disable until new image is uploaded
+        submitBtn.disabled = true;
 
       } catch (error) {
         console.error('Error:', error);
 
-        // Parse error message and details
         const errorParts = error.message.split('\n\n');
         const mainMessage = errorParts[0] || 'Failed to divine the dream';
         const details = errorParts.slice(1).join('\n\n') || error.stack || 'No additional details';
 
         showError('Dream Divination Failed', mainMessage, details);
-        submitBtn.disabled = false; // Re-enable button so user can retry
+        submitBtn.disabled = false;
       } finally {
         loading.classList.remove('visible');
       }
     }
 
-    // Submit button click handler
     submitBtn.addEventListener('click', submitDream);
 
-    // Archive
+    // ===========================================
+    // ARCHIVE
+    // ===========================================
+    
     function renderArchive() {
       archiveCount.textContent = `${entries.length} ${entries.length === 1 ? 'dream' : 'dreams'}`;
 
@@ -945,7 +1218,6 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         </div>
       `).join('');
 
-      // Add click handlers
       document.querySelectorAll('.archive-entry').forEach(el => {
         el.addEventListener('click', () => {
           const entry = entries.find(e => e.id === parseInt(el.dataset.id));
@@ -971,7 +1243,86 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
       });
     }
 
-    // Modal handling
+    // ===========================================
+    // EXPORT / IMPORT / CLEAR
+    // ===========================================
+    
+    exportBtn.addEventListener('click', () => {
+      const dataStr = JSON.stringify(entries, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `oneiros-dreams-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    importBtn.addEventListener('click', () => {
+      importInput.click();
+    });
+
+    importInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        
+        if (!Array.isArray(imported)) {
+          throw new Error('Invalid format');
+        }
+
+        // Merge with existing, avoiding duplicates by ID
+        const existingIds = new Set(entries.map(e => e.id));
+        const newEntries = imported.filter(e => !existingIds.has(e.id));
+        
+        entries = [...newEntries, ...entries].sort((a, b) => 
+          new Date(b.date) - new Date(a.date)
+        );
+        
+        if (entries.length > MAX_ENTRIES) {
+          entries = entries.slice(0, MAX_ENTRIES);
+        }
+
+        Storage.save(entries);
+        renderArchive();
+        
+        alert(`Imported ${newEntries.length} new dreams.`);
+      } catch (err) {
+        showError('Import Failed', 'Could not read the file. Make sure it\'s a valid Oneiros export.');
+      }
+      
+      importInput.value = '';
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (entries.length === 0) {
+        alert('No dreams to clear.');
+        return;
+      }
+      
+      const confirmed = confirm(
+        `Are you sure you want to delete all ${entries.length} dreams?\n\n` +
+        `This cannot be undone. Consider exporting first.`
+      );
+      
+      if (confirmed) {
+        entries = [];
+        localStorage.removeItem(STORAGE_KEY);
+        Storage.checkQuota();
+        renderArchive();
+      }
+    });
+
+    // ===========================================
+    // MODAL
+    // ===========================================
+    
     modalClose.addEventListener('click', () => {
       modalOverlay.classList.remove('visible');
     });
@@ -982,10 +1333,23 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
       }
     });
 
-    // Initialize
+    // ===========================================
+    // INITIALIZE
+    // ===========================================
+    
+    // Migrate old data if needed
+    Storage.migrateOldData();
+    
+    // Load entries
+    entries = Storage.load();
+    
+    // Check storage quota
+    Storage.checkQuota();
+    
+    // Render archive
     renderArchive();
 
-    // Initialize analytics when DOM is ready
+    // Initialize analytics
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => {
         if (window.Analytics) {
