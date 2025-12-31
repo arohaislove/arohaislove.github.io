@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Visualize audio as colors and shapes in real-time. Upload an MP3 or WAV file and watch as bass, mids, and treble create a synesthetic light show.">
+  <title>Chromesthesia Audio - Sound Visualizer</title>
+
+  <!-- Prevent zoom on iOS when focusing inputs (improves mobile UX) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
+  <script src="/shared/analytics.js"></script>
+
+  <!-- Favicon (uses default for now) -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script type="module" crossorigin src="/chromesthesia-audio/assets/index.CjpbT_Yx.js"></script>
+  <link rel="stylesheet" crossorigin href="/chromesthesia-audio/assets/index.DLlzUxn-.css">
+</head>
+<body>
+  <!-- React app will render here -->
+  <div id="root"></div>
+
+  <!-- Main JavaScript entry point -->
+  <!-- Vite will process this and bundle all dependencies -->
+
+  <!-- Initialize analytics -->
+  <script>
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.Analytics) {
+          Analytics.init();
+        }
+      });
+    } else {
+      if (window.Analytics) {
+        Analytics.init();
+      }
+    }
+  </script>
+</body>
+</html>
