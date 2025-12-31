@@ -669,10 +669,11 @@
     <div class="modal">
       <button class="modal-close" id="settingsClose">&times;</button>
       <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 400; margin-bottom: 1.5rem;">Settings</h2>
-      <label style="margin-bottom: 0.5rem;">Anthropic API Key</label>
+      <label style="margin-bottom: 0.5rem;">Anthropic API Key <span class="label-hint">— required</span></label>
       <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-...">
-      <label style="margin-bottom: 0.5rem;">Proxy URL <span class="label-hint">— your Cloudflare Worker</span></label>
-      <input type="text" class="api-input" id="proxyInput" placeholder="https://cors-proxy.xxx.workers.dev/anthropic">
+      <label style="margin-bottom: 0.5rem;">Proxy URL <span class="label-hint">— pre-configured ✓</span></label>
+      <input type="text" class="api-input" id="proxyInput" placeholder="https://cors-proxy.arohaislove.workers.dev/anthropic" readonly style="background: #f5f2eb; color: #666;">
+      <p style="font-family: 'Instrument Sans', sans-serif; font-size: 0.85rem; color: #666; margin-bottom: 1rem;">The CORS proxy is already configured. You only need to add your API key.</p>
       <button class="submit-btn" id="saveSettingsBtn">Save</button>
     </div>
   </div>
@@ -711,9 +712,15 @@
     const proxyInput = document.getElementById('proxyInput');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 
-    // Load settings
+    // Load settings with hardcoded proxy URL
+    const PROXY_URL = 'https://cors-proxy.arohaislove.workers.dev/anthropic';
     apiKeyInput.value = localStorage.getItem('oneiros_api_key') || '';
-    proxyInput.value = localStorage.getItem('oneiros_proxy') || '';
+    proxyInput.value = localStorage.getItem('oneiros_proxy') || PROXY_URL;
+
+    // Pre-fill proxy on first load
+    if (!localStorage.getItem('oneiros_proxy')) {
+      localStorage.setItem('oneiros_proxy', PROXY_URL);
+    }
 
     // Image handling
     imageInput.addEventListener('change', handleImageSelect);
@@ -734,24 +741,28 @@
       reader.readAsDataURL(file);
     }
 
-    // Submit
-    submitBtn.addEventListener('click', async () => {
+    // Submit function
+    async function submitDream() {
       const apiKey = localStorage.getItem('oneiros_api_key');
       const proxyUrl = localStorage.getItem('oneiros_proxy');
 
       if (!apiKey || !proxyUrl) {
-        pendingSubmit = true; // Mark that we need to submit after settings are saved
+        pendingSubmit = true;
         settingsOverlay.classList.add('visible');
         return;
       }
 
-      if (!currentImageData) return;
+      if (!currentImageData) {
+        alert('Please upload an image first');
+        return;
+      }
 
       submitBtn.disabled = true;
       loading.classList.add('visible');
       response.classList.remove('visible');
 
       try {
+        console.log('Submitting dream to:', proxyUrl);
         const context = contextInput.value.trim();
         const base64Data = currentImageData.split(',')[1];
         const mediaType = currentImageData.split(';')[0].split(':')[1];
@@ -789,6 +800,17 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
           }
         ];
 
+        const requestBody = {
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          system: systemPrompt,
+          messages: [{
+            role: 'user',
+            content: userContent
+          }]
+        };
+
+        console.log('Making API request...');
         const apiResponse = await fetch(proxyUrl, {
           method: 'POST',
           headers: {
@@ -796,20 +818,22 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
             'x-api-key': apiKey,
             'anthropic-version': '2023-06-01'
           },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1024,
-            system: systemPrompt,
-            messages: [{
-              role: 'user',
-              content: userContent
-            }]
-          })
+          body: JSON.stringify(requestBody)
         });
 
+        console.log('Response status:', apiResponse.status, apiResponse.statusText);
+
+        if (!apiResponse.ok) {
+          const errorText = await apiResponse.text();
+          console.error('API error response:', errorText);
+          throw new Error(`API returned ${apiResponse.status}: ${errorText}`);
+        }
+
         const data = await apiResponse.json();
+        console.log('Received response from API');
 
         if (data.error) {
+          console.error('API error:', data.error);
           throw new Error(data.error.message || 'API error');
         }
 
@@ -860,12 +884,15 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
 
       } catch (error) {
         console.error('Error:', error);
-        alert('Failed to divine the dream: ' + error.message);
+        alert('Failed to divine the dream: ' + error.message + '\n\nCheck the browser console (F12) for more details.');
       } finally {
         loading.classList.remove('visible');
         submitBtn.disabled = true;
       }
-    });
+    }
+
+    // Submit button click handler
+    submitBtn.addEventListener('click', submitDream);
 
     // Archive
     function renderArchive() {
@@ -938,14 +965,26 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
     });
 
     saveSettingsBtn.addEventListener('click', () => {
-      localStorage.setItem('oneiros_api_key', apiKeyInput.value);
-      localStorage.setItem('oneiros_proxy', proxyInput.value);
+      const key = apiKeyInput.value.trim();
+
+      if (!key) {
+        alert('Please enter your Anthropic API key');
+        return;
+      }
+
+      // Always use the hardcoded proxy URL
+      localStorage.setItem('oneiros_api_key', key);
+      localStorage.setItem('oneiros_proxy', PROXY_URL);
       settingsOverlay.classList.remove('visible');
+
+      console.log('Settings saved. API key starts with:', key.substring(0, 10) + '...');
+      console.log('Proxy URL:', PROXY_URL);
 
       // If we were trying to submit when settings opened, auto-submit now
       if (pendingSubmit) {
         pendingSubmit = false;
-        submitBtn.click(); // Trigger the submit
+        console.log('Auto-submitting dream after settings save...');
+        submitDream(); // Call the submit function directly
       }
     });
 
