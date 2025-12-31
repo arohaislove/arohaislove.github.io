@@ -18,6 +18,7 @@ export function useAudioAnalyzer() {
   // These track the current state of our audio system
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasAudio, setHasAudio] = useState(false);
+  const [isMicActive, setIsMicActive] = useState(false);
   const [error, setError] = useState(null);
 
   // Current frequency band values (updated ~60 times per second)
@@ -37,6 +38,7 @@ export function useAudioAnalyzer() {
   const audioElementRef = useRef(null);  // The actual <audio> HTML element
   const animationFrameRef = useRef(null); // ID for canceling animation loop
   const dataArrayRef = useRef(null);     // Holds raw frequency data from analyzer
+  const mediaStreamRef = useRef(null);   // Holds microphone media stream
 
   /**
    * Initialize the Web Audio API context and analyzer
@@ -273,6 +275,128 @@ export function useAudioAnalyzer() {
     }
   }, [isPlaying, startAnalyzing, stopAnalyzing]);
 
+  /**
+   * Start microphone input
+   *
+   * HOW THIS WORKS:
+   * 1. Request microphone permission from the browser
+   * 2. Get a media stream from the microphone
+   * 3. Create a MediaStreamSource node
+   * 4. Connect it to the analyzer
+   * 5. Start the visualization loop
+   *
+   * WHY THIS IS COOL:
+   * - Visualize any sound around you in real-time
+   * - Works with system audio if you play Spotify/YouTube in another tab
+   * - Great for live music, singing, talking
+   */
+  const startMicrophone = useCallback(async () => {
+    // Stop any playing audio file first
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      setIsPlaying(false);
+    }
+
+    // Initialize audio context if needed
+    initializeAudioContext();
+
+    if (!audioContextRef.current || !analyserRef.current) {
+      setError('Audio system not initialized');
+      return;
+    }
+
+    try {
+      // Request microphone access from the browser
+      // This will show a permission dialog
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,  // We want raw audio
+          noiseSuppression: false,  // Don't filter out frequencies
+          autoGainControl: false    // Keep original volume levels
+        }
+      });
+
+      // Disconnect old source if it exists
+      if (sourceRef.current) {
+        sourceRef.current.disconnect();
+      }
+
+      // Resume audio context if suspended
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume();
+      }
+
+      // Create a source from the microphone stream
+      const micSource = audioContextRef.current.createMediaStreamSource(stream);
+
+      // Connect mic → analyzer
+      // NOTE: We don't connect to destination (speakers) to avoid feedback!
+      micSource.connect(analyserRef.current);
+
+      // Store references
+      sourceRef.current = micSource;
+      mediaStreamRef.current = stream;
+
+      // Update state
+      setIsMicActive(true);
+      setHasAudio(true);
+      setError(null);
+
+      // Start the visualization
+      startAnalyzing();
+
+    } catch (err) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('Microphone permission denied. Please allow microphone access.');
+      } else if (err.name === 'NotFoundError') {
+        setError('No microphone found. Please connect a microphone.');
+      } else {
+        setError('Failed to start microphone: ' + err.message);
+      }
+      console.error('Microphone error:', err);
+    }
+  }, [initializeAudioContext, startAnalyzing]);
+
+  /**
+   * Stop microphone input
+   *
+   * WHY WE NEED THIS:
+   * - Properly release the microphone resource
+   * - Turn off the microphone indicator in the browser
+   * - Stop the visualization
+   */
+  const stopMicrophone = useCallback(() => {
+    // Stop all tracks in the media stream
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    // Disconnect the source
+    if (sourceRef.current) {
+      sourceRef.current.disconnect();
+      sourceRef.current = null;
+    }
+
+    // Stop the visualization
+    stopAnalyzing();
+
+    // Update state
+    setIsMicActive(false);
+    setHasAudio(false);
+  }, [stopAnalyzing]);
+
+  /**
+   * Toggle microphone on/off
+   */
+  const toggleMicrophone = useCallback(() => {
+    if (isMicActive) {
+      stopMicrophone();
+    } else {
+      startMicrophone();
+    }
+  }, [isMicActive, startMicrophone, stopMicrophone]);
+
   // ===== CLEANUP =====
   // Stop analyzing when component unmounts
   // WHY? Prevents memory leaks and unnecessary CPU usage
@@ -283,6 +407,10 @@ export function useAudioAnalyzer() {
       }
       if (audioElementRef.current) {
         audioElementRef.current.pause();
+      }
+      // Stop microphone if active
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
       if (audioContextRef.current) {
         audioContextRef.current.close();
@@ -296,10 +424,12 @@ export function useAudioAnalyzer() {
     frequencies,      // { bass: 0-100, mids: 0-100, treble: 0-100 }
     isPlaying,        // true/false
     hasAudio,         // true if a file is loaded
+    isMicActive,      // true if microphone is active
     error,            // error message or null
 
     // Functions
     loadAudio,        // (file) => load and connect audio file
     togglePlayPause,  // () => play or pause
+    toggleMicrophone, // () => start or stop microphone
   };
 }
