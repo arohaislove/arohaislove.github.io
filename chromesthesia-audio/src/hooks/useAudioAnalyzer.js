@@ -22,10 +22,16 @@ export function useAudioAnalyzer() {
   const [error, setError] = useState(null);
 
   // Current frequency band values (updated ~60 times per second)
+  // Now with 8 bands for more detailed visualization
   const [frequencies, setFrequencies] = useState({
-    bass: 0,
-    mids: 0,
-    treble: 0
+    subBass: 0,      // 20-60 Hz - felt more than heard
+    bass: 0,         // 60-250 Hz - kick drums, bass guitar
+    lowMids: 0,      // 250-500 Hz - body of most instruments
+    mids: 0,         // 500-2000 Hz - vocals, guitars
+    highMids: 0,     // 2000-4000 Hz - presence, clarity
+    presence: 0,     // 4000-6000 Hz - consonants, attack
+    brilliance: 0,   // 6000-12000 Hz - sparkle, air
+    treble: 0        // 12000-20000 Hz - highest frequencies
   });
 
   // ===== REFS =====
@@ -166,7 +172,7 @@ export function useAudioAnalyzer() {
    *
    * WHY THIS IS THE CORE FUNCTION:
    * - This runs ~60 times per second via requestAnimationFrame
-   * - Reads raw frequency data and simplifies it to 3 bands
+   * - Reads raw frequency data and simplifies it to 8 bands
    * - Updates React state so component can re-render with new values
    */
   const analyzeFrequencies = useCallback(() => {
@@ -181,40 +187,47 @@ export function useAudioAnalyzer() {
 
     // FREQUENCY BANDS EXPLANATION:
     // The dataArray contains ~1024 values (half of fftSize)
-    // Each value represents a narrow frequency range
-    // We divide this into 3 bands:
+    // Each value represents a narrow frequency range (roughly 20 Hz per bin)
+    // We divide this into 8 detailed bands for richer visualization
 
-    // BASS: Low frequencies (roughly 20Hz - 250Hz)
-    // Index 0 to 1/6 of the array
-    const bassEnd = Math.floor(bufferLength / 6);
-    let bassSum = 0;
-    for (let i = 0; i < bassEnd; i++) {
-      bassSum += dataArray[i];
-    }
-    const bassAvg = bassSum / bassEnd;
+    // Helper function to average a range of frequency bins
+    const avgRange = (start, end) => {
+      let sum = 0;
+      for (let i = start; i < end; i++) {
+        sum += dataArray[i];
+      }
+      return sum / (end - start);
+    };
 
-    // MIDS: Middle frequencies (roughly 250Hz - 4000Hz)
-    // Index 1/6 to 2/3 of the array
-    const midsEnd = Math.floor(bufferLength * 2 / 3);
-    let midsSum = 0;
-    for (let i = bassEnd; i < midsEnd; i++) {
-      midsSum += dataArray[i];
-    }
-    const midsAvg = midsSum / (midsEnd - bassEnd);
+    // Calculate band boundaries (rough estimates based on typical sampling rates)
+    const subBassEnd = Math.floor(bufferLength * 0.02);    // ~0-60 Hz
+    const bassEnd = Math.floor(bufferLength * 0.08);       // 60-250 Hz
+    const lowMidsEnd = Math.floor(bufferLength * 0.15);    // 250-500 Hz
+    const midsEnd = Math.floor(bufferLength * 0.35);       // 500-2000 Hz
+    const highMidsEnd = Math.floor(bufferLength * 0.50);   // 2000-4000 Hz
+    const presenceEnd = Math.floor(bufferLength * 0.65);   // 4000-6000 Hz
+    const brillianceEnd = Math.floor(bufferLength * 0.85); // 6000-12000 Hz
+    // Treble = rest of the array                           // 12000-20000 Hz
 
-    // TREBLE: High frequencies (roughly 4000Hz - 20000Hz)
-    // Index 2/3 to end of array
-    let trebleSum = 0;
-    for (let i = midsEnd; i < bufferLength; i++) {
-      trebleSum += dataArray[i];
-    }
-    const trebleAvg = trebleSum / (bufferLength - midsEnd);
+    // Calculate averages for each band
+    const subBassAvg = avgRange(0, subBassEnd);
+    const bassAvg = avgRange(subBassEnd, bassEnd);
+    const lowMidsAvg = avgRange(bassEnd, lowMidsEnd);
+    const midsAvg = avgRange(lowMidsEnd, midsEnd);
+    const highMidsAvg = avgRange(midsEnd, highMidsEnd);
+    const presenceAvg = avgRange(highMidsEnd, presenceEnd);
+    const brillianceAvg = avgRange(presenceEnd, brillianceEnd);
+    const trebleAvg = avgRange(brillianceEnd, bufferLength);
 
     // Normalize to 0-100 range
-    // WHY? Easier to work with than 0-255, and matches percentage mental model
     setFrequencies({
+      subBass: Math.round((subBassAvg / 255) * 100),
       bass: Math.round((bassAvg / 255) * 100),
+      lowMids: Math.round((lowMidsAvg / 255) * 100),
       mids: Math.round((midsAvg / 255) * 100),
+      highMids: Math.round((highMidsAvg / 255) * 100),
+      presence: Math.round((presenceAvg / 255) * 100),
+      brilliance: Math.round((brillianceAvg / 255) * 100),
       treble: Math.round((trebleAvg / 255) * 100)
     });
 
@@ -244,7 +257,16 @@ export function useAudioAnalyzer() {
       animationFrameRef.current = null;
     }
     // Reset frequencies to zero when stopped
-    setFrequencies({ bass: 0, mids: 0, treble: 0 });
+    setFrequencies({
+      subBass: 0,
+      bass: 0,
+      lowMids: 0,
+      mids: 0,
+      highMids: 0,
+      presence: 0,
+      brilliance: 0,
+      treble: 0
+    });
   }, []);
 
   /**
