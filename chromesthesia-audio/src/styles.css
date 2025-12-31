@@ -1,11 +1,7 @@
 /**
- * Chromesthesia Audio Styles
+ * Chromesthesia Audio - Advanced Edition Styles
  *
- * Design principles:
- * - Dark background to make colors pop
- * - Clean, minimal UI that doesn't distract from visualization
- * - Mobile-friendly touch targets
- * - Accessible contrast ratios
+ * Minimal, immersive full-screen design
  */
 
 /* ===== GLOBAL RESET ===== */
@@ -22,7 +18,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: #000;
   color: #fff;
-  overflow: hidden; /* Hide scrollbars for immersive experience */
+  overflow: hidden;
 }
 
 /* ===== APP CONTAINER ===== */
@@ -43,287 +39,214 @@ body {
   display: block;
 }
 
-/* ===== CONTROLS OVERLAY ===== */
-.controls {
+/* ===== MINIMAL CONTROLS ===== */
+.controls-minimal {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  /* Pointer events only on interactive elements */
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  padding: 2rem;
-  z-index: 10;
+  top: 20px;
+  right: 20px;
+  z-index: 100;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.controls-inner {
-  pointer-events: auto;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 500px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
-
-/* ===== TYPOGRAPHY ===== */
-h1 {
-  font-size: 2.5rem;
-  font-weight: 300;
-  margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.tagline {
-  font-size: 1rem;
-  color: #aaa;
-  margin-bottom: 2rem;
-}
-
-/* ===== FILE UPLOAD ===== */
-.upload-section {
-  margin-bottom: 1rem;
-}
-
-.file-input {
-  /* Hide the default file input */
-  display: none;
-}
-
-.upload-button {
-  display: inline-block;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  /* Make it look clickable */
-  user-select: none;
-}
-
-.upload-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.upload-button:active {
+.controls-minimal.visible {
+  opacity: 1;
   transform: translateY(0);
 }
 
-/* ===== MICROPHONE BUTTON ===== */
-.mic-button {
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-  color: white;
+.controls-minimal.hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+.controls-compact {
+  display: flex;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 50px;
+  padding: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== CONTROL BUTTONS ===== */
+.control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-  margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
-}
-
-.mic-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
-}
-
-.mic-button:active {
-  transform: scale(0.98);
-}
-
-/* ===== PLAY/PAUSE BUTTON ===== */
-.play-button {
-  padding: 1rem 2rem;
   background: rgba(255, 255, 255, 0.1);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 20px;
   cursor: pointer;
-  transition: all 0.2s;
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-.play-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-.play-button:active {
-  transform: scale(0.98);
-}
-
-/* ===== ERROR MESSAGE ===== */
-.error-message {
-  padding: 1rem;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 8px;
-  color: #fca5a5;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-}
-
-/* ===== FREQUENCY INDICATORS ===== */
-.frequency-indicators {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.indicator {
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: center;
+  position: relative;
 }
 
-.indicator .label {
-  font-size: 0.9rem;
-  color: #aaa;
-  min-width: 60px;
-  font-weight: 500;
+.control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
-.indicator .bar {
-  flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  overflow: hidden;
+.control-btn:active {
+  transform: scale(0.95);
 }
 
-.indicator .fill {
-  height: 100%;
-  transition: width 0.1s ease-out;
-  border-radius: 4px;
+.control-btn.mic {
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.4);
 }
 
-.indicator .fill.bass {
-  background: linear-gradient(90deg, #ff4500, #ff8c00);
+.control-btn.mic:hover {
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
 }
 
-.indicator .fill.mids {
-  background: linear-gradient(90deg, #32cd32, #7fff00);
+.control-btn.upload {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
-.indicator .fill.treble {
-  background: linear-gradient(90deg, #1e90ff, #9370db);
+.control-btn.upload:hover {
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
 }
 
-.indicator .value {
-  font-size: 0.9rem;
-  color: #aaa;
-  min-width: 30px;
-  text-align: right;
-  font-variant-numeric: tabular-nums; /* Monospace numbers */
+.control-btn.play {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-/* ===== INSTRUCTIONS ===== */
-.instructions {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.control-btn.hide {
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 16px;
 }
 
-.instructions p {
-  margin-bottom: 0.5rem;
-  color: #aaa;
-  font-size: 0.9rem;
+/* File input (hidden) */
+.file-input {
+  display: none;
 }
 
-/* ===== BACK LINK ===== */
-.back-link {
-  pointer-events: auto;
-  margin-top: auto;
-  color: rgba(255, 255, 255, 0.5);
+/* ===== SHOW CONTROLS BUTTON ===== */
+.show-controls-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(20px);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 99;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.show-controls-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* ===== ERROR DISPLAY (COMPACT) ===== */
+.error-compact {
+  margin-top: 10px;
+  padding: 12px 20px;
+  background: rgba(239, 68, 68, 0.9);
+  border-radius: 25px;
+  color: white;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* ===== MINIMAL BACK LINK ===== */
+.back-link-minimal {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 25px;
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   font-size: 0.9rem;
-  transition: color 0.2s;
-  display: inline-block;
+  transition: all 0.2s ease;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.back-link:hover {
-  color: rgba(255, 255, 255, 0.8);
+.back-link-minimal:hover {
+  background: rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 1);
+  transform: translateX(-5px);
 }
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
-  .controls {
-    padding: 1rem;
+  .controls-minimal {
+    top: 10px;
+    right: 10px;
   }
 
-  .controls-inner {
-    padding: 1.5rem;
+  .controls-compact {
+    padding: 6px;
+    gap: 8px;
   }
 
-  h1 {
-    font-size: 2rem;
+  .control-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
   }
 
-  .tagline {
-    font-size: 0.9rem;
+  .show-controls-btn {
+    top: 10px;
+    right: 10px;
+    width: 44px;
+    height: 44px;
   }
 
-  .upload-button,
-  .mic-button,
-  .play-button {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.9rem;
-  }
-
-  .frequency-indicators {
-    margin-top: 1rem;
-  }
-
-  .indicator {
-    gap: 0.75rem;
-  }
-
-  .indicator .label {
-    min-width: 50px;
+  .back-link-minimal {
+    bottom: 10px;
+    left: 10px;
+    padding: 10px 16px;
     font-size: 0.85rem;
   }
 
-  .indicator .value {
-    font-size: 0.85rem;
-    min-width: 25px;
+  .error-compact {
+    font-size: 0.8rem;
+    padding: 10px 16px;
   }
 }
 
 /* Small mobile devices */
 @media (max-width: 480px) {
-  h1 {
-    font-size: 1.75rem;
+  .controls-compact {
+    flex-wrap: wrap;
+    max-width: calc(100vw - 40px);
   }
 
-  .controls-inner {
-    padding: 1rem;
+  .control-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 }
 
 /* ===== TOUCH DEVICE OPTIMIZATIONS ===== */
 @media (hover: none) and (pointer: coarse) {
-  /* Larger touch targets on mobile */
-  .upload-button,
-  .mic-button,
-  .play-button {
-    padding: 1.125rem 2rem;
-    min-height: 48px; /* iOS accessibility guideline */
+  .control-btn {
+    width: 52px;
+    height: 52px;
+  }
+
+  .show-controls-btn {
+    width: 52px;
+    height: 52px;
   }
 }
