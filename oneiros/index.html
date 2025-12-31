@@ -351,6 +351,31 @@
       display: block;
     }
 
+    .response-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .response-image-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .response-image {
+      max-width: 100%;
+      height: auto;
+      border-radius: 2px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .response-text {
+      display: flex;
+      flex-direction: column;
+    }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -571,6 +596,11 @@
         padding: 1.5rem;
       }
 
+      .response-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
       .modal {
         padding: 2rem;
       }
@@ -632,7 +662,14 @@
 
     <div class="response" id="response">
       <div class="response-date" id="responseDate"></div>
-      <div class="response-poem" id="responsePoem"></div>
+      <div class="response-content">
+        <div class="response-image-container">
+          <img class="response-image" id="responseImage" alt="Dream image">
+        </div>
+        <div class="response-text">
+          <div class="response-poem" id="responsePoem"></div>
+        </div>
+      </div>
       <div class="response-symbols">
         <h3>Recurring Symbols</h3>
         <div class="symbols-list" id="symbolsList"></div>
@@ -685,6 +722,7 @@
     const errorDetails = document.getElementById('errorDetails');
     const response = document.getElementById('response');
     const responseDate = document.getElementById('responseDate');
+    const responseImage = document.getElementById('responseImage');
     const responsePoem = document.getElementById('responsePoem');
     const symbolsList = document.getElementById('symbolsList');
     const archiveList = document.getElementById('archiveList');
@@ -840,6 +878,7 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         // Display
         const now = new Date();
         responseDate.textContent = formatDate(now);
+        responseImage.src = currentImageData;
         responsePoem.textContent = poem;
 
         symbolsList.innerHTML = symbols.map(s =>
