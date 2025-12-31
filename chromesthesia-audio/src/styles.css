@@ -119,6 +119,31 @@ h1 {
   transform: translateY(0);
 }
 
+/* ===== MICROPHONE BUTTON ===== */
+.mic-button {
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.mic-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(236, 72, 153, 0.5);
+}
+
+.mic-button:active {
+  transform: scale(0.98);
+}
+
 /* ===== PLAY/PAUSE BUTTON ===== */
 .play-button {
   padding: 1rem 2rem;
@@ -256,6 +281,7 @@ h1 {
   }
 
   .upload-button,
+  .mic-button,
   .play-button {
     padding: 0.875rem 1.5rem;
     font-size: 0.9rem;
@@ -295,6 +321,7 @@ h1 {
 @media (hover: none) and (pointer: coarse) {
   /* Larger touch targets on mobile */
   .upload-button,
+  .mic-button,
   .play-button {
     padding: 1.125rem 2rem;
     min-height: 48px; /* iOS accessibility guideline */

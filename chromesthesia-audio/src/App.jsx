@@ -28,9 +28,11 @@ function App() {
     frequencies,      // { bass: 0-100, mids: 0-100, treble: 0-100 }
     isPlaying,
     hasAudio,
+    isMicActive,
     error,
     loadAudio,
-    togglePlayPause
+    togglePlayPause,
+    toggleMicrophone
   } = useAudioAnalyzer();
 
   // ===== CANVAS SETUP =====
@@ -246,7 +248,7 @@ function App() {
           {/* File upload */}
           <div className="upload-section">
             <label htmlFor="audio-upload" className="upload-button">
-              {hasAudio ? '🎵 Load Different Audio' : '🎵 Upload Audio File'}
+              {hasAudio && !isMicActive ? '🎵 Load Different Audio' : '🎵 Upload Audio File'}
             </label>
             <input
               id="audio-upload"
@@ -257,8 +259,13 @@ function App() {
             />
           </div>
 
-          {/* Play/Pause button (only show when audio is loaded) */}
-          {hasAudio && (
+          {/* Microphone button */}
+          <button onClick={toggleMicrophone} className="mic-button">
+            {isMicActive ? '🎤 Stop Microphone' : '🎤 Use Microphone'}
+          </button>
+
+          {/* Play/Pause button (only show when audio file is loaded, not mic) */}
+          {hasAudio && !isMicActive && (
             <button onClick={togglePlayPause} className="play-button">
               {isPlaying ? '⏸ Pause' : '▶ Play'}
             </button>
@@ -271,8 +278,8 @@ function App() {
             </div>
           )}
 
-          {/* Frequency indicators (only show when playing) */}
-          {isPlaying && (
+          {/* Frequency indicators (show when playing or mic is active) */}
+          {(isPlaying || isMicActive) && (
             <div className="frequency-indicators">
               <div className="indicator">
                 <span className="label">Bass</span>
