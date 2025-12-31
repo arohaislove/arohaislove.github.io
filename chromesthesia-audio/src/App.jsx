@@ -95,28 +95,28 @@ function App() {
       const centerX = width / 2;
       const centerY = height / 2;
 
-      // Dark background with more fade for smoother trails (2026 aesthetic)
-      ctx.fillStyle = 'rgba(8, 10, 15, 0.25)';
+      // Modern deep blue-gray background instead of black (2026 aesthetic)
+      ctx.fillStyle = 'rgba(15, 20, 30, 0.3)'; // Softer trails, more elegant
       ctx.fillRect(0, 0, width, height);
 
       // ===== BACKGROUND GLOW (Sub-bass) =====
-      // Softer, more ethereal glow
-      if (frequencies.subBass > 20) {
+      // Very subtle, almost imperceptible glow
+      if (frequencies.subBass > 25) {
         const glowRadius = Math.max(width, height);
         const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
-        // Softer purples and blues instead of harsh purple
-        gradient.addColorStop(0, `rgba(100, 80, 160, ${frequencies.subBass / 500})`);
-        gradient.addColorStop(0.5, `rgba(60, 40, 100, ${frequencies.subBass / 800})`);
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        // Ultra-soft indigo glow
+        gradient.addColorStop(0, `rgba(90, 70, 130, ${frequencies.subBass / 600})`);
+        gradient.addColorStop(0.5, `rgba(50, 40, 80, ${frequencies.subBass / 1000})`);
+        gradient.addColorStop(1, 'rgba(15, 20, 30, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
       }
 
       // ===== CENTRAL BASS VISUALIZATION =====
-      // Smaller, more refined pulsing center
-      const bassRadius = 20 + (frequencies.bass * 1.8); // Smaller and more subtle
-      // Modern coral/peach tones instead of harsh red
-      const bassColor = `hsl(${10 + frequencies.bass * 0.3}, 70%, 60%)`;
+      // Much smaller, more subtle - just a gentle pulse
+      const bassRadius = 12 + (frequencies.bass * 0.8); // Way smaller!
+      // Soft warm peachy tone
+      const bassColor = `hsl(${15 + frequencies.bass * 0.2}, 65%, 65%)`;
 
       // Outer rings (low mids) - softer, more elegant
       if (frequencies.lowMids > 10) {

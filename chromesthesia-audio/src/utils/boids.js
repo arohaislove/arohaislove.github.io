@@ -35,13 +35,18 @@ export class Boid {
     // Apply flocking behavior
     this.flock(boids);
 
-    // Audio reactivity - speed increases with treble
-    const speedMultiplier = 0.5 + (audioData.treble / 100) * 1.5;
-    this.maxSpeed = 3 * speedMultiplier;
+    // Audio reactivity - boids creep when silent, speed up with volume
+    // Calculate overall energy (average of all frequencies)
+    const energy = (audioData.bass + audioData.mids + audioData.treble) / 300;
 
-    // Bass makes them flee from center
-    if (audioData.bass > 50) {
-      this.fleeFromCenter(audioData.bass / 100);
+    // Base speed is slow (creeping), increases dramatically with energy
+    const baseSpeed = 0.8; // Slow creep when silent
+    const maxEnergySpeed = 4; // Fast when loud
+    this.maxSpeed = baseSpeed + (energy * maxEnergySpeed);
+
+    // Bass makes them gently drift away from center (less aggressive)
+    if (audioData.bass > 40) {
+      this.fleeFromCenter(audioData.bass / 150); // Gentler flee
     }
 
     // Update velocity
