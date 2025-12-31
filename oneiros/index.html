@@ -275,6 +275,50 @@
       display: flex;
     }
 
+    /* Error Display */
+    .error-display {
+      display: none;
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+      border-radius: 2px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .error-display.visible {
+      display: block;
+    }
+
+    .error-title {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #c53030;
+      margin-bottom: 1rem;
+    }
+
+    .error-message {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: #742a2a;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .error-details {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.85rem;
+      color: #742a2a;
+      margin-top: 1rem;
+      padding: 1rem;
+      background: white;
+      border-radius: 2px;
+      overflow-x: auto;
+    }
+
     .loading-dot {
       width: 6px;
       height: 6px;
@@ -580,6 +624,12 @@
       <div class="loading-dot"></div>
     </div>
 
+    <div class="error-display" id="errorDisplay">
+      <div class="error-title">Error</div>
+      <div class="error-message" id="errorMessage"></div>
+      <div class="error-details" id="errorDetails"></div>
+    </div>
+
     <div class="response" id="response">
       <div class="response-date" id="responseDate"></div>
       <div class="response-poem" id="responsePoem"></div>
@@ -630,6 +680,9 @@
     const contextInput = document.getElementById('contextInput');
     const submitBtn = document.getElementById('submitBtn');
     const loading = document.getElementById('loading');
+    const errorDisplay = document.getElementById('errorDisplay');
+    const errorMessage = document.getElementById('errorMessage');
+    const errorDetails = document.getElementById('errorDetails');
     const response = document.getElementById('response');
     const responseDate = document.getElementById('responseDate');
     const responsePoem = document.getElementById('responsePoem');
@@ -662,13 +715,28 @@
       reader.readAsDataURL(file);
     }
 
+    // Helper to show error on screen
+    function showError(title, message, details = '') {
+      errorMessage.textContent = message;
+      errorDetails.textContent = details;
+      errorDetails.style.display = details ? 'block' : 'none';
+      errorDisplay.classList.add('visible');
+      console.error('Error:', title, message, details);
+    }
+
+    // Helper to hide error
+    function hideError() {
+      errorDisplay.classList.remove('visible');
+    }
+
     // Submit function
     async function submitDream() {
       if (!currentImageData) {
-        alert('Please upload an image first');
+        showError('No Image', 'Please upload an image of your dream first');
         return;
       }
 
+      hideError();
       submitBtn.disabled = true;
       loading.classList.add('visible');
       response.classList.remove('visible');
@@ -737,7 +805,17 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         if (!apiResponse.ok) {
           const errorText = await apiResponse.text();
           console.error('API error response:', errorText);
-          throw new Error(`API returned ${apiResponse.status}: ${errorText}`);
+
+          let errorMsg = 'The API request failed.';
+          if (apiResponse.status === 500) {
+            errorMsg = 'Server error. The worker may not be configured correctly.';
+          } else if (apiResponse.status === 401) {
+            errorMsg = 'Authentication failed. API key may be missing or invalid.';
+          } else if (apiResponse.status === 429) {
+            errorMsg = 'Rate limit exceeded. Please try again in a moment.';
+          }
+
+          throw new Error(errorMsg + '\n\nStatus: ' + apiResponse.status + '\nDetails: ' + errorText);
         }
 
         const data = await apiResponse.json();
@@ -745,7 +823,7 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
 
         if (data.error) {
           console.error('API error:', data.error);
-          throw new Error(data.error.message || 'API error');
+          throw new Error(data.error.message || 'API error: ' + JSON.stringify(data.error));
         }
 
         const responseText = data.content[0].text;
@@ -784,7 +862,7 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         localStorage.setItem('oneiros_entries', JSON.stringify(entries));
         renderArchive();
 
-        // Reset form
+        // Reset form after successful submission
         currentImageData = null;
         previewImage.src = '';
         previewImage.classList.remove('visible');
@@ -792,13 +870,20 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
         uploadArea.classList.remove('has-image');
         contextInput.value = '';
         imageInput.value = '';
+        submitBtn.disabled = true; // Disable until new image is uploaded
 
       } catch (error) {
         console.error('Error:', error);
-        alert('Failed to divine the dream: ' + error.message + '\n\nCheck the browser console (F12) for more details.');
+
+        // Parse error message and details
+        const errorParts = error.message.split('\n\n');
+        const mainMessage = errorParts[0] || 'Failed to divine the dream';
+        const details = errorParts.slice(1).join('\n\n') || error.stack || 'No additional details';
+
+        showError('Dream Divination Failed', mainMessage, details);
+        submitBtn.disabled = false; // Re-enable button so user can retry
       } finally {
         loading.classList.remove('visible');
-        submitBtn.disabled = true;
       }
     }
 
