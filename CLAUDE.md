@@ -30,41 +30,278 @@ arohaislove.github.io/
   - Projects: `https://arohaislove.github.io/project-name/`
 - **Auto-Deploy:** Changes pushed to the main branch are automatically deployed (usually within 1-2 minutes).
 
-## CI/CD and Cloudflare Workers
+## Cloudflare Workers: Your Backend Solution
 
-This repository has automated deployment for Cloudflare Workers to support projects that need CORS proxies (like Ekphrasis).
+**IMPORTANT:** If your project needs ANY backend functionality, use Cloudflare Workers. This is the standard, supported way to add server-side capabilities to projects in this repository.
+
+### When to Use Workers (TL;DR: Whenever You Need Backend!)
+
+Use Cloudflare Workers for ANY of these scenarios:
+
+✅ **Making API calls to external services** (especially ones requiring API keys)
+✅ **CORS proxying** (calling APIs that don't allow browser requests)
+✅ **Hiding secrets** (API keys, credentials, tokens)
+✅ **Server-side processing** (data transformation, validation, filtering)
+✅ **Rate limiting** (controlling API usage)
+✅ **Authentication** (handling auth flows, JWT validation)
+✅ **Caching** (storing responses to reduce API calls)
+✅ **Webhooks** (receiving callbacks from external services)
+✅ **Any backend logic** that can't run in the browser
+
+**Don't overthink it:** If you find yourself thinking "I wish I had a server for this," create a worker!
+
+### Why Workers Are Perfect for This Repo
+
+1. **Zero maintenance** - They just run, no servers to manage
+2. **Automatic deployment** - Push to main, worker deploys automatically
+3. **Free tier is generous** - 100,000 requests/day for free
+4. **Global CDN** - Workers run at the edge, fast everywhere
+5. **Simple to create** - Just add a folder with `index.js` and `wrangler.toml`
+6. **Secrets built-in** - API keys are securely stored and auto-configured
 
 ### Available GitHub Secrets
 
-The following secrets are configured in GitHub Actions and available for CI/CD tasks:
+The following secrets are configured and available for all workers:
 
-- **`CF_ACCOUNT_ID`** - Cloudflare account ID for deploying workers
-- **`CF_API_KEY`** - Cloudflare API key with permissions to edit and deploy workers
+- **`CF_ACCOUNT_ID`** - Cloudflare account ID (for deployment)
+- **`CF_API_KEY`** - Cloudflare API token (for deployment)
+- **`ANTHROPIC_API_KEY`** - Anthropic API key (available to workers that need it)
 
-These secrets are used by GitHub Actions workflows to automatically deploy Cloudflare Workers when changes are pushed to the main branch.
+When you create a worker, GitHub Actions automatically injects the `ANTHROPIC_API_KEY` if your worker code references it. You can add other secrets as needed.
 
-### Cloudflare Worker Deployment
+### Existing Workers
 
-**Worker Location:** `workers/cors-proxy/`
+| Worker | URL | Purpose |
+|--------|-----|---------|
+| `cors-proxy` | `https://cors-proxy.zammel.workers.dev` | CORS proxy for Anthropic API calls (used by Ekphrasis, Oneiros) |
 
-The CORS proxy worker is automatically deployed via GitHub Actions when changes are merged to main. The deployed worker URL is:
-```
-https://cors-proxy.arohaislove.workers.dev
-```
+### How to Create a New Worker
 
-**To update the worker:**
-1. Modify files in `workers/cors-proxy/`
-2. Commit and push to your branch
-3. Merge to main
-4. GitHub Actions will automatically deploy using Wrangler CLI
+Creating a worker is simple. Follow these steps:
 
-**Manual deployment** (if needed):
+#### Step 1: Create the Worker Directory
+
 ```bash
-cd workers/cors-proxy
-npx wrangler deploy
+# Use kebab-case naming that describes what the worker does
+mkdir workers/my-worker-name
 ```
 
-**Note:** Projects like Ekphrasis are configured to use this worker URL by default, so users don't need to set up their own CORS proxy.
+#### Step 2: Create `wrangler.toml`
+
+This is the worker configuration file:
+
+```toml
+name = "my-worker-name"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Workers are deployed to *.workers.dev subdomain
+# This will be available at: https://my-worker-name.zammel.workers.dev
+```
+
+**Important:** The `name` field determines the worker's URL. It will be deployed to `https://[name].zammel.workers.dev`
+
+#### Step 3: Create `index.js`
+
+This is your worker code. Here's a minimal template:
+
+```javascript
+/**
+ * My Worker - Description of what it does
+ *
+ * Used by: [list projects that use this worker]
+ */
+
+export default {
+  async fetch(request, env, ctx) {
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders()
+      });
+    }
+
+    // Your worker logic here
+    try {
+      // Example: proxy a request
+      const response = await fetch('https://api.example.com/endpoint', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.ANTHROPIC_API_KEY}`, // Access secrets via env
+          'Content-Type': 'application/json'
+        },
+        body: await request.text()
+      });
+
+      const data = await response.text();
+
+      return new Response(data, {
+        status: response.status,
+        headers: {
+          ...corsHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({
+        error: error.message
+      }), {
+        status: 500,
+        headers: {
+          ...corsHeaders(),
+          'Content-Type': 'application/json'
+        }
+      });
+    }
+  }
+};
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': '*',
+    'Access-Control-Max-Age': '86400'
+  };
+}
+```
+
+#### Step 4: (Optional) Create README.md
+
+Document your worker:
+
+```markdown
+# My Worker Name
+
+## Purpose
+What this worker does and why it exists.
+
+## Endpoints
+- POST / - Main endpoint
+
+## Usage
+How to use this worker from your project.
+
+## Environment Variables
+- ANTHROPIC_API_KEY - Anthropic API key (automatically configured)
+```
+
+#### Step 5: Commit and Push
+
+```bash
+git add workers/my-worker-name/
+git commit -m "Add my-worker-name worker for [purpose]"
+git push -u origin claude/branch-name
+```
+
+#### Step 6: Merge to Main
+
+Once your PR is merged to `main`, GitHub Actions will:
+1. **Automatically discover** your new worker
+2. **Configure secrets** (if your code uses `ANTHROPIC_API_KEY`)
+3. **Deploy the worker** to Cloudflare
+4. **Make it available** at `https://my-worker-name.zammel.workers.dev`
+
+You don't need to do anything else! The worker will be live within 1-2 minutes of merge.
+
+### Automatic Deployment
+
+The repository uses a **matrix-based deployment strategy** that automatically:
+- **Finds all workers** in the `workers/` directory
+- **Deploys them in parallel** for fast deployments
+- **Configures secrets** automatically (checks if worker uses `ANTHROPIC_API_KEY`)
+- **Continues on failure** (one broken worker won't block others)
+
+You can view deployment status in the **Actions** tab on GitHub.
+
+### Using Workers in Your Projects
+
+Once a worker is deployed, use it from your browser-based project:
+
+```javascript
+// Call your worker instead of the API directly
+const response = await fetch('https://my-worker-name.zammel.workers.dev', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    // your request data
+  })
+});
+
+const data = await response.json();
+```
+
+**No API keys in your frontend code!** The worker handles authentication securely.
+
+### Adding More Secrets
+
+If your worker needs additional secrets beyond `ANTHROPIC_API_KEY`:
+
+1. **Ask the user to add the secret to GitHub**:
+   - Request that they go to repo Settings → Secrets and variables → Actions
+   - Ask them to click "New repository secret"
+   - Have them add the secret with an appropriate name (e.g., `OPENAI_API_KEY`)
+
+2. **Update the workflow** (you can do this):
+   - Edit `.github/workflows/deploy-workers.yml`
+   - Add a step to inject the new secret (similar to how `ANTHROPIC_API_KEY` is handled)
+
+3. **Use in your worker code**:
+   ```javascript
+   const apiKey = env.YOUR_SECRET_NAME;
+   ```
+
+### Worker Best Practices
+
+1. **Keep workers focused** - One worker, one purpose
+2. **Handle CORS properly** - Always include CORS headers for browser requests
+3. **Validate input** - Workers are public endpoints, validate everything
+4. **Handle errors gracefully** - Return helpful error messages
+5. **Document usage** - Add comments and README files
+
+**Note:** All worker deployments happen automatically through GitHub Actions when merged to main. Never attempt manual deployment.
+
+### Common Worker Patterns
+
+**CORS Proxy for API:**
+See `workers/cors-proxy/index.js` for a complete example.
+
+**Simple GET endpoint:**
+```javascript
+export default {
+  async fetch(request, env, ctx) {
+    return new Response(JSON.stringify({ message: 'Hello!' }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+};
+```
+
+**POST with JSON body:**
+```javascript
+export default {
+  async fetch(request, env, ctx) {
+    const data = await request.json();
+    // Process data...
+    return new Response(JSON.stringify({ result: processed }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+};
+```
+
+### Remember
+
+**If you're building a project that needs backend functionality, workers are your answer.** Don't try to work around it with client-side hacks. Just create a worker—it takes 5 minutes and deploys automatically.
 
 ## Instructions for New Claude Agents
 

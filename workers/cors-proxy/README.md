@@ -35,7 +35,7 @@ You'll need:
 
 Once deployed, the worker is available at:
 ```
-https://cors-proxy.arohaislove.workers.dev
+https://cors-proxy.zammel.workers.dev
 ```
 
 ## Testing
@@ -43,7 +43,7 @@ https://cors-proxy.arohaislove.workers.dev
 You can test the worker with curl:
 
 ```bash
-curl -X POST https://cors-proxy.arohaislove.workers.dev \
+curl -X POST https://cors-proxy.zammel.workers.dev \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01" \

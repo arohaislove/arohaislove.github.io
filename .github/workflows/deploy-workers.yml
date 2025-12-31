@@ -10,9 +10,41 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  deploy:
+  # Discover all worker directories
+  find-workers:
     runs-on: ubuntu-latest
-    name: Deploy CORS Proxy Worker
+    outputs:
+      workers: ${{ steps.get-workers.outputs.workers }}
+      worker-count: ${{ steps.get-workers.outputs.count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find all workers
+        id: get-workers
+        run: |
+          # Find all directories in workers/ (excluding hidden files)
+          workers=$(find workers -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          count=$(echo "$workers" | jq 'length')
+
+          echo "workers=$workers" >> $GITHUB_OUTPUT
+          echo "count=$count" >> $GITHUB_OUTPUT
+
+          echo "📦 Found $count worker(s) to deploy:"
+          echo "$workers" | jq -r '.[]' | sed 's/^/  - /'
+
+  # Deploy all discovered workers
+  deploy:
+    needs: find-workers
+    runs-on: ubuntu-latest
+    if: needs.find-workers.outputs.worker-count > 0
+
+    strategy:
+      matrix:
+        worker: ${{ fromJson(needs.find-workers.outputs.workers) }}
+      fail-fast: false  # Continue deploying other workers even if one fails
+
+    name: Deploy ${{ matrix.worker }}
 
     steps:
       - name: Checkout code
@@ -26,24 +58,50 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - name: Set Worker Secret
+      - name: Check if ANTHROPIC_API_KEY is needed
+        id: check-secrets
+        run: |
+          # Check if worker code references ANTHROPIC_API_KEY
+          if grep -q "ANTHROPIC_API_KEY" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-api-key=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses ANTHROPIC_API_KEY - will configure secret"
+          else
+            echo "needs-api-key=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use ANTHROPIC_API_KEY - skipping secret configuration"
+          fi
+
+      - name: Set ANTHROPIC_API_KEY secret
+        if: steps.check-secrets.outputs.needs-api-key == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          cd workers/cors-proxy
+          cd workers/${{ matrix.worker }}
           echo "${{ secrets.ANTHROPIC_API_KEY }}" | wrangler secret put ANTHROPIC_API_KEY
 
-      - name: Deploy Worker
+      - name: Deploy worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
-          cd workers/cors-proxy
+          cd workers/${{ matrix.worker }}
           wrangler deploy
 
       - name: Deployment summary
         run: |
-          echo "✅ CORS Proxy Worker deployed successfully!"
-          echo "🌐 Worker URL: https://cors-proxy.arohaislove.workers.dev"
-          echo "📝 This worker is used by: Ekphrasis (image-to-poetry app)"
+          echo "✅ Worker '${{ matrix.worker }}' deployed successfully!"
+          echo "🌐 Worker URL: https://${{ matrix.worker }}.zammel.workers.dev"
+
+  # Summary of all deployments
+  summary:
+    needs: [find-workers, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "🎉 Deployment complete!"
+          echo "📦 Total workers deployed: ${{ needs.find-workers.outputs.worker-count }}"
+          echo ""
+          echo "Workers:"
+          echo '${{ needs.find-workers.outputs.workers }}' | jq -r '.[] | "  ✓ https://\(.).zammel.workers.dev"'

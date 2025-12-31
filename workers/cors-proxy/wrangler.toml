@@ -3,7 +3,7 @@ main = "index.js"
 compatibility_date = "2024-01-01"
 
 # Workers are deployed to *.workers.dev subdomain
-# This will be available at: https://cors-proxy.arohaislove.workers.dev
+# This will be available at: https://cors-proxy.zammel.workers.dev
 
 # Environment variables (values set in Cloudflare dashboard and GitHub secrets)
 [vars]
