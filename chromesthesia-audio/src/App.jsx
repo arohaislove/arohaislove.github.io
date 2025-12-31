@@ -95,52 +95,57 @@ function App() {
       const centerX = width / 2;
       const centerY = height / 2;
 
-      // Dark background with slight fade for trails
-      ctx.fillStyle = 'rgba(5, 5, 10, 0.15)';
+      // Dark background with more fade for smoother trails (2026 aesthetic)
+      ctx.fillStyle = 'rgba(8, 10, 15, 0.25)';
       ctx.fillRect(0, 0, width, height);
 
       // ===== BACKGROUND GLOW (Sub-bass) =====
-      // Subtle full-screen glow that pulses with sub-bass
+      // Softer, more ethereal glow
       if (frequencies.subBass > 20) {
         const glowRadius = Math.max(width, height);
         const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, glowRadius);
-        gradient.addColorStop(0, `rgba(80, 20, 120, ${frequencies.subBass / 400})`);
+        // Softer purples and blues instead of harsh purple
+        gradient.addColorStop(0, `rgba(100, 80, 160, ${frequencies.subBass / 500})`);
+        gradient.addColorStop(0.5, `rgba(60, 40, 100, ${frequencies.subBass / 800})`);
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
       }
 
       // ===== CENTRAL BASS VISUALIZATION =====
-      // Pulsing center with bass
-      const bassRadius = 30 + (frequencies.bass * 3);
-      const bassColor = `hsl(${340 - frequencies.bass * 0.5}, 80%, 50%)`; // Red to orange
+      // Smaller, more refined pulsing center
+      const bassRadius = 20 + (frequencies.bass * 1.8); // Smaller and more subtle
+      // Modern coral/peach tones instead of harsh red
+      const bassColor = `hsl(${10 + frequencies.bass * 0.3}, 70%, 60%)`;
 
-      // Outer rings (low mids)
+      // Outer rings (low mids) - softer, more elegant
       if (frequencies.lowMids > 10) {
         const ringCount = Math.floor(frequencies.lowMids / 15);
         for (let i = 0; i < ringCount; i++) {
-          ctx.strokeStyle = `hsla(${20 + i * 10}, 70%, 50%, ${0.3 - i * 0.05})`;
-          ctx.lineWidth = 3;
+          // Softer warm tones
+          ctx.strokeStyle = `hsla(${30 + i * 15}, 60%, 65%, ${0.25 - i * 0.04})`;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(centerX, centerY, bassRadius + (i + 1) * 40, 0, Math.PI * 2);
+          ctx.arc(centerX, centerY, bassRadius + (i + 1) * 35, 0, Math.PI * 2);
           ctx.stroke();
         }
       }
 
-      // Main bass circle
-      ctx.shadowBlur = 50;
+      // Main bass circle - softer glow
+      ctx.shadowBlur = 40;
       ctx.shadowColor = bassColor;
       ctx.fillStyle = bassColor;
-      ctx.globalAlpha = 0.8;
+      ctx.globalAlpha = 0.7;
       ctx.beginPath();
       ctx.arc(centerX, centerY, bassRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Inner bright core
+      // Inner bright core - softer white
       ctx.globalAlpha = 1;
       const coreGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, bassRadius * 0.6);
-      coreGradient.addColorStop(0, '#ffffff');
-      coreGradient.addColorStop(1, bassColor);
+      coreGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)'); // Slightly translucent white
+      coreGradient.addColorStop(0.5, bassColor);
+      coreGradient.addColorStop(1, `hsla(${10 + frequencies.bass * 0.3}, 70%, 50%, 0.8)`);
       ctx.fillStyle = coreGradient;
       ctx.beginPath();
       ctx.arc(centerX, centerY, bassRadius * 0.6, 0, Math.PI * 2);
@@ -150,9 +155,9 @@ function App() {
       ctx.globalAlpha = 1;
 
       // ===== RADIAL FREQUENCY BARS (Mids) =====
-      // Bars radiating from center, controlled by mids
+      // Softer, more refined bars
       const barCount = 32;
-      const barDistance = bassRadius + 100;
+      const barDistance = bassRadius + 80;
 
       for (let i = 0; i < barCount; i++) {
         const angle = (Math.PI * 2 / barCount) * i + rotationRef.current * 0.5;
@@ -169,7 +174,7 @@ function App() {
           frequencies.brilliance,
           frequencies.treble
         ];
-        const barHeight = freqValues[freqIndex] * 2;
+        const barHeight = freqValues[freqIndex] * 1.8;
 
         if (barHeight > 5) {
           const x1 = centerX + Math.cos(angle) * barDistance;
@@ -177,9 +182,10 @@ function App() {
           const x2 = centerX + Math.cos(angle) * (barDistance + barHeight);
           const y2 = centerY + Math.sin(angle) * (barDistance + barHeight);
 
-          const hue = (freqIndex / 8) * 120 + 180; // Blue to purple range
-          ctx.strokeStyle = `hsla(${hue}, 80%, 60%, 0.7)`;
-          ctx.lineWidth = 4;
+          // Softer cyan to lavender gradient
+          const hue = (freqIndex / 8) * 100 + 180; // 180-280 range
+          ctx.strokeStyle = `hsla(${hue}, 65%, 70%, 0.5)`;
+          ctx.lineWidth = 3;
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
@@ -218,24 +224,27 @@ function App() {
       }
 
       // ===== ORBITING PARTICLES (High Mids) =====
-      // Particles that orbit the center, controlled by high mids
+      // Softer glowing particles
       if (frequencies.highMids > 15) {
         const particleCount = Math.floor(frequencies.highMids / 3);
-        const orbitRadius = bassRadius + 200;
+        const orbitRadius = bassRadius + 160;
 
         for (let i = 0; i < particleCount; i++) {
           const angle = (Math.PI * 2 / particleCount) * i + rotationRef.current;
           const x = centerX + Math.cos(angle) * orbitRadius;
           const y = centerY + Math.sin(angle) * orbitRadius;
 
-          ctx.fillStyle = `hsla(${120 + frequencies.highMids}, 80%, 60%, 0.6)`;
-          ctx.shadowBlur = 10;
-          ctx.shadowColor = ctx.fillStyle;
+          // Soft mint to aqua tones
+          const particleGradient = ctx.createRadialGradient(x, y, 0, x, y, 6);
+          particleGradient.addColorStop(0, `hsla(${170 + frequencies.highMids * 0.5}, 60%, 75%, 0.8)`);
+          particleGradient.addColorStop(0.5, `hsla(${170 + frequencies.highMids * 0.5}, 60%, 65%, 0.4)`);
+          particleGradient.addColorStop(1, `hsla(${170 + frequencies.highMids * 0.5}, 60%, 65%, 0)`);
+
+          ctx.fillStyle = particleGradient;
           ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.arc(x, y, 6, 0, Math.PI * 2);
           ctx.fill();
         }
-        ctx.shadowBlur = 0;
       }
 
       // Update rotation
