@@ -669,10 +669,11 @@
     <div class="modal">
       <button class="modal-close" id="settingsClose">&times;</button>
       <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 400; margin-bottom: 1.5rem;">Settings</h2>
-      <label style="margin-bottom: 0.5rem;">Anthropic API Key</label>
+      <label style="margin-bottom: 0.5rem;">Anthropic API Key <span class="label-hint">— required</span></label>
       <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-...">
-      <label style="margin-bottom: 0.5rem;">Proxy URL <span class="label-hint">— your Cloudflare Worker</span></label>
-      <input type="text" class="api-input" id="proxyInput" placeholder="https://cors-proxy.xxx.workers.dev/anthropic">
+      <label style="margin-bottom: 0.5rem;">Proxy URL <span class="label-hint">— pre-configured ✓</span></label>
+      <input type="text" class="api-input" id="proxyInput" placeholder="https://cors-proxy.arohaislove.workers.dev/anthropic" readonly style="background: #f5f2eb; color: #666;">
+      <p style="font-family: 'Instrument Sans', sans-serif; font-size: 0.85rem; color: #666; margin-bottom: 1rem;">The CORS proxy is already configured. You only need to add your API key.</p>
       <button class="submit-btn" id="saveSettingsBtn">Save</button>
     </div>
   </div>
@@ -711,9 +712,15 @@
     const proxyInput = document.getElementById('proxyInput');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 
-    // Load settings
+    // Load settings with hardcoded proxy URL
+    const PROXY_URL = 'https://cors-proxy.arohaislove.workers.dev/anthropic';
     apiKeyInput.value = localStorage.getItem('oneiros_api_key') || '';
-    proxyInput.value = localStorage.getItem('oneiros_proxy') || '';
+    proxyInput.value = localStorage.getItem('oneiros_proxy') || PROXY_URL;
+
+    // Pre-fill proxy on first load
+    if (!localStorage.getItem('oneiros_proxy')) {
+      localStorage.setItem('oneiros_proxy', PROXY_URL);
+    }
 
     // Image handling
     imageInput.addEventListener('change', handleImageSelect);
@@ -959,19 +966,19 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
 
     saveSettingsBtn.addEventListener('click', () => {
       const key = apiKeyInput.value.trim();
-      const proxy = proxyInput.value.trim();
 
-      if (!key || !proxy) {
-        alert('Please enter both API key and proxy URL');
+      if (!key) {
+        alert('Please enter your Anthropic API key');
         return;
       }
 
+      // Always use the hardcoded proxy URL
       localStorage.setItem('oneiros_api_key', key);
-      localStorage.setItem('oneiros_proxy', proxy);
+      localStorage.setItem('oneiros_proxy', PROXY_URL);
       settingsOverlay.classList.remove('visible');
 
       console.log('Settings saved. API key starts with:', key.substring(0, 10) + '...');
-      console.log('Proxy URL:', proxy);
+      console.log('Proxy URL:', PROXY_URL);
 
       // If we were trying to submit when settings opened, auto-submit now
       if (pendingSubmit) {
