@@ -286,30 +286,48 @@ export class Boid {
   }
 
   /**
-   * Render the boid
+   * Render the boid as a soft glowing orb (2026 aesthetic)
    */
   render(ctx, alpha = 1) {
     ctx.save();
 
-    // Draw as a small triangle pointing in direction of movement
-    const angle = Math.atan2(this.velocity.y, this.velocity.x);
+    // Softer, more ethereal color palette
+    const saturation = 70; // Less saturated than before
+    const lightness = 65;  // Brighter, more pastel
 
-    ctx.translate(this.position.x, this.position.y);
-    ctx.rotate(angle);
+    // Main glow orb
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.8})`;
 
-    // Glow effect
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = `hsla(${this.hue}, 80%, 60%, ${alpha})`;
+    // Outer glow (larger, very soft)
+    const outerGradient = ctx.createRadialGradient(
+      this.position.x, this.position.y, 0,
+      this.position.x, this.position.y, this.size * 3
+    );
+    outerGradient.addColorStop(0, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.3})`);
+    outerGradient.addColorStop(0.5, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.1})`);
+    outerGradient.addColorStop(1, `hsla(${this.hue}, ${saturation}%, ${lightness}%, 0)`);
 
-    // Triangle body
-    ctx.fillStyle = `hsla(${this.hue}, 80%, 60%, ${alpha})`;
+    ctx.fillStyle = outerGradient;
     ctx.beginPath();
-    ctx.moveTo(this.size * 2, 0);
-    ctx.lineTo(-this.size, this.size);
-    ctx.lineTo(-this.size, -this.size);
-    ctx.closePath();
+    ctx.arc(this.position.x, this.position.y, this.size * 3, 0, Math.PI * 2);
     ctx.fill();
 
+    // Core orb (solid, bright)
+    const coreGradient = ctx.createRadialGradient(
+      this.position.x, this.position.y, 0,
+      this.position.x, this.position.y, this.size
+    );
+    coreGradient.addColorStop(0, `hsla(${this.hue}, ${saturation}%, 95%, ${alpha})`); // Bright center
+    coreGradient.addColorStop(0.7, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha})`);
+    coreGradient.addColorStop(1, `hsla(${this.hue}, ${saturation}%, ${lightness - 10}%, ${alpha * 0.5})`);
+
+    ctx.fillStyle = coreGradient;
+    ctx.beginPath();
+    ctx.arc(this.position.x, this.position.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
     ctx.restore();
   }
 }
