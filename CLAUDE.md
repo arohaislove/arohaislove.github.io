@@ -240,16 +240,16 @@ const data = await response.json();
 
 If your worker needs additional secrets beyond `ANTHROPIC_API_KEY`:
 
-1. **Add the secret to GitHub**:
-   - Go to repo Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Add your secret (e.g., `OPENAI_API_KEY`)
+1. **Ask the user to add the secret to GitHub**:
+   - Request that they go to repo Settings → Secrets and variables → Actions
+   - Ask them to click "New repository secret"
+   - Have them add the secret with an appropriate name (e.g., `OPENAI_API_KEY`)
 
-2. **Update the workflow**:
+2. **Update the workflow** (you can do this):
    - Edit `.github/workflows/deploy-workers.yml`
-   - Add a step to inject your new secret (similar to `ANTHROPIC_API_KEY`)
+   - Add a step to inject the new secret (similar to how `ANTHROPIC_API_KEY` is handled)
 
-3. **Use in your worker**:
+3. **Use in your worker code**:
    ```javascript
    const apiKey = env.YOUR_SECRET_NAME;
    ```
@@ -261,18 +261,8 @@ If your worker needs additional secrets beyond `ANTHROPIC_API_KEY`:
 3. **Validate input** - Workers are public endpoints, validate everything
 4. **Handle errors gracefully** - Return helpful error messages
 5. **Document usage** - Add comments and README files
-6. **Test before merge** - Use `wrangler dev` for local testing if needed
 
-### Manual Deployment (Rarely Needed)
-
-The automatic deployment should handle everything, but if you need to deploy manually:
-
-```bash
-cd workers/my-worker-name
-npm install -g wrangler  # If not installed
-wrangler login           # Authenticate
-wrangler deploy          # Deploy
-```
+**Note:** All worker deployments happen automatically through GitHub Actions when merged to main. Never attempt manual deployment.
 
 ### Common Worker Patterns
 
