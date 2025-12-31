@@ -682,6 +682,7 @@
     let currentImage = null;
     let currentImageData = null;
     let entries = JSON.parse(localStorage.getItem('oneiros_entries') || '[]');
+    let pendingSubmit = false; // Track if we need to auto-submit after saving settings
 
     // Elements
     const imageInput = document.getElementById('imageInput');
@@ -739,6 +740,7 @@
       const proxyUrl = localStorage.getItem('oneiros_proxy');
 
       if (!apiKey || !proxyUrl) {
+        pendingSubmit = true; // Mark that we need to submit after settings are saved
         settingsOverlay.classList.add('visible');
         return;
       }
@@ -925,11 +927,13 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
 
     settingsClose.addEventListener('click', () => {
       settingsOverlay.classList.remove('visible');
+      pendingSubmit = false; // Clear pending submit if they close without saving
     });
 
     settingsOverlay.addEventListener('click', (e) => {
       if (e.target === settingsOverlay) {
         settingsOverlay.classList.remove('visible');
+        pendingSubmit = false; // Clear pending submit if they close without saving
       }
     });
 
@@ -937,6 +941,12 @@ Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside
       localStorage.setItem('oneiros_api_key', apiKeyInput.value);
       localStorage.setItem('oneiros_proxy', proxyInput.value);
       settingsOverlay.classList.remove('visible');
+
+      // If we were trying to submit when settings opened, auto-submit now
+      if (pendingSubmit) {
+        pendingSubmit = false;
+        submitBtn.click(); // Trigger the submit
+      }
     });
 
     // Initialize
