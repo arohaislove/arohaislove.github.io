@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oneiros — Dream Journal</title>
+
+  <!-- Privacy-friendly analytics by Plausible -->
+  <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+  <script>
+    window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+    plausible.init()
+  </script>
+  <script src="/shared/analytics.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --ink: #1a1a1a;
+      --paper: #f5f2eb;
+      --paper-dark: #e8e4d9;
+      --accent: #4a5568;
+      --gold: #8b7355;
+      --phantom: rgba(26, 26, 26, 0.06);
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Instrument Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Paper texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+    }
+
+    /* Navigation */
+    nav {
+      margin-bottom: 2rem;
+    }
+
+    nav a {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: var(--gold);
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 4rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid var(--phantom);
+    }
+
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.5rem;
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+      color: var(--ink);
+    }
+
+    .subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
+
+    /* Entry Form */
+    .entry-form {
+      background: white;
+      border-radius: 2px;
+      padding: 2.5rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid var(--phantom);
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+    }
+
+    .form-section:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 0.75rem;
+      color: var(--ink);
+    }
+
+    .label-hint {
+      font-weight: 300;
+      font-style: italic;
+      color: var(--accent);
+      font-size: 0.95rem;
+    }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed var(--paper-dark);
+      border-radius: 2px;
+      padding: 3rem 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-area:hover {
+      border-color: var(--gold);
+      background: rgba(139, 115, 85, 0.02);
+    }
+
+    .upload-area.has-image {
+      padding: 1rem;
+      border-style: solid;
+      border-color: var(--paper-dark);
+    }
+
+    .upload-area input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-placeholder {
+      color: var(--accent);
+    }
+
+    .upload-placeholder svg {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+      stroke: var(--gold);
+      stroke-width: 1;
+    }
+
+    .upload-placeholder p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-style: italic;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 400px;
+      display: none;
+      margin: 0 auto;
+      border-radius: 2px;
+    }
+
+    .preview-image.visible {
+      display: block;
+    }
+
+    /* Text Input */
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      border: 1px solid var(--paper-dark);
+      border-radius: 2px;
+      background: var(--paper);
+      color: var(--ink);
+      resize: vertical;
+      transition: border-color 0.3s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    textarea::placeholder {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    /* Button */
+    .submit-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem 2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--paper);
+      background: var(--ink);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: var(--gold);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Loading State */
+    .loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 2rem;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .loading.visible {
+      display: flex;
+    }
+
+    .loading-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes pulse {
+      0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+      40% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Response */
+    .response {
+      display: none;
+      background: white;
+      border-radius: 2px;
+      padding: 3rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid var(--phantom);
+      animation: fadeIn 0.6s ease;
+    }
+
+    .response.visible {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .response-date {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .response-poem {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem;
+      font-weight: 300;
+      line-height: 1.9;
+      color: var(--ink);
+      white-space: pre-wrap;
+    }
+
+    .response-symbols {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--phantom);
+    }
+
+    .response-symbols h3 {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .symbols-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .symbol-tag {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      font-style: italic;
+      padding: 0.25rem 0.75rem;
+      background: var(--paper);
+      border-radius: 2px;
+      color: var(--ink);
+    }
+
+    /* Archive */
+    .archive {
+      margin-top: 4rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--phantom);
+    }
+
+    .archive-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+
+    .archive h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+    }
+
+    .archive-count {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    .archive-empty {
+      text-align: center;
+      padding: 3rem;
+      color: var(--accent);
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+    }
+
+    .archive-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .archive-entry {
+      background: white;
+      border-radius: 2px;
+      padding: 1.5rem;
+      border: 1px solid var(--phantom);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .archive-entry:hover {
+      border-color: var(--paper-dark);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .archive-entry-date {
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .archive-entry-preview {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem;
+      font-style: italic;
+      color: var(--ink);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(26, 26, 26, 0.8);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--paper);
+      max-width: 700px;
+      max-height: 80vh;
+      width: 100%;
+      border-radius: 2px;
+      padding: 3rem;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 32px;
+      height: 32px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--accent);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--ink);
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 300px;
+      display: block;
+      margin: 0 auto 2rem;
+      border-radius: 2px;
+    }
+
+    .modal-poem {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.25rem;
+      font-weight: 300;
+      line-height: 1.9;
+      white-space: pre-wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-context {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1rem;
+      font-style: italic;
+      color: var(--accent);
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--phantom);
+    }
+
+    /* API Key Modal */
+    .settings-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      background: white;
+      border: 1px solid var(--phantom);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .settings-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .settings-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .api-input {
+      width: 100%;
+      padding: 1rem;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 0.9rem;
+      border: 1px solid var(--paper-dark);
+      border-radius: 2px;
+      background: white;
+      margin-bottom: 1rem;
+    }
+
+    .api-input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .container {
+        padding: 2rem 1.25rem;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+      }
+
+      .entry-form,
+      .response {
+        padding: 1.5rem;
+      }
+
+      .modal {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <nav>
+      <a href="/">← Back to Projects</a>
+    </nav>
+
+    <header>
+      <h1>Oneiros</h1>
+      <p class="subtitle">A journal for the territory between waking and sleep</p>
+    </header>
+
+    <div class="entry-form">
+      <div class="form-section">
+        <label>
+          The Image
+          <span class="label-hint">— a sketch, a photograph, whatever surfaced</span>
+        </label>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="imageInput" accept="image/*">
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round"/>
+            </svg>
+            <p>Drop an image here, or click to select</p>
+          </div>
+          <img class="preview-image" id="previewImage" alt="Preview">
+        </div>
+      </div>
+
+      <div class="form-section">
+        <label>
+          The Feeling
+          <span class="label-hint">— optional fragments, sensations, residue</span>
+        </label>
+        <textarea id="contextInput" placeholder="What lingered when you woke? A colour, a presence, unease or warmth..."></textarea>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" disabled>Divine the Dream</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <span>Listening</span>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+      <div class="loading-dot"></div>
+    </div>
+
+    <div class="response" id="response">
+      <div class="response-date" id="responseDate"></div>
+      <div class="response-poem" id="responsePoem"></div>
+      <div class="response-symbols">
+        <h3>Recurring Symbols</h3>
+        <div class="symbols-list" id="symbolsList"></div>
+      </div>
+    </div>
+
+    <div class="archive" id="archive">
+      <div class="archive-header">
+        <h2>Archive</h2>
+        <span class="archive-count" id="archiveCount"></span>
+      </div>
+      <div class="archive-list" id="archiveList">
+        <div class="archive-empty">No dreams recorded yet</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Button -->
+  <button class="settings-btn" id="settingsBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+    </svg>
+  </button>
+
+  <!-- Modal for viewing entries -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">&times;</button>
+      <img class="modal-image" id="modalImage" alt="Dream sketch">
+      <div class="response-date" id="modalDate"></div>
+      <div class="modal-poem" id="modalPoem"></div>
+      <div class="modal-context" id="modalContext"></div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsOverlay">
+    <div class="modal">
+      <button class="modal-close" id="settingsClose">&times;</button>
+      <h2 style="font-family: 'Cormorant Garamond', serif; font-weight: 400; margin-bottom: 1.5rem;">Settings</h2>
+      <label style="margin-bottom: 0.5rem;">Anthropic API Key</label>
+      <input type="password" class="api-input" id="apiKeyInput" placeholder="sk-ant-...">
+      <label style="margin-bottom: 0.5rem;">Proxy URL <span class="label-hint">— your Cloudflare Worker</span></label>
+      <input type="text" class="api-input" id="proxyInput" placeholder="https://cors-proxy.xxx.workers.dev/anthropic">
+      <button class="submit-btn" id="saveSettingsBtn">Save</button>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentImage = null;
+    let currentImageData = null;
+    let entries = JSON.parse(localStorage.getItem('oneiros_entries') || '[]');
+
+    // Elements
+    const imageInput = document.getElementById('imageInput');
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+    const previewImage = document.getElementById('previewImage');
+    const contextInput = document.getElementById('contextInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const loading = document.getElementById('loading');
+    const response = document.getElementById('response');
+    const responseDate = document.getElementById('responseDate');
+    const responsePoem = document.getElementById('responsePoem');
+    const symbolsList = document.getElementById('symbolsList');
+    const archiveList = document.getElementById('archiveList');
+    const archiveCount = document.getElementById('archiveCount');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalClose = document.getElementById('modalClose');
+    const modalImage = document.getElementById('modalImage');
+    const modalDate = document.getElementById('modalDate');
+    const modalPoem = document.getElementById('modalPoem');
+    const modalContext = document.getElementById('modalContext');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsOverlay = document.getElementById('settingsOverlay');
+    const settingsClose = document.getElementById('settingsClose');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const proxyInput = document.getElementById('proxyInput');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+
+    // Load settings
+    apiKeyInput.value = localStorage.getItem('oneiros_api_key') || '';
+    proxyInput.value = localStorage.getItem('oneiros_proxy') || '';
+
+    // Image handling
+    imageInput.addEventListener('change', handleImageSelect);
+
+    function handleImageSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentImageData = e.target.result;
+        previewImage.src = currentImageData;
+        previewImage.classList.add('visible');
+        uploadPlaceholder.style.display = 'none';
+        uploadArea.classList.add('has-image');
+        submitBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Submit
+    submitBtn.addEventListener('click', async () => {
+      const apiKey = localStorage.getItem('oneiros_api_key');
+      const proxyUrl = localStorage.getItem('oneiros_proxy');
+
+      if (!apiKey || !proxyUrl) {
+        settingsOverlay.classList.add('visible');
+        return;
+      }
+
+      if (!currentImageData) return;
+
+      submitBtn.disabled = true;
+      loading.classList.add('visible');
+      response.classList.remove('visible');
+
+      try {
+        const context = contextInput.value.trim();
+        const base64Data = currentImageData.split(',')[1];
+        const mediaType = currentImageData.split(';')[0].split(':')[1];
+
+        const systemPrompt = `You are Oneiros, a poetic interpreter of dreams. You receive images of dream sketches or photographs along with optional context about feelings or fragments the dreamer remembers.
+
+Your role is to respond with:
+1. A poem (free verse, 8-20 lines) that doesn't describe the image literally but responds to its emotional and symbolic resonance. The poem should feel like it emerged from the same territory as the dream—liminal, surprising, true in the way dreams are true.
+2. A list of 3-5 archetypal symbols or themes you perceive (single words or short phrases).
+
+Format your response exactly like this:
+[POEM]
+Your poem here
+line by line
+
+[SYMBOLS]
+symbol one, symbol two, symbol three
+
+Be evocative, not diagnostic. You are not analyzing—you are dreaming alongside.`;
+
+        const userContent = [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: mediaType,
+              data: base64Data
+            }
+          },
+          {
+            type: "text",
+            text: context
+              ? `The dreamer shares this feeling: "${context}"\n\nRespond to this dream image.`
+              : "Respond to this dream image."
+          }
+        ];
+
+        const apiResponse = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1024,
+            system: systemPrompt,
+            messages: [{
+              role: 'user',
+              content: userContent
+            }]
+          })
+        });
+
+        const data = await apiResponse.json();
+
+        if (data.error) {
+          throw new Error(data.error.message || 'API error');
+        }
+
+        const responseText = data.content[0].text;
+
+        // Parse response
+        const poemMatch = responseText.match(/\[POEM\]\s*([\s\S]*?)\s*\[SYMBOLS\]/);
+        const symbolsMatch = responseText.match(/\[SYMBOLS\]\s*([\s\S]*?)$/);
+
+        const poem = poemMatch ? poemMatch[1].trim() : responseText;
+        const symbols = symbolsMatch
+          ? symbolsMatch[1].split(',').map(s => s.trim()).filter(s => s)
+          : [];
+
+        // Display
+        const now = new Date();
+        responseDate.textContent = formatDate(now);
+        responsePoem.textContent = poem;
+
+        symbolsList.innerHTML = symbols.map(s =>
+          `<span class="symbol-tag">${s}</span>`
+        ).join('');
+
+        response.classList.add('visible');
+
+        // Save entry
+        const entry = {
+          id: Date.now(),
+          date: now.toISOString(),
+          image: currentImageData,
+          context: context,
+          poem: poem,
+          symbols: symbols
+        };
+
+        entries.unshift(entry);
+        localStorage.setItem('oneiros_entries', JSON.stringify(entries));
+        renderArchive();
+
+        // Reset form
+        currentImageData = null;
+        previewImage.src = '';
+        previewImage.classList.remove('visible');
+        uploadPlaceholder.style.display = 'block';
+        uploadArea.classList.remove('has-image');
+        contextInput.value = '';
+        imageInput.value = '';
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to divine the dream: ' + error.message);
+      } finally {
+        loading.classList.remove('visible');
+        submitBtn.disabled = true;
+      }
+    });
+
+    // Archive
+    function renderArchive() {
+      archiveCount.textContent = `${entries.length} ${entries.length === 1 ? 'dream' : 'dreams'}`;
+
+      if (entries.length === 0) {
+        archiveList.innerHTML = '<div class="archive-empty">No dreams recorded yet</div>';
+        return;
+      }
+
+      archiveList.innerHTML = entries.map(entry => `
+        <div class="archive-entry" data-id="${entry.id}">
+          <div class="archive-entry-date">${formatDate(new Date(entry.date))}</div>
+          <div class="archive-entry-preview">${entry.poem.split('\n')[0]}</div>
+        </div>
+      `).join('');
+
+      // Add click handlers
+      document.querySelectorAll('.archive-entry').forEach(el => {
+        el.addEventListener('click', () => {
+          const entry = entries.find(e => e.id === parseInt(el.dataset.id));
+          if (entry) showModal(entry);
+        });
+      });
+    }
+
+    function showModal(entry) {
+      modalImage.src = entry.image;
+      modalDate.textContent = formatDate(new Date(entry.date));
+      modalPoem.textContent = entry.poem;
+      modalContext.textContent = entry.context || 'No context recorded';
+      modalOverlay.classList.add('visible');
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('en-NZ', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    // Modal handling
+    modalClose.addEventListener('click', () => {
+      modalOverlay.classList.remove('visible');
+    });
+
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('visible');
+      }
+    });
+
+    // Settings
+    settingsBtn.addEventListener('click', () => {
+      settingsOverlay.classList.add('visible');
+    });
+
+    settingsClose.addEventListener('click', () => {
+      settingsOverlay.classList.remove('visible');
+    });
+
+    settingsOverlay.addEventListener('click', (e) => {
+      if (e.target === settingsOverlay) {
+        settingsOverlay.classList.remove('visible');
+      }
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+      localStorage.setItem('oneiros_api_key', apiKeyInput.value);
+      localStorage.setItem('oneiros_proxy', proxyInput.value);
+      settingsOverlay.classList.remove('visible');
+    });
+
+    // Initialize
+    renderArchive();
+
+    // Initialize analytics when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.Analytics) {
+          Analytics.init();
+        }
+      });
+    } else {
+      if (window.Analytics) {
+        Analytics.init();
+      }
+    }
+  </script>
+</body>
+</html>
