@@ -14,7 +14,7 @@ This repository uses **two separate deployment methods**:
 ### 2. Cloudflare Workers (CORS Proxy)
 **Purpose:** Provides CORS proxy for Ekphrasis and other projects
 **Platform:** Cloudflare Workers
-**URL:** https://cors-proxy.arohaislove.workers.dev
+**URL:** https://cors-proxy.zammel.workers.dev
 **Deploy Trigger:** Automatic via GitHub Actions when `workers/` changes
 **What it deploys:** Worker code from `workers/cors-proxy/`
 
@@ -59,7 +59,7 @@ When you merge changes to `main` that affect the `workers/` directory:
 2. The workflow `.github/workflows/deploy-workers.yml` runs
 3. It uses **Wrangler CLI** to deploy the worker to Cloudflare
 4. Uses the secrets: `CF_ACCOUNT_ID` and `CF_API_TOKEN`
-5. Worker becomes available at: `https://cors-proxy.arohaislove.workers.dev`
+5. Worker becomes available at: `https://cors-proxy.zammel.workers.dev`
 
 ## Manual Worker Deployment (if needed)
 

@@ -90,7 +90,7 @@ jobs:
       - name: Deployment summary
         run: |
           echo "✅ Worker '${{ matrix.worker }}' deployed successfully!"
-          echo "🌐 Worker URL: https://${{ matrix.worker }}.arohaislove.workers.dev"
+          echo "🌐 Worker URL: https://${{ matrix.worker }}.zammel.workers.dev"
 
   # Summary of all deployments
   summary:
@@ -104,4 +104,4 @@ jobs:
           echo "📦 Total workers deployed: ${{ needs.find-workers.outputs.worker-count }}"
           echo ""
           echo "Workers:"
-          echo '${{ needs.find-workers.outputs.workers }}' | jq -r '.[] | "  ✓ https://\(.).arohaislove.workers.dev"'
+          echo '${{ needs.find-workers.outputs.workers }}' | jq -r '.[] | "  ✓ https://\(.).zammel.workers.dev"'

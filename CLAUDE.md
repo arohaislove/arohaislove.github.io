@@ -73,7 +73,7 @@ When you create a worker, GitHub Actions automatically injects the `ANTHROPIC_AP
 
 | Worker | URL | Purpose |
 |--------|-----|---------|
-| `cors-proxy` | `https://cors-proxy.arohaislove.workers.dev` | CORS proxy for Anthropic API calls (used by Ekphrasis, Oneiros) |
+| `cors-proxy` | `https://cors-proxy.zammel.workers.dev` | CORS proxy for Anthropic API calls (used by Ekphrasis, Oneiros) |
 
 ### How to Create a New Worker
 
@@ -96,10 +96,10 @@ main = "index.js"
 compatibility_date = "2024-01-01"
 
 # Workers are deployed to *.workers.dev subdomain
-# This will be available at: https://my-worker-name.arohaislove.workers.dev
+# This will be available at: https://my-worker-name.zammel.workers.dev
 ```
 
-**Important:** The `name` field determines the worker's URL. It will be deployed to `https://[name].arohaislove.workers.dev`
+**Important:** The `name` field determines the worker's URL. It will be deployed to `https://[name].zammel.workers.dev`
 
 #### Step 3: Create `index.js`
 
@@ -201,7 +201,7 @@ Once your PR is merged to `main`, GitHub Actions will:
 1. **Automatically discover** your new worker
 2. **Configure secrets** (if your code uses `ANTHROPIC_API_KEY`)
 3. **Deploy the worker** to Cloudflare
-4. **Make it available** at `https://my-worker-name.arohaislove.workers.dev`
+4. **Make it available** at `https://my-worker-name.zammel.workers.dev`
 
 You don't need to do anything else! The worker will be live within 1-2 minutes of merge.
 
@@ -221,7 +221,7 @@ Once a worker is deployed, use it from your browser-based project:
 
 ```javascript
 // Call your worker instead of the API directly
-const response = await fetch('https://my-worker-name.arohaislove.workers.dev', {
+const response = await fetch('https://my-worker-name.zammel.workers.dev', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json'
