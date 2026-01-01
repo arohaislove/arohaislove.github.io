@@ -346,6 +346,7 @@ async function tryElevenLabsSpeech(text) {
         const strength = state.accentStrength / 100;
         const voiceSettings = {
             voiceId: CONFIG.defaultVoiceId,
+            accentStyle: state.currentAccent, // Send current accent to worker
             stability: 0.5,
             similarity_boost: 0.75,
             style: strength,
