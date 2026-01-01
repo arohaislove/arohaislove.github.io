@@ -2,6 +2,7 @@
  * Chromesthesia Audio - Advanced Edition Styles
  *
  * Minimal, immersive full-screen design
+ * 2026 aesthetic: warm, soft, ethereal
  */
 
 /* ===== GLOBAL RESET ===== */
@@ -16,7 +17,7 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #0F141E; /* Modern deep blue-gray instead of black */
+  background: #121216; /* Warm dark slate */
   color: #fff;
   overflow: hidden;
 }
