@@ -240,16 +240,38 @@ async function getChatResponse(userMessage) {
 }
 
 /**
- * Build system prompt with accent instructions
+ * Build system prompt with accent instructions and response length scaling
  */
 function buildSystemPrompt() {
     const accentInstruction = state.autoDetect
         ? 'Respond naturally and conversationally.'
         : `Respond in the style of: ${state.currentAccent}. Adjust your tone, word choice, and phrasing to match this style, but keep responses clear and helpful.`;
 
+    // Calculate suggested response length based on last user message
+    const lastUserMessage = state.conversationHistory.length > 0
+        ? state.conversationHistory[state.conversationHistory.length - 1].content
+        : '';
+
+    const userSentenceCount = countSentences(lastUserMessage);
+    const targetSentenceCount = Math.min(userSentenceCount * 2, 6); // Max 6 sentences to save tokens
+
+    const lengthInstruction = `IMPORTANT: Keep your response CONCISE - aim for ${targetSentenceCount} sentence${targetSentenceCount === 1 ? '' : 's'} or less. Be brief but complete.`;
+
     return `You are Vox, a conversational AI assistant with dynamic voice personality. ${accentInstruction}
 
+${lengthInstruction}
+
 Be warm, engaging, and helpful. Keep responses conversational but informative. Don't mention that you're speaking in a particular accent unless directly asked about it.`;
+}
+
+/**
+ * Count sentences in text (rough approximation)
+ */
+function countSentences(text) {
+    if (!text || text.trim().length === 0) return 1;
+    // Count periods, exclamation marks, and question marks
+    const matches = text.match(/[.!?]+/g);
+    return matches ? Math.max(1, matches.length) : 1;
 }
 
 /**
