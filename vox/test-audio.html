@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+            width: 100%;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        h1 { color: #333; }
+        p { color: #666; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <div class="test-box">
+        <h1>🔊 Vox Audio Test</h1>
+        <p><strong>Step 1:</strong> Make sure your volume is turned up!</p>
+        <p><strong>Step 2:</strong> Click the button below to test if your browser can speak:</p>
+
+        <button id="testBtn">🎤 Test Browser Speech</button>
+
+        <div id="result" class="result"></div>
+
+        <div id="info" class="result info" style="display: block; margin-top: 20px;">
+            <strong>What this tests:</strong><br>
+            • If your browser supports text-to-speech<br>
+            • If your volume is working<br>
+            • If browser permissions are OK
+        </div>
+    </div>
+
+    <script>
+        const testBtn = document.getElementById('testBtn');
+        const result = document.getElementById('result');
+
+        testBtn.addEventListener('click', async () => {
+            result.style.display = 'none';
+
+            // Check if speech synthesis exists
+            if (!('speechSynthesis' in window)) {
+                result.className = 'result error';
+                result.innerHTML = '❌ <strong>Error:</strong> Your browser doesn\'t support text-to-speech. Try using Chrome, Edge, or Safari.';
+                result.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+
+                // Wait a moment for voices to load
+                setTimeout(() => {
+                    const voices = window.speechSynthesis.getVoices();
+
+                    if (voices.length === 0) {
+                        result.className = 'result error';
+                        result.innerHTML = '❌ <strong>Error:</strong> No voices available. Try refreshing the page.';
+                        result.style.display = 'block';
+                        return;
+                    }
+
+                    // Create and speak test message
+                    const utterance = new SpeechSynthesisUtterance('Hello! If you can hear this, your browser speech is working perfectly!');
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    utterance.volume = 1.0;
+
+                    utterance.onstart = () => {
+                        result.className = 'result info';
+                        result.innerHTML = '🔊 <strong>Speaking now...</strong> Can you hear it?';
+                        result.style.display = 'block';
+                    };
+
+                    utterance.onend = () => {
+                        result.className = 'result success';
+                        result.innerHTML = `✅ <strong>Success!</strong> Your browser can speak! Found ${voices.length} voices available.<br><br>
+                            <strong>Next step:</strong> Go back to Vox and try it there. Make sure to do a hard refresh (Ctrl+Shift+R on Windows, Cmd+Shift+R on Mac).`;
+                        result.style.display = 'block';
+                    };
+
+                    utterance.onerror = (e) => {
+                        result.className = 'result error';
+                        result.innerHTML = `❌ <strong>Error:</strong> ${e.error}<br><br>Try checking your browser permissions or volume settings.`;
+                        result.style.display = 'block';
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                }, 100);
+
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ <strong>Error:</strong> ${error.message}`;
+                result.style.display = 'block';
+            }
+        });
+
+        // Load voices on page load
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
+        }
+    </script>
+</body>
+</html>
