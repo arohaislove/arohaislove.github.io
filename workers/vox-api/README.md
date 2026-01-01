@@ -100,6 +100,15 @@ const audioResponse = await fetch('https://vox-api.zammel.workers.dev/speak', {
 const audioBlob = await audioResponse.blob();
 ```
 
+## Deployment
+
+This worker is automatically deployed via GitHub Actions when changes are pushed to the `main` branch.
+
+The deployment process:
+1. Detects ANTHROPIC_API_KEY and ELEVENLABS_API_KEY usage
+2. Injects secrets from GitHub repository secrets
+3. Deploys to Cloudflare Workers
+
 ## Notes
 
 - All API keys are securely stored in the worker environment
