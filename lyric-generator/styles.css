@@ -391,3 +391,247 @@ footer {
         left: 100%;
     }
 }
+
+/* Mode Toggle */
+.mode-toggle {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: 1.5px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.mode-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.mode-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Hide inactive modes */
+.input-section {
+    display: none;
+}
+
+.input-section.active {
+    display: block;
+}
+
+/* Audio Input Options */
+.audio-input-options {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 2rem;
+    align-items: center;
+    margin: 2rem 0;
+}
+
+.audio-option {
+    display: flex;
+    justify-content: center;
+}
+
+.file-upload-label,
+.record-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    border: 2px dashed var(--border-color);
+    border-radius: 16px;
+    background: var(--bg-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+    min-width: 200px;
+}
+
+.file-upload-label:hover,
+.record-btn:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-secondary);
+    transform: translateY(-2px);
+}
+
+.file-upload-label svg,
+.record-btn svg {
+    color: var(--accent-primary);
+}
+
+.file-upload-label span,
+.record-btn span {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.file-upload-label small,
+.record-btn small {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.audio-divider {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Audio Player Section */
+.audio-player-section {
+    background: var(--bg-primary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.audio-player-section audio {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Recording Controls */
+.recording-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.recording-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.recording-pulse {
+    width: 12px;
+    height: 12px;
+    background: #ff4444;
+    border-radius: 50%;
+    animation: pulse-recording 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-recording {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(1.2);
+    }
+}
+
+.stop-recording-btn {
+    padding: 0.5rem 1.5rem;
+    background: #ff4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.stop-recording-btn:hover {
+    background: #cc0000;
+}
+
+/* Analysis Status & Results */
+.analysis-status {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+.analysis-status.analyzing {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.analysis-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.analysis-item {
+    background: var(--bg-secondary);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.analysis-item label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.analysis-item value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--accent-primary);
+}
+
+/* Responsive adjustments for audio mode */
+@media (max-width: 768px) {
+    .mode-toggle {
+        flex-direction: column;
+    }
+
+    .audio-input-options {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .audio-divider {
+        text-align: center;
+    }
+
+    .file-upload-label,
+    .record-btn {
+        min-width: 100%;
+    }
+
+    .analysis-results {
+        grid-template-columns: 1fr 1fr;
+    }
+}

@@ -18,8 +18,87 @@
         </header>
 
         <div class="container">
-            <!-- Input Section -->
-            <section class="input-section">
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="audio">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                    Analyze Audio
+                </button>
+                <button class="mode-btn" data-mode="manual">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Describe Manually
+                </button>
+            </div>
+
+            <!-- Audio Analysis Section -->
+            <section class="input-section audio-mode active" id="audioSection">
+                <h2>Let Me Hear Your Music</h2>
+                <p class="instructions">Upload an audio file or record from your microphone, and I'll analyze it to generate lyrics.</p>
+
+                <div class="audio-input-options">
+                    <div class="audio-option">
+                        <label for="audioFile" class="file-upload-label">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Upload Audio File</span>
+                            <small>MP3, WAV, OGG, M4A</small>
+                        </label>
+                        <input type="file" id="audioFile" accept="audio/*" hidden>
+                    </div>
+
+                    <div class="audio-divider">or</div>
+
+                    <div class="audio-option">
+                        <button id="recordBtn" class="record-btn">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                            <span>Record from Microphone</span>
+                            <small>Play your instrumental</small>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Player & Analysis Display -->
+                <div id="audioPlayerSection" class="audio-player-section" style="display: none;">
+                    <audio id="audioPlayer" controls></audio>
+                    <div class="recording-controls" id="recordingControls" style="display: none;">
+                        <div class="recording-indicator">
+                            <span class="recording-pulse"></span>
+                            Recording... <span id="recordingTime">0:00</span>
+                        </div>
+                        <button id="stopRecordingBtn" class="stop-recording-btn">Stop Recording</button>
+                    </div>
+                    <div id="analysisStatus" class="analysis-status"></div>
+                    <div id="analysisResults" class="analysis-results"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="themeAudio">Lyric Theme (Optional)</label>
+                    <input type="text" id="themeAudio" placeholder="e.g., longing, journey, transformation... or leave blank for AI to decide">
+                </div>
+
+                <button id="generateFromAudioBtn" class="generate-btn" disabled>
+                    <span class="btn-text">Generate Lyrics from Audio</span>
+                    <span class="btn-loading">Analyzing and writing...</span>
+                </button>
+            </section>
+
+            <!-- Manual Description Section -->
+            <section class="input-section manual-mode" id="manualSection">
                 <h2>Describe Your Instrumental</h2>
                 <p class="instructions">Paint a picture of your track — the mood, tempo, energy, instruments, structure...</p>
 
