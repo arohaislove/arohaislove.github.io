@@ -1,6 +1,6 @@
 /**
  * Vox API Worker
- * Version: 1.0.1 - Updated ElevenLabs API key permissions
+ * Version: 1.0.2 - Testing ElevenLabs API key deployment
  *
  * Handles both Claude API (conversational responses) and ElevenLabs API (text-to-speech)
  * for the Vox conversational AI with dynamic accents.
