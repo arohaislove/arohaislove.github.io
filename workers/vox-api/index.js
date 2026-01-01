@@ -1,6 +1,6 @@
 /**
  * Vox API Worker
- * Version: 1.1.0 - Use free-tier compatible ElevenLabs model
+ * Version: 1.1.1 - Deploy with new ElevenLabs key (Torrential Swordfish)
  *
  * Handles both Claude API (conversational responses) and ElevenLabs API (text-to-speech)
  * for the Vox conversational AI with dynamic accents.
