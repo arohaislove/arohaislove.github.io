@@ -74,8 +74,8 @@ export class Boid {
     this.acceleration.x = 0;
     this.acceleration.y = 0;
 
-    // Update color based on frequency
-    this.hue = 180 + (audioData.treble / 100) * 60; // Blue to purple
+    // 2026 aesthetic: Warm rose to soft amber, gentle drift over time
+    this.hue = 20 + (audioData.treble / 100) * 40 + Math.sin(Date.now() / 3000) * 30;
   }
 
   /**
@@ -296,36 +296,37 @@ export class Boid {
   render(ctx, alpha = 1) {
     ctx.save();
 
-    // Softer, more ethereal color palette
-    const saturation = 70; // Less saturated than before
-    const lightness = 65;  // Brighter, more pastel
+    // 2026 palette: soft whites, pale rose, warm lavender
+    // Much less saturated, higher lightness = ethereal not neon
+    const saturation = 25; // Very desaturated - almost white with a hint of color
+    const lightness = 85;  // Very bright, soft
 
-    // Main glow orb
-    ctx.shadowBlur = 20;
-    ctx.shadowColor = `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.8})`;
+    // Main glow orb - minimal shadow for softer look
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = `hsla(${this.hue}, ${saturation + 20}%, 70%, ${alpha * 0.4})`;
 
-    // Outer glow (larger, very soft)
+    // Outer glow (larger, extremely soft)
     const outerGradient = ctx.createRadialGradient(
       this.position.x, this.position.y, 0,
-      this.position.x, this.position.y, this.size * 3
+      this.position.x, this.position.y, this.size * 4
     );
-    outerGradient.addColorStop(0, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.3})`);
-    outerGradient.addColorStop(0.5, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.1})`);
+    outerGradient.addColorStop(0, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.25})`);
+    outerGradient.addColorStop(0.4, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha * 0.08})`);
     outerGradient.addColorStop(1, `hsla(${this.hue}, ${saturation}%, ${lightness}%, 0)`);
 
     ctx.fillStyle = outerGradient;
     ctx.beginPath();
-    ctx.arc(this.position.x, this.position.y, this.size * 3, 0, Math.PI * 2);
+    ctx.arc(this.position.x, this.position.y, this.size * 4, 0, Math.PI * 2);
     ctx.fill();
 
-    // Core orb (solid, bright)
+    // Core orb - almost white center with subtle color
     const coreGradient = ctx.createRadialGradient(
       this.position.x, this.position.y, 0,
       this.position.x, this.position.y, this.size
     );
-    coreGradient.addColorStop(0, `hsla(${this.hue}, ${saturation}%, 95%, ${alpha})`); // Bright center
-    coreGradient.addColorStop(0.7, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha})`);
-    coreGradient.addColorStop(1, `hsla(${this.hue}, ${saturation}%, ${lightness - 10}%, ${alpha * 0.5})`);
+    coreGradient.addColorStop(0, `hsla(${this.hue}, 10%, 98%, ${alpha})`); // Nearly white center
+    coreGradient.addColorStop(0.5, `hsla(${this.hue}, ${saturation}%, ${lightness}%, ${alpha})`);
+    coreGradient.addColorStop(1, `hsla(${this.hue}, ${saturation + 10}%, ${lightness - 10}%, ${alpha * 0.7})`);
 
     ctx.fillStyle = coreGradient;
     ctx.beginPath();
