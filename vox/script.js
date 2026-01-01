@@ -345,6 +345,17 @@ async function tryElevenLabsSpeech(text) {
             // Check if it's a configuration error
             if (response.status === 500) {
                 const errorData = await response.json().catch(() => ({}));
+
+                // Log the full error for debugging
+                console.error('🔴 ElevenLabs Error:', {
+                    status: response.status,
+                    errorData: errorData,
+                    message: errorData.message
+                });
+
+                // Show user-friendly error message
+                showElevenLabsError(errorData.message || 'Unknown error');
+
                 if (errorData.message && errorData.message.includes('ELEVENLABS_API_KEY')) {
                     console.warn('⚠️ ElevenLabs API key not configured. Using browser speech instead.');
                     showConfigNotice();
@@ -457,6 +468,26 @@ function showConfigNotice() {
             <strong>ℹ️ Using Browser Speech</strong><br>
             For premium AI voices with accents, the ElevenLabs API key needs to be configured.
             <br>Using your browser's built-in voices for now.
+        </div>
+    `;
+
+    const conversationHistory = document.getElementById('conversationHistory');
+    if (conversationHistory && conversationHistory.children.length > 0) {
+        conversationHistory.insertBefore(notice, conversationHistory.children[0]);
+    }
+}
+
+/**
+ * Show ElevenLabs error message
+ */
+function showElevenLabsError(errorMessage) {
+    const notice = document.createElement('div');
+    notice.className = 'elevenlabs-error';
+    notice.innerHTML = `
+        <div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; padding: 12px; margin: 10px 0; font-size: 0.9em; color: #721c24;">
+            <strong>🔴 ElevenLabs Error:</strong><br>
+            ${errorMessage}<br>
+            <small style="margin-top: 8px; display: block;">Open browser console (F12) to see full error details.</small>
         </div>
     `;
 
