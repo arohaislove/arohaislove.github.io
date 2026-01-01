@@ -1,6 +1,6 @@
 /**
  * Vox API Worker
- * Version: 1.0.3 - Deploy with fresh ElevenLabs API key (Implacable Bearded Vulture)
+ * Version: 1.0.4 - Redeploy with updated ElevenLabs key (post-secret update)
  *
  * Handles both Claude API (conversational responses) and ElevenLabs API (text-to-speech)
  * for the Vox conversational AI with dynamic accents.
