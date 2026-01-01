@@ -63,21 +63,39 @@ jobs:
         run: |
           # Check if worker code references ANTHROPIC_API_KEY
           if grep -q "ANTHROPIC_API_KEY" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
-            echo "needs-api-key=true" >> $GITHUB_OUTPUT
+            echo "needs-anthropic-key=true" >> $GITHUB_OUTPUT
             echo "🔑 Worker uses ANTHROPIC_API_KEY - will configure secret"
           else
-            echo "needs-api-key=false" >> $GITHUB_OUTPUT
+            echo "needs-anthropic-key=false" >> $GITHUB_OUTPUT
             echo "ℹ️  Worker does not use ANTHROPIC_API_KEY - skipping secret configuration"
           fi
 
+          # Check if worker code references ELEVENLABS_API_KEY
+          if grep -q "ELEVENLABS_API_KEY" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-elevenlabs-key=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses ELEVENLABS_API_KEY - will configure secret"
+          else
+            echo "needs-elevenlabs-key=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use ELEVENLABS_API_KEY - skipping secret configuration"
+          fi
+
       - name: Set ANTHROPIC_API_KEY secret
-        if: steps.check-secrets.outputs.needs-api-key == 'true'
+        if: steps.check-secrets.outputs.needs-anthropic-key == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
         run: |
           cd workers/${{ matrix.worker }}
           echo "${{ secrets.ANTHROPIC_API_KEY }}" | wrangler secret put ANTHROPIC_API_KEY
+
+      - name: Set ELEVENLABS_API_KEY secret
+        if: steps.check-secrets.outputs.needs-elevenlabs-key == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd workers/${{ matrix.worker }}
+          echo "${{ secrets.ELEVENLABS_API_KEY }}" | wrangler secret put ELEVENLABS_API_KEY
 
       - name: Deploy worker
         env:
