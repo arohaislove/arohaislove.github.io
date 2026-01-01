@@ -43,6 +43,22 @@ function init() {
     setupEventListeners();
     setupSpeechRecognition();
     updateCurrentStyleDisplay();
+    loadBrowserVoices();
+}
+
+/**
+ * Load browser speech synthesis voices
+ */
+function loadBrowserVoices() {
+    if ('speechSynthesis' in window) {
+        // Load voices (they load asynchronously)
+        window.speechSynthesis.getVoices();
+
+        // Some browsers need this event listener
+        window.speechSynthesis.onvoiceschanged = () => {
+            window.speechSynthesis.getVoices();
+        };
+    }
 }
 
 /**
@@ -273,7 +289,7 @@ async function detectAndUpdateAccent() {
 }
 
 /**
- * Speak text using ElevenLabs via worker
+ * Speak text using ElevenLabs via worker, with browser speech fallback
  */
 async function speakText(text) {
     try {
@@ -283,13 +299,34 @@ async function speakText(text) {
             state.currentAudio = null;
         }
 
+        // Try ElevenLabs first
+        const elevenLabsSuccess = await tryElevenLabsSpeech(text);
+
+        // If ElevenLabs failed, fall back to browser speech
+        if (!elevenLabsSuccess) {
+            console.log('Falling back to browser speech synthesis');
+            useBrowserSpeech(text);
+        }
+    } catch (error) {
+        console.error('Error speaking text:', error);
+        // Last resort: try browser speech
+        useBrowserSpeech(text);
+    }
+}
+
+/**
+ * Try to speak using ElevenLabs API
+ * Returns true if successful, false if failed
+ */
+async function tryElevenLabsSpeech(text) {
+    try {
         // Calculate voice settings based on accent strength
         const strength = state.accentStrength / 100;
         const voiceSettings = {
             voiceId: CONFIG.defaultVoiceId,
             stability: 0.5,
             similarity_boost: 0.75,
-            style: strength, // Use accent strength for style parameter
+            style: strength,
             use_speaker_boost: true
         };
 
@@ -305,8 +342,15 @@ async function speakText(text) {
         });
 
         if (!response.ok) {
-            console.warn('Text-to-speech failed:', response.status);
-            return;
+            // Check if it's a configuration error
+            if (response.status === 500) {
+                const errorData = await response.json().catch(() => ({}));
+                if (errorData.message && errorData.message.includes('ELEVENLABS_API_KEY')) {
+                    console.warn('⚠️ ElevenLabs API key not configured. Using browser speech instead.');
+                    showConfigNotice();
+                }
+            }
+            return false;
         }
 
         // Get audio blob and play
@@ -322,8 +366,103 @@ async function speakText(text) {
         };
 
         await audio.play();
+        return true;
     } catch (error) {
-        console.error('Error speaking text:', error);
+        console.warn('ElevenLabs speech failed:', error);
+        return false;
+    }
+}
+
+/**
+ * Use browser's built-in speech synthesis as fallback
+ */
+function useBrowserSpeech(text) {
+    // Check if browser supports speech synthesis
+    if (!('speechSynthesis' in window)) {
+        console.warn('Browser speech synthesis not supported');
+        return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    // Create utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Try to match the accent/style with available voices
+    const voices = window.speechSynthesis.getVoices();
+    const selectedVoice = selectBrowserVoice(voices, state.currentAccent);
+
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+
+    // Adjust rate and pitch based on accent
+    utterance.rate = 0.9; // Slightly slower for clarity
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Speak
+    window.speechSynthesis.speak(utterance);
+}
+
+/**
+ * Select best browser voice based on desired accent
+ */
+function selectBrowserVoice(voices, accent) {
+    if (!voices || voices.length === 0) return null;
+
+    // Map accent styles to voice characteristics
+    const accentMap = {
+        'Welsh': ['Welsh', 'GB', 'UK'],
+        'Irish Storyteller': ['Irish', 'IE'],
+        'Scottish Highlander': ['Scottish', 'GB'],
+        'Kiwi Casual': ['New Zealand', 'NZ'],
+        'Southland NZ': ['New Zealand', 'NZ'],
+        'West Coast NZ': ['New Zealand', 'NZ'],
+        'Te Reo-inflected': ['New Zealand', 'NZ'],
+        'Victorian Butler': ['GB', 'British', 'UK'],
+        'Shakespearean': ['GB', 'British', 'UK'],
+        'Ship\'s Captain': ['GB', 'British', 'UK']
+    };
+
+    const keywords = accentMap[accent] || ['US', 'en-US'];
+
+    // Try to find a matching voice
+    for (const keyword of keywords) {
+        const match = voices.find(v =>
+            v.lang.includes(keyword) ||
+            v.name.includes(keyword)
+        );
+        if (match) return match;
+    }
+
+    // Default to first English voice
+    return voices.find(v => v.lang.startsWith('en')) || voices[0];
+}
+
+/**
+ * Show one-time notice about ElevenLabs configuration
+ */
+let configNoticeShown = false;
+function showConfigNotice() {
+    if (configNoticeShown) return;
+    configNoticeShown = true;
+
+    // Add a subtle notice to the UI
+    const notice = document.createElement('div');
+    notice.className = 'config-notice';
+    notice.innerHTML = `
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 12px; margin: 10px 0; font-size: 0.9em;">
+            <strong>ℹ️ Using Browser Speech</strong><br>
+            For premium AI voices with accents, the ElevenLabs API key needs to be configured.
+            <br>Using your browser's built-in voices for now.
+        </div>
+    `;
+
+    const conversationHistory = document.getElementById('conversationHistory');
+    if (conversationHistory && conversationHistory.children.length > 0) {
+        conversationHistory.insertBefore(notice, conversationHistory.children[0]);
     }
 }
 
