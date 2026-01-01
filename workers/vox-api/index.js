@@ -1,6 +1,6 @@
 /**
  * Vox API Worker
- * Version: 1.0.4 - Redeploy with updated ElevenLabs key (post-secret update)
+ * Version: 1.1.0 - Use free-tier compatible ElevenLabs model
  *
  * Handles both Claude API (conversational responses) and ElevenLabs API (text-to-speech)
  * for the Vox conversational AI with dynamic accents.
@@ -171,7 +171,7 @@ async function handleSpeak(request, env) {
       },
       body: JSON.stringify({
         text: text,
-        model_id: 'eleven_monolingual_v1',
+        model_id: 'eleven_turbo_v2_5', // Updated to free-tier compatible model
         voice_settings: {
           stability: stability,
           similarity_boost: similarityBoost,
