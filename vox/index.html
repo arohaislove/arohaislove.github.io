@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vox - Conversational AI with Dynamic Accents</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="back-link">← Back to Projects</a>
+    </nav>
+
+    <div class="container">
+        <header class="app-header">
+            <h1>Vox</h1>
+            <p class="tagline">Conversational AI with Dynamic Accents</p>
+        </header>
+
+        <div class="main-layout">
+            <!-- Left Panel: Controls -->
+            <aside class="controls-panel">
+                <section class="control-section">
+                    <h3>Voice Style</h3>
+
+                    <div class="toggle-group">
+                        <label class="toggle">
+                            <input type="checkbox" id="autoDetect" checked>
+                            <span class="toggle-label">Auto-detect accent</span>
+                        </label>
+                    </div>
+
+                    <div id="manualControls" class="manual-controls" style="display: none;">
+                        <div class="accent-categories">
+                            <details class="category">
+                                <summary>Era</summary>
+                                <div class="options">
+                                    <button class="accent-btn" data-accent="Shakespearean">Shakespearean</button>
+                                    <button class="accent-btn" data-accent="Victorian Butler">Victorian Butler</button>
+                                    <button class="accent-btn" data-accent="1920s Chicago Gangster">1920s Chicago</button>
+                                    <button class="accent-btn" data-accent="1940s Newsreader">1940s Newsreader</button>
+                                    <button class="accent-btn" data-accent="1950s Jazz DJ">1950s Jazz DJ</button>
+                                    <button class="accent-btn" data-accent="Medieval Herald">Medieval Herald</button>
+                                    <button class="accent-btn" data-accent="Ancient Greek Orator">Ancient Greek Orator</button>
+                                    <button class="accent-btn" data-accent="1970s Sci-Fi AI">1970s Sci-Fi AI</button>
+                                </div>
+                            </details>
+
+                            <details class="category">
+                                <summary>Regional</summary>
+                                <div class="options">
+                                    <button class="accent-btn" data-accent="Welsh">Welsh</button>
+                                    <button class="accent-btn" data-accent="Irish Storyteller">Irish Storyteller</button>
+                                    <button class="accent-btn" data-accent="Scottish Highlander">Scottish Highlander</button>
+                                    <button class="accent-btn" data-accent="Jamaican">Jamaican</button>
+                                    <button class="accent-btn" data-accent="Nigerian English">Nigerian English</button>
+                                    <button class="accent-btn" data-accent="Cajun Louisiana">Cajun Louisiana</button>
+                                    <button class="accent-btn" data-accent="Newfoundland Canadian">Newfoundland Canadian</button>
+                                    <button class="accent-btn" data-accent="Mumbai English">Mumbai English</button>
+                                    <button class="accent-btn" data-accent="Singaporean English">Singaporean English</button>
+                                    <button class="accent-btn" data-accent="German Physicist">German Physicist</button>
+                                    <button class="accent-btn" data-accent="Parisian Intellectual">Parisian Intellectual</button>
+                                    <button class="accent-btn" data-accent="French Resistance Fighter">French Resistance</button>
+                                    <button class="accent-btn" data-accent="Bavarian">Bavarian</button>
+                                    <button class="accent-btn" data-accent="Quebec French">Quebec French</button>
+                                    <button class="accent-btn" data-accent="Kiwi Casual">Kiwi Casual</button>
+                                    <button class="accent-btn" data-accent="Southland NZ">Southland NZ</button>
+                                    <button class="accent-btn" data-accent="Hokianga/Tai Tokerau">Hokianga</button>
+                                    <button class="accent-btn" data-accent="West Coast NZ">West Coast NZ</button>
+                                    <button class="accent-btn" data-accent="Te Reo-inflected English">Te Reo-inflected</button>
+                                    <button class="accent-btn" data-accent="1950s NZ Newsreader">1950s NZ Newsreader</button>
+                                </div>
+                            </details>
+
+                            <details class="category">
+                                <summary>Character</summary>
+                                <div class="options">
+                                    <button class="accent-btn" data-accent="Ship's Captain">Ship's Captain</button>
+                                    <button class="accent-btn" data-accent="Zen Monk">Zen Monk</button>
+                                    <button class="accent-btn" data-accent="Italian Nonna">Italian Nonna</button>
+                                    <button class="accent-btn" data-accent="Texas Auctioneer">Texas Auctioneer</button>
+                                    <button class="accent-btn" data-accent="Soviet Broadcaster">Soviet Broadcaster</button>
+                                    <button class="accent-btn" data-accent="Drunk Poet">Drunk Poet</button>
+                                    <button class="accent-btn" data-accent="Whispering Conspiracist">Whispering Conspiracist</button>
+                                    <button class="accent-btn" data-accent="Sports Commentator">Sports Commentator</button>
+                                    <button class="accent-btn" data-accent="Stern Bureaucrat">Stern Bureaucrat</button>
+                                    <button class="accent-btn" data-accent="Berlin Cabaret Singer">Berlin Cabaret Singer</button>
+                                </div>
+                            </details>
+
+                            <details class="category">
+                                <summary>Mood</summary>
+                                <div class="options">
+                                    <button class="accent-btn" data-accent="Warm & Gentle">Warm & Gentle</button>
+                                    <button class="accent-btn" data-accent="Urgent">Urgent</button>
+                                    <button class="accent-btn" data-accent="Formal">Formal</button>
+                                    <button class="accent-btn" data-accent="Playful">Playful</button>
+                                    <button class="accent-btn" data-accent="Melancholic">Melancholic</button>
+                                    <button class="accent-btn" data-accent="Conspiratorial">Conspiratorial</button>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <label for="accentStrength">Accent Strength</label>
+                        <input type="range" id="accentStrength" min="0" max="100" value="50">
+                        <div class="slider-labels">
+                            <span>Subtle</span>
+                            <span>Strong</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="control-section">
+                    <h3>Current Style</h3>
+                    <div class="current-style" id="currentStyle">
+                        <span class="style-badge">Warm & Gentle</span>
+                        <span class="auto-badge" id="autoBadge">Auto</span>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Center Panel: Conversation -->
+            <main class="conversation-panel">
+                <div class="conversation-container">
+                    <div id="conversationHistory" class="conversation-history">
+                        <div class="welcome-message">
+                            <h2>Welcome to Vox</h2>
+                            <p>Start a conversation by typing or speaking. The AI will respond with a voice that adapts to the context of our chat.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-area">
+                    <div class="input-container">
+                        <button id="voiceBtn" class="voice-btn" title="Click to speak">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </button>
+                        <input
+                            type="text"
+                            id="messageInput"
+                            placeholder="Type a message or click the mic to speak..."
+                            autocomplete="off"
+                        >
+                        <button id="sendBtn" class="send-btn">Send</button>
+                    </div>
+                    <div class="listening-indicator" id="listeningIndicator" style="display: none;">
+                        <span class="pulse"></span>
+                        Listening...
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
