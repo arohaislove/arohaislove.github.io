@@ -50,6 +50,9 @@ let recordingStartTime = null;
 let recordingInterval = null;
 let analysisData = null;
 let lastParameters = null;
+let syncedLyrics = null; // Stores lyrics with timestamps
+let syncInterval = null; // Interval for syncing
+let audioStartTime = null; // When audio started playing
 
 const API_URL = 'https://cors-proxy.zammel.workers.dev';
 
@@ -74,6 +77,12 @@ generateBtn.addEventListener('click', handleGenerateManual);
 // Output
 regenerateBtn.addEventListener('click', handleRegenerate);
 copyBtn.addEventListener('click', handleCopy);
+
+// Audio player sync events
+audioPlayer.addEventListener('play', startLyricSync);
+audioPlayer.addEventListener('pause', stopLyricSync);
+audioPlayer.addEventListener('ended', stopLyricSync);
+audioPlayer.addEventListener('seeked', updateLyricSync);
 
 // =============================================================================
 // Mode Switching
@@ -606,6 +615,208 @@ ${trackDescription}
 Please generate lyrics for this instrumental. Include verse/chorus structure markers if appropriate. The lyrics should feel natural when sung to this music.`;
 }
 
+// =============================================================================
+// Lyrics Synchronization
+// =============================================================================
+
+/**
+ * Calculate timestamps for each lyric line based on BPM and syllable count
+ */
+function calculateLyricTimestamps(lyrics, bpm) {
+    if (!bpm) bpm = 120; // Default BPM
+
+    const lines = lyrics.split('\n').filter(line => line.trim().length > 0);
+    const timestampedLines = [];
+
+    const beatsPerSecond = bpm / 60;
+    const secondsPerBeat = 60 / bpm;
+
+    let currentTime = 0; // Start at beginning
+
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        // Skip section markers (e.g., [Verse], [Chorus])
+        if (trimmedLine.match(/^\[.*\]$/)) {
+            timestampedLines.push({
+                text: trimmedLine,
+                timestamp: currentTime,
+                isSectionMarker: true,
+                syllables: 0
+            });
+            // Section markers get 2 beats of space
+            currentTime += secondsPerBeat * 2;
+            continue;
+        }
+
+        // Count syllables (rough approximation)
+        const syllables = countSyllables(trimmedLine);
+
+        // Calculate duration for this line
+        // Assume roughly 2-4 syllables per beat depending on tempo
+        const syllablesPerBeat = bpm < 90 ? 2 : (bpm > 140 ? 4 : 3);
+        const beatsForLine = Math.max(2, Math.ceil(syllables / syllablesPerBeat));
+        const duration = beatsForLine * secondsPerBeat;
+
+        timestampedLines.push({
+            text: trimmedLine,
+            timestamp: currentTime,
+            duration: duration,
+            syllables: syllables,
+            isSectionMarker: false
+        });
+
+        currentTime += duration;
+    }
+
+    return timestampedLines;
+}
+
+/**
+ * Count syllables in a text (rough approximation)
+ */
+function countSyllables(text) {
+    // Remove section markers and punctuation
+    text = text.replace(/\[.*?\]/g, '').toLowerCase();
+
+    // Count vowel groups as syllables
+    const vowels = text.match(/[aeiouy]+/g);
+    let count = vowels ? vowels.length : 0;
+
+    // Adjust for silent e
+    if (text.endsWith('e')) count--;
+
+    // Minimum 1 syllable per word
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    return Math.max(count, words.length);
+}
+
+/**
+ * Render synchronized lyrics display
+ */
+function renderSyncedLyrics(timestampedLines) {
+    const container = document.getElementById('syncedLyricsContainer');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    timestampedLines.forEach((line, index) => {
+        const lineDiv = document.createElement('div');
+        lineDiv.className = line.isSectionMarker ? 'synced-section-marker' : 'synced-lyric-line';
+        lineDiv.dataset.index = index;
+        lineDiv.dataset.timestamp = line.timestamp;
+
+        if (!line.isSectionMarker) {
+            const textSpan = document.createElement('span');
+            textSpan.className = 'lyric-text';
+            textSpan.textContent = line.text;
+            lineDiv.appendChild(textSpan);
+        } else {
+            lineDiv.textContent = line.text;
+        }
+
+        container.appendChild(lineDiv);
+    });
+}
+
+/**
+ * Sync lyrics with audio playback
+ */
+function updateLyricSync() {
+    if (!syncedLyrics || !audioPlayer.duration) return;
+
+    const currentTime = audioPlayer.currentTime;
+    const container = document.getElementById('syncedLyricsContainer');
+    if (!container) return;
+
+    // Find current line
+    let currentLineIndex = -1;
+    for (let i = syncedLyrics.length - 1; i >= 0; i--) {
+        if (currentTime >= syncedLyrics[i].timestamp) {
+            currentLineIndex = i;
+            break;
+        }
+    }
+
+    // Update highlights
+    const lines = container.querySelectorAll('.synced-lyric-line, .synced-section-marker');
+    lines.forEach((line, index) => {
+        if (index === currentLineIndex) {
+            line.classList.add('active');
+            // Scroll into view
+            line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (index < currentLineIndex) {
+            line.classList.add('past');
+            line.classList.remove('active');
+        } else {
+            line.classList.remove('active', 'past');
+        }
+    });
+
+    // Update beat indicator
+    updateBeatIndicator(currentTime);
+}
+
+/**
+ * Update beat indicator pulse
+ */
+function updateBeatIndicator(currentTime) {
+    const beatIndicator = document.getElementById('beatIndicator');
+    if (!beatIndicator || !analysisData) return;
+
+    const bpm = analysisData.bpm || 120;
+    const secondsPerBeat = 60 / bpm;
+    const beatNumber = Math.floor(currentTime / secondsPerBeat) % 4;
+
+    // Pulse on beat 0 (downbeat)
+    const timeInBeat = (currentTime % secondsPerBeat) / secondsPerBeat;
+
+    if (timeInBeat < 0.1) {
+        beatIndicator.classList.add('pulse');
+        if (beatNumber === 0) {
+            beatIndicator.classList.add('downbeat');
+        }
+    } else {
+        beatIndicator.classList.remove('pulse', 'downbeat');
+    }
+}
+
+/**
+ * Start syncing lyrics with audio
+ */
+function startLyricSync() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+    }
+
+    // Update every 50ms for smooth sync
+    syncInterval = setInterval(updateLyricSync, 50);
+}
+
+/**
+ * Stop syncing lyrics
+ */
+function stopLyricSync() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+}
+
+/**
+ * Adjust timing offset for all lyrics
+ */
+function adjustLyricTiming(offsetSeconds) {
+    if (!syncedLyrics) return;
+
+    syncedLyrics = syncedLyrics.map(line => ({
+        ...line,
+        timestamp: Math.max(0, line.timestamp + offsetSeconds)
+    }));
+
+    renderSyncedLyrics(syncedLyrics);
+}
+
 function displayLyrics(lyrics) {
     lyricsOutput.style.opacity = '0';
     lyricsOutput.textContent = lyrics;
@@ -614,6 +825,18 @@ function displayLyrics(lyrics) {
         lyricsOutput.style.transition = 'opacity 0.6s ease';
         lyricsOutput.style.opacity = '1';
     }, 50);
+
+    // Calculate and display synced lyrics if audio is available
+    if (audioPlayer.src && analysisData && analysisData.bpm) {
+        syncedLyrics = calculateLyricTimestamps(lyrics, analysisData.bpm);
+        renderSyncedLyrics(syncedLyrics);
+
+        // Show synced lyrics container
+        const syncContainer = document.getElementById('syncedLyricsSection');
+        if (syncContainer) {
+            syncContainer.style.display = 'block';
+        }
+    }
 }
 
 async function handleRegenerate() {

@@ -164,6 +164,53 @@
                 </div>
                 <div id="lyricsOutput" class="lyrics-output"></div>
 
+                <!-- Synchronized Lyrics Display -->
+                <div id="syncedLyricsSection" class="synced-lyrics-section" style="display: none;">
+                    <div class="synced-header">
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Synchronized Lyrics
+                        </h3>
+                        <div class="sync-controls">
+                            <div class="beat-indicator-wrapper">
+                                <div id="beatIndicator" class="beat-indicator"></div>
+                                <span class="beat-label">Beat</span>
+                            </div>
+                            <div class="timing-controls">
+                                <label>Timing Adjust:</label>
+                                <button class="timing-btn" onclick="adjustLyricTiming(-0.5)" title="Earlier">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                    -0.5s
+                                </button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(-0.1)" title="Earlier">-0.1s</button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(0.1)" title="Later">+0.1s</button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(0.5)" title="Later">
+                                    +0.5s
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="synced-lyrics-container" id="syncedLyricsContainer">
+                        <!-- Synced lyrics will be rendered here -->
+                    </div>
+                    <p class="sync-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        Press play on the audio to see lyrics sync in real-time. Use timing adjust if lyrics are slightly off.
+                    </p>
+                </div>
+
                 <div class="regenerate-section">
                     <p class="regenerate-prompt">Want to explore a different angle?</p>
                     <button id="regenerateBtn" class="secondary-btn">Regenerate with Same Parameters</button>

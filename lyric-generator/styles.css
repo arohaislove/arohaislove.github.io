@@ -611,6 +611,221 @@ footer {
     color: var(--accent-primary);
 }
 
+/* =============================================================================
+   Synchronized Lyrics Display
+   ============================================================================= */
+
+.synced-lyrics-section {
+    margin-top: 2rem;
+    background: var(--bg-secondary);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--border-color);
+}
+
+.synced-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.synced-header h3 {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+}
+
+.sync-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* Beat Indicator */
+.beat-indicator-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.beat-indicator {
+    width: 16px;
+    height: 16px;
+    background: var(--accent-tertiary);
+    border-radius: 50%;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.beat-indicator.pulse {
+    transform: scale(1.3);
+    background: var(--accent-primary);
+}
+
+.beat-indicator.pulse.downbeat {
+    background: var(--accent-secondary);
+    transform: scale(1.5);
+}
+
+.beat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Timing Controls */
+.timing-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timing-controls label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-right: 0.25rem;
+}
+
+.timing-btn {
+    padding: 0.4rem 0.75rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.timing-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+.timing-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* Synced Lyrics Container */
+.synced-lyrics-container {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 1rem;
+    background: linear-gradient(135deg, rgba(212, 165, 165, 0.05) 0%, rgba(200, 181, 212, 0.05) 100%);
+    border-radius: 12px;
+    scroll-behavior: smooth;
+}
+
+/* Synced Lyric Lines */
+.synced-lyric-line,
+.synced-section-marker {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+}
+
+.synced-lyric-line {
+    background: white;
+    border-left: 3px solid transparent;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.synced-section-marker {
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 0;
+    margin-top: 1rem;
+}
+
+/* Active lyric line */
+.synced-lyric-line.active {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color: white;
+    border-left-color: var(--accent-tertiary);
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(212, 165, 165, 0.3);
+    font-weight: 500;
+}
+
+/* Past lyric lines (already sung) */
+.synced-lyric-line.past {
+    opacity: 0.5;
+    background: #f9f9f9;
+}
+
+/* Hover effect */
+.synced-lyric-line:hover {
+    background: #fafafa;
+    border-left-color: var(--accent-primary);
+}
+
+.synced-lyric-line.active:hover {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+}
+
+/* Sync hint */
+.sync-hint {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(165, 196, 212, 0.1);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.5;
+}
+
+.sync-hint svg {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    color: var(--accent-tertiary);
+}
+
+/* Scrollbar styling for synced lyrics */
+.synced-lyrics-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.synced-lyrics-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+}
+
+.synced-lyrics-container::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 4px;
+}
+
+.synced-lyrics-container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
 /* Responsive adjustments for audio mode */
 @media (max-width: 768px) {
     .mode-toggle {
@@ -633,5 +848,20 @@ footer {
 
     .analysis-results {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .synced-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sync-controls {
+        width: 100%;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .timing-controls {
+        flex-wrap: wrap;
     }
 }
