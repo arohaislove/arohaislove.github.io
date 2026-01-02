@@ -1,0 +1,3 @@
+# Ignore everything - this repo should NOT be deployed via Cloudflare Pages
+# It uses GitHub Pages for hosting and GitHub Actions for worker deployment
+*

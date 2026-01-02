@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ekphrasis — Art Finds Its Voice</title>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+    <script src="/shared/analytics.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #e8e4df;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 3.5rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 0.5rem;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: #888;
+            font-weight: 300;
+            font-style: italic;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+        }
+
+        .upload-section {
+            background: #141414;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #2a2a2a;
+        }
+
+        .section-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #fff;
+            font-weight: 400;
+        }
+
+        .drop-zone {
+            border: 2px dashed #3a3a3a;
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #0a0a0a;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #c9a227;
+            background: #1a1a1a;
+        }
+
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .drop-zone-text {
+            color: #888;
+            font-size: 0.95rem;
+        }
+
+        .drop-zone-text span {
+            color: #c9a227;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .image-preview {
+            display: none;
+            margin-top: 1.5rem;
+            position: relative;
+        }
+
+        .image-preview.active {
+            display: block;
+        }
+
+        .image-preview img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .clear-image {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+
+        .style-selector {
+            margin-top: 1.5rem;
+        }
+
+        .style-label {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .style-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .style-btn {
+            padding: 0.5rem 1rem;
+            background: #1a1a1a;
+            border: 1px solid #3a3a3a;
+            border-radius: 20px;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .style-btn:hover {
+            border-color: #c9a227;
+            color: #fff;
+        }
+
+        .style-btn.active {
+            background: #c9a227;
+            border-color: #c9a227;
+            color: #000;
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            background: linear-gradient(135deg, #c9a227 0%, #a68523 100%);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(201, 162, 39, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #3a3a3a;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .output-section {
+            background: #141414;
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid #2a2a2a;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-placeholder {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .output-placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .output-content {
+            display: none;
+        }
+
+        .output-content.active {
+            display: block;
+        }
+
+        .poem-text {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            line-height: 1.9;
+            color: #e8e4df;
+            white-space: pre-line;
+            font-weight: 300;
+        }
+
+        .poem-style-label {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a2a;
+            font-size: 0.85rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .output-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            color: #888;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            border-color: #c9a227;
+            color: #c9a227;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #2a2a2a;
+            border-top-color: #c9a227;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #888;
+            font-style: italic;
+        }
+
+        .error-message {
+            background: #2a1515;
+            border: 1px solid #5a2020;
+            color: #ff6b6b;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .sample-images {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .sample-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .sample-img {
+            aspect-ratio: 1;
+            background-size: cover;
+            background-position: center;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .sample-img:hover {
+            opacity: 1;
+            border-color: #c9a227;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #1a1a1a;
+            color: #444;
+            font-size: 0.85rem;
+        }
+
+        footer a {
+            color: #c9a227;
+            text-decoration: none;
+        }
+
+        @media (max-width: 900px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .poem-text {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .upload-section, .output-section {
+                padding: 1.5rem;
+            }
+
+            .style-options {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ekphrasis</h1>
+            <p class="subtitle">Where art finds its voice</p>
+        </header>
+
+        <div class="main-grid">
+            <div class="upload-section">
+                <h2 class="section-title">Your Image</h2>
+                
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">🖼️</div>
+                    <p class="drop-zone-text">
+                        Drag & drop an image here<br>
+                        or <span id="browseLink">browse to upload</span>
+                    </p>
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+
+                <div class="image-preview" id="imagePreview">
+                    <img id="previewImg" src="" alt="Preview">
+                    <button class="clear-image" id="clearImage" data-track="Clear Image">×</button>
+                </div>
+
+                <div class="style-selector">
+                    <label class="style-label">Choose a voice:</label>
+                    <div class="style-options">
+                        <button class="style-btn active" data-style="freeverse" data-track="Style: Free Verse">Free Verse</button>
+                        <button class="style-btn" data-style="haiku" data-track="Style: Haiku">Haiku</button>
+                        <button class="style-btn" data-style="sonnet" data-track="Style: Sonnet">Sonnet</button>
+                        <button class="style-btn" data-style="lyrics" data-track="Style: Song Lyrics">Song Lyrics</button>
+                        <button class="style-btn" data-style="quote" data-track="Style: Quote">Quote</button>
+                        <button class="style-btn" data-style="prose" data-track="Style: Flash Prose">Flash Prose</button>
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generateBtn" disabled data-track="Generate Poem">Give This Image a Voice</button>
+
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">The Voice</h2>
+                
+                <div class="output-placeholder" id="outputPlaceholder">
+                    <div class="output-placeholder-icon">✨</div>
+                    <p>Upload an image and watch<br>as it finds its words...</p>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">Listening to the image...</p>
+                </div>
+
+                <div class="output-content" id="outputContent">
+                    <div class="poem-text" id="poemText"></div>
+                    <div class="poem-style-label" id="poemStyleLabel"></div>
+                    <div class="output-actions">
+                        <button class="action-btn" id="copyBtn" data-track="Copy Poem">Copy</button>
+                        <button class="action-btn" id="regenerateBtn" data-track="Regenerate Poem">Try Again</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>A companion to <a href="/chromesthesia/">Chromesthesia</a> — words to art, art to words</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const WORKER_URL = 'https://mute-moon-54a3.zammel.workers.dev';
+
+        // State
+        let currentImage = null;
+        let currentStyle = 'freeverse';
+
+        // Elements
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const browseLink = document.getElementById('browseLink');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const clearImage = document.getElementById('clearImage');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputPlaceholder = document.getElementById('outputPlaceholder');
+        const loading = document.getElementById('loading');
+        const outputContent = document.getElementById('outputContent');
+        const poemText = document.getElementById('poemText');
+        const poemStyleLabel = document.getElementById('poemStyleLabel');
+        const errorMessage = document.getElementById('errorMessage');
+        const copyBtn = document.getElementById('copyBtn');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+
+        // Style descriptions for the prompt
+        const stylePrompts = {
+            freeverse: 'Write a free verse poem (8-16 lines) inspired by this image. Let the words flow naturally without strict meter or rhyme. Be evocative and specific to what you see.',
+            haiku: 'Write 3 haikus (each 5-7-5 syllables) inspired by this image. Capture different aspects or moments within the scene. Separate each haiku with a blank line.',
+            sonnet: 'Write a Shakespearean-style sonnet (14 lines, iambic pentameter, ABAB CDCD EFEF GG rhyme scheme) inspired by this image. Be romantic and contemplative.',
+            lyrics: 'Write song lyrics (2 verses and a chorus) inspired by this image. Make it emotional and singable. Label the sections (Verse 1, Chorus, Verse 2).',
+            quote: 'Write 3 profound, philosophical one-line quotes (like something you\'d find in a museum) inspired by this image. Each should stand alone as wisdom. Separate with blank lines.',
+            prose: 'Write a flash fiction piece (3-4 sentences, ~50 words) inspired by this image. Make it vivid and emotionally resonant, like the opening of a novel.'
+        };
+
+        const styleLabels = {
+            freeverse: 'Free Verse Poetry',
+            haiku: 'Haiku Collection',
+            sonnet: 'Sonnet',
+            lyrics: 'Song Lyrics',
+            quote: 'Philosophical Quotes',
+            prose: 'Flash Prose'
+        };
+
+        // Event Listeners
+        browseLink.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImage(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImage(file);
+            }
+        });
+
+        clearImage.addEventListener('click', () => {
+            currentImage = null;
+            imagePreview.classList.remove('active');
+            dropZone.style.display = 'block';
+            generateBtn.disabled = true;
+            fileInput.value = '';
+        });
+
+        document.querySelectorAll('.style-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStyle = btn.dataset.style;
+            });
+        });
+
+        generateBtn.addEventListener('click', generatePoem);
+        copyBtn.addEventListener('click', copyPoem);
+        regenerateBtn.addEventListener('click', generatePoem);
+
+        // Functions
+        function handleImage(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                previewImg.src = currentImage;
+                imagePreview.classList.add('active');
+                dropZone.style.display = 'none';
+                generateBtn.disabled = false;
+                hideError();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function generatePoem() {
+            if (!currentImage) return;
+
+            // Show loading
+            outputPlaceholder.style.display = 'none';
+            outputContent.classList.remove('active');
+            loading.classList.add('active');
+            hideError();
+            generateBtn.disabled = true;
+
+            try {
+                // Extract base64 data and media type
+                const matches = currentImage.match(/^data:(.+);base64,(.+)$/);
+                if (!matches) throw new Error('Invalid image format');
+                
+                const mediaType = matches[1];
+                const base64Data = matches[2];
+
+                const prompt = stylePrompts[currentStyle] + '\n\nIMPORTANT: Only output the creative writing itself. No introductions, explanations, or commentary. Just the poem/lyrics/quotes/prose.';
+
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                {
+                                    type: 'image',
+                                    source: {
+                                        type: 'base64',
+                                        media_type: mediaType,
+                                        data: base64Data
+                                    }
+                                },
+                                {
+                                    type: 'text',
+                                    text: prompt
+                                }
+                            ]
+                        }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate. Please try again.');
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message || 'API error occurred');
+                }
+
+                const poem = data.content[0].text;
+                displayPoem(poem);
+
+            } catch (error) {
+                showError(error.message);
+                outputPlaceholder.style.display = 'flex';
+            } finally {
+                loading.classList.remove('active');
+                generateBtn.disabled = false;
+            }
+        }
+
+        function displayPoem(poem) {
+            poemText.textContent = poem;
+            poemStyleLabel.textContent = '— ' + styleLabels[currentStyle];
+            outputContent.classList.add('active');
+        }
+
+        function copyPoem() {
+            const text = poemText.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('active');
+        }
+
+        // Initialize analytics when DOM is ready
+        if (window.Analytics) {
+            Analytics.init();
+        }
+    </script>
+</body>
+</html>

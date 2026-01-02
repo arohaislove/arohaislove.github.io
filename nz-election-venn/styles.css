@@ -1,0 +1,484 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/* Navigation */
+.back-nav {
+    margin-bottom: 1.5rem;
+}
+
+.back-nav a {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.back-nav a:hover {
+    color: #e2e8f0;
+}
+
+/* Header */
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.5rem;
+}
+
+.header h2 {
+    font-size: 1.25rem;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+}
+
+.election-date {
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+/* Venn Diagram */
+.venn-container {
+    max-width: 1000px;
+    margin: 0 auto 2rem;
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+#venn-diagram {
+    width: 100%;
+    height: auto;
+}
+
+.interactive-area {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.interactive-area:hover {
+    filter: brightness(1.2);
+}
+
+.interactive-area:focus {
+    outline: 3px solid #60a5fa;
+    outline-offset: 3px;
+}
+
+/* Info Panel */
+.info-panel {
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border-left: 4px solid #6366f1;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.info-header h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 0.25rem;
+}
+
+.info-header p {
+    font-size: 0.95rem;
+    color: #94a3b8;
+}
+
+.close-btn {
+    background: #334155;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.close-btn:hover {
+    background: #475569;
+    color: #f1f5f9;
+}
+
+.close-btn:focus {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+}
+
+.policy-list {
+    list-style: none;
+    padding: 0;
+}
+
+.policy-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #334155;
+}
+
+.policy-list li:last-child {
+    border-bottom: none;
+}
+
+.check-icon {
+    color: #22c55e;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+}
+
+/* Party Section */
+.party-section {
+    margin-bottom: 2rem;
+}
+
+.party-section h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #f1f5f9;
+}
+
+.party-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
+}
+
+.party-card {
+    background: #1e293b;
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+    border-top: 3px solid;
+    cursor: pointer;
+}
+
+.party-card:hover,
+.party-card.hovered {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.party-card:focus,
+.party-card.focused {
+    outline: 2px solid #60a5fa;
+    outline-offset: 2px;
+    transform: translateY(-4px);
+}
+
+.party-card h4 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.party-card .leader {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 1rem;
+}
+
+.party-card .policy-header {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+.unique-policies {
+    list-style: none;
+    padding: 0;
+}
+
+.unique-policies li {
+    font-size: 0.85rem;
+    color: #cbd5e1;
+    padding: 0.375rem 0;
+    padding-left: 0.75rem;
+    position: relative;
+}
+
+.unique-policies li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #64748b;
+}
+
+/* Insights Section */
+.insights-section {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.insights-section h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: #f1f5f9;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.insight-column h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+}
+
+.agreement-header {
+    color: #34d399;
+}
+
+.dividing-header {
+    color: #fb7185;
+}
+
+.insight-list {
+    list-style: none;
+    padding: 0;
+}
+
+.insight-list li {
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    padding: 0.375rem 0;
+    padding-left: 0.75rem;
+    position: relative;
+}
+
+.insight-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #64748b;
+}
+
+.insight-list strong {
+    color: #e2e8f0;
+}
+
+/* Coalition Section */
+.coalition-section {
+    background: rgba(30, 41, 59, 0.3);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.coalition-section p {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.coalition-section strong {
+    color: #e2e8f0;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+/* Accessibility - Screen reader only content */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 0.5rem;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+    }
+
+    .header h2 {
+        font-size: 1rem;
+    }
+
+    .venn-container {
+        padding: 0.5rem;
+    }
+
+    .info-panel {
+        padding: 1rem;
+    }
+
+    .info-header {
+        flex-direction: column;
+    }
+
+    .close-btn {
+        align-self: flex-end;
+        margin-left: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .party-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .insights-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .coalition-section p {
+        font-size: 0.8rem;
+    }
+
+    /* Make SVG text more readable on mobile */
+    #venn-diagram text {
+        font-size: 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.25rem;
+    }
+
+    .header h2 {
+        font-size: 0.9rem;
+    }
+
+    .election-date {
+        font-size: 0.8rem;
+    }
+
+    .party-section h3 {
+        font-size: 1.25rem;
+    }
+
+    .insights-section h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+
+    .back-nav,
+    .close-btn {
+        display: none;
+    }
+
+    .info-panel {
+        page-break-inside: avoid;
+    }
+
+    .party-card {
+        page-break-inside: avoid;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Dark mode support (already dark, but for consistency) */
+@media (prefers-color-scheme: light) {
+    /* Could add light mode styles here if desired */
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .interactive-area:focus {
+        outline-width: 4px;
+    }
+
+    .close-btn:focus,
+    .party-card:focus {
+        outline-width: 3px;
+    }
+}

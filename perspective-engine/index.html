@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Perspective Engine - Aroha's Projects</title>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+    <script src="/shared/analytics.js"></script>
+
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -64,6 +73,13 @@
           const [currentAge, setCurrentAge] = useState(30);
           const [goalAge, setGoalAge] = useState(85);
           const [quoteIndex, setQuoteIndex] = useState(0);
+
+          // Initialize analytics on component mount
+          useEffect(() => {
+            if (window.Analytics) {
+              window.Analytics.init();
+            }
+          }, []);
 
           const quotes = [
             { text: "You could leave life right now. Let that determine what you do and say and think.", author: "Marcus Aurelius" },
@@ -203,7 +219,7 @@
                     A visual meditation on time, mortality, and perceptual acceleration
                   </p>
                   <nav className="pt-4">
-                    <a href="/" className="text-green-400 hover:text-green-300 transition-colors">
+                    <a href="/" className="text-green-400 hover:text-green-300 transition-colors" data-track="Back to Projects">
                       ← Back to Projects
                     </a>
                   </nav>
@@ -227,6 +243,7 @@
                         min="1"
                         max="119"
                         step="1"
+                        data-track="Adjust Current Age"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>1</span>
@@ -248,6 +265,7 @@
                         min={currentAge + 1}
                         max="120"
                         step="1"
+                        data-track="Adjust Goal Age"
                       />
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>{currentAge + 1}</span>

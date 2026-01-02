@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NZ Policy Matcher 2026 - Ko wai tō pāti? - Aroha's Projects</title>
+    <meta name="description" content="Find out which NZ political party best matches your values for the 2026 election">
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+    <script src="/shared/analytics.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="back-nav">
+            <a href="/" data-track="Back to Projects">← Back to Projects</a>
+        </nav>
+
+        <!-- Start Screen -->
+        <section id="start-screen" class="screen active">
+            <header class="header">
+                <h1>NZ Policy Matcher 2026</h1>
+                <h2>Ko wai tō pāti?</h2>
+                <p class="subtitle">Which party aligns with your whakaaro?</p>
+            </header>
+
+            <div class="intro-content">
+                <p class="intro-text">
+                    Answer 15 questions about key policy issues facing Aotearoa New Zealand.
+                    We'll show you which political parties align with your views.
+                </p>
+
+                <div class="features">
+                    <div class="feature">
+                        <span class="feature-icon">✓</span>
+                        <span>See your match with each party</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🔍</span>
+                        <span>Discover where you agree and disagree</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">💡</span>
+                        <span>Find out how close you are to other parties</span>
+                    </div>
+                </div>
+
+                <button id="start-btn" class="primary-btn" data-track="Start Quiz">Tīmata - Start Quiz</button>
+
+                <p class="disclaimer">
+                    This is an independent educational tool. Not affiliated with any political party.
+                    Data compiled from party announcements and official policy documents.
+                </p>
+            </div>
+        </section>
+
+        <!-- Quiz Screen -->
+        <section id="quiz-screen" class="screen">
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <div class="progress-text">
+                <span id="question-number">Question 1 of 15</span>
+            </div>
+
+            <div class="quiz-content">
+                <div class="category-tag" id="category-tag"></div>
+
+                <h3 id="question-text" class="question-text"></h3>
+
+                <div class="answer-options">
+                    <button class="answer-btn" data-value="1" data-track="Answer: Strongly Agree">
+                        <span class="answer-label">Strongly Agree</span>
+                        <span class="answer-sublabel">Āe rawa</span>
+                    </button>
+                    <button class="answer-btn" data-value="0.5" data-track="Answer: Somewhat Agree">
+                        <span class="answer-label">Somewhat Agree</span>
+                        <span class="answer-sublabel">Āe</span>
+                    </button>
+                    <button class="answer-btn" data-value="0" data-track="Answer: Neutral">
+                        <span class="answer-label">Neutral</span>
+                        <span class="answer-sublabel">Kāore he whakaaro</span>
+                    </button>
+                    <button class="answer-btn" data-value="-0.5" data-track="Answer: Somewhat Disagree">
+                        <span class="answer-label">Somewhat Disagree</span>
+                        <span class="answer-sublabel">Kāo</span>
+                    </button>
+                    <button class="answer-btn" data-value="-1" data-track="Answer: Strongly Disagree">
+                        <span class="answer-label">Strongly Disagree</span>
+                        <span class="answer-sublabel">Kāo rawa</span>
+                    </button>
+                </div>
+
+                <button id="back-btn" class="secondary-btn" style="display: none;" data-track="Previous Question">← Previous Question</button>
+            </div>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="results-screen" class="screen">
+            <header class="results-header">
+                <h2>Ngā Hua - Your Results</h2>
+                <p class="results-subtitle">Here's how you match with each party</p>
+            </header>
+
+            <div id="results-content" class="results-content">
+                <!-- Results will be inserted here by JavaScript -->
+            </div>
+
+            <div class="insights-section">
+                <h3>One Policy Away...</h3>
+                <p class="insights-intro">
+                    You might be closer to other parties than you think. Here's what would change your top match:
+                </p>
+                <div id="flip-insights" class="flip-insights">
+                    <!-- Flip insights will be inserted here -->
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="restart-btn" class="primary-btn" data-track="Restart Quiz">Take Quiz Again</button>
+                <a href="/nz-election-venn/" class="secondary-btn" data-track="Explore Policy Overlaps">Explore Policy Overlaps →</a>
+            </div>
+
+            <footer class="results-footer">
+                <p>Election Day: By December 19, 2026</p>
+                <p class="disclaimer-small">
+                    Policy positions based on party announcements and official documents (Dec 2024-2025).
+                    Always verify current policies on official party websites before voting.
+                </p>
+            </footer>
+        </section>
+    </div>
+
+    <script src="policies.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

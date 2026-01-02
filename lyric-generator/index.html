@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riff to Verse — Lyric Generator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="back-link">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header class="app-header">
+            <h1>Riff to Verse</h1>
+            <p class="tagline">Transform instrumental music into lyrics that breathe with the rhythm</p>
+        </header>
+
+        <div class="container">
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="audio">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                    Analyze Audio
+                </button>
+                <button class="mode-btn" data-mode="manual">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    Describe Manually
+                </button>
+            </div>
+
+            <!-- Audio Analysis Section -->
+            <section class="input-section audio-mode active" id="audioSection">
+                <h2>Let Me Hear Your Music</h2>
+                <p class="instructions">Upload an audio file or record from your microphone, and I'll analyze it to generate lyrics.</p>
+
+                <div class="audio-input-options">
+                    <div class="audio-option">
+                        <label for="audioFile" class="file-upload-label">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <span>Upload Audio File</span>
+                            <small>MP3, WAV, OGG, M4A</small>
+                        </label>
+                        <input type="file" id="audioFile" accept="audio/*" hidden>
+                    </div>
+
+                    <div class="audio-divider">or</div>
+
+                    <div class="audio-option">
+                        <button id="recordBtn" class="record-btn">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                            <span>Record from Microphone</span>
+                            <small>Play your instrumental</small>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Player & Analysis Display -->
+                <div id="audioPlayerSection" class="audio-player-section" style="display: none;">
+                    <audio id="audioPlayer" controls></audio>
+                    <div class="recording-controls" id="recordingControls" style="display: none;">
+                        <div class="recording-indicator">
+                            <span class="recording-pulse"></span>
+                            Recording... <span id="recordingTime">0:00</span>
+                        </div>
+                        <button id="stopRecordingBtn" class="stop-recording-btn">Stop Recording</button>
+                    </div>
+                    <div id="analysisStatus" class="analysis-status"></div>
+                    <div id="analysisResults" class="analysis-results"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="themeAudio">Lyric Theme (Optional)</label>
+                    <input type="text" id="themeAudio" placeholder="e.g., longing, journey, transformation... or leave blank for AI to decide">
+                </div>
+
+                <button id="generateFromAudioBtn" class="generate-btn" disabled>
+                    <span class="btn-text">Generate Lyrics from Audio</span>
+                    <span class="btn-loading">Analyzing and writing...</span>
+                </button>
+            </section>
+
+            <!-- Manual Description Section -->
+            <section class="input-section manual-mode" id="manualSection">
+                <h2>Describe Your Instrumental</h2>
+                <p class="instructions">Paint a picture of your track — the mood, tempo, energy, instruments, structure...</p>
+
+                <div class="form-group">
+                    <label for="mood">Mood & Atmosphere</label>
+                    <input type="text" id="mood" placeholder="e.g., melancholic, euphoric, haunting, driving...">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tempo">Tempo (BPM)</label>
+                        <input type="number" id="tempo" placeholder="120" min="40" max="200">
+                    </div>
+                    <div class="form-group">
+                        <label for="energy">Energy Level</label>
+                        <select id="energy">
+                            <option value="">Select...</option>
+                            <option value="low">Low / Ambient</option>
+                            <option value="medium-low">Medium-Low / Laid back</option>
+                            <option value="medium">Medium / Steady</option>
+                            <option value="medium-high">Medium-High / Driving</option>
+                            <option value="high">High / Intense</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="instruments">Key Instruments & Textures</label>
+                    <input type="text" id="instruments" placeholder="e.g., acoustic guitar, reverb-heavy synths, soft drums...">
+                </div>
+
+                <div class="form-group">
+                    <label for="structure">Structure & Dynamics</label>
+                    <textarea id="structure" rows="3" placeholder="e.g., starts quiet, builds to a peak at 2:00, drops back down for the outro..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="genre">Genre / Style</label>
+                    <input type="text" id="genre" placeholder="e.g., indie folk, electronic ambient, post-rock...">
+                </div>
+
+                <div class="form-group">
+                    <label for="theme">Lyric Theme (Optional)</label>
+                    <input type="text" id="theme" placeholder="e.g., longing, journey, transformation... or leave blank for AI to decide">
+                </div>
+
+                <button id="generateBtn" class="generate-btn">
+                    <span class="btn-text">Generate Lyrics</span>
+                    <span class="btn-loading">Listening to the music...</span>
+                </button>
+            </section>
+
+            <!-- Output Section -->
+            <section class="output-section" id="outputSection">
+                <div class="output-header">
+                    <h2>Your Lyrics</h2>
+                    <button id="copyBtn" class="icon-btn" title="Copy to clipboard">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="lyricsOutput" class="lyrics-output"></div>
+
+                <!-- Synchronized Lyrics Display -->
+                <div id="syncedLyricsSection" class="synced-lyrics-section" style="display: none;">
+                    <div class="synced-header">
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            Synchronized Lyrics
+                        </h3>
+                        <div class="sync-controls">
+                            <div class="beat-indicator-wrapper">
+                                <div id="beatIndicator" class="beat-indicator"></div>
+                                <span class="beat-label">Beat</span>
+                            </div>
+                            <div class="timing-controls">
+                                <label>Timing Adjust:</label>
+                                <button class="timing-btn" onclick="adjustLyricTiming(-0.5)" title="Earlier">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="15 18 9 12 15 6"></polyline>
+                                    </svg>
+                                    -0.5s
+                                </button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(-0.1)" title="Earlier">-0.1s</button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(0.1)" title="Later">+0.1s</button>
+                                <button class="timing-btn" onclick="adjustLyricTiming(0.5)" title="Later">
+                                    +0.5s
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="9 18 15 12 9 6"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="synced-lyrics-container" id="syncedLyricsContainer">
+                        <!-- Synced lyrics will be rendered here -->
+                    </div>
+                    <p class="sync-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        Press play on the audio to see lyrics sync in real-time. Use timing adjust if lyrics are slightly off.
+                    </p>
+                </div>
+
+                <div class="regenerate-section">
+                    <p class="regenerate-prompt">Want to explore a different angle?</p>
+                    <button id="regenerateBtn" class="secondary-btn">Regenerate with Same Parameters</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <p class="footer-note">
+            <em>"Not everything has to be expressed with words — let the instruments tell their side of the story."</em>
+        </p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

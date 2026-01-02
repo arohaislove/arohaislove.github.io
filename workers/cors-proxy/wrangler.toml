@@ -1,0 +1,11 @@
+name = "cors-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Workers are deployed to *.workers.dev subdomain
+# This will be available at: https://cors-proxy.zammel.workers.dev
+
+# Environment variables (values set in Cloudflare dashboard and GitHub secrets)
+[vars]
+# ANTHROPIC_API_KEY is set as a secret, not listed here
+

@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aroha's Projects</title>
+
+    <!-- Privacy-friendly analytics by Plausible -->
+    <script async src="https://plausible.io/js/pa-YDHVJtiLBBWA8IRTBSaq6.js"></script>
+    <script>
+      window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+      plausible.init()
+    </script>
+    <script src="/shared/analytics.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -15,7 +24,7 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
                 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
             min-height: 100vh;
             padding: 2rem;
         }
@@ -27,7 +36,7 @@
 
         header {
             text-align: center;
-            color: white;
+            color: #4a5568;
             margin-bottom: 3rem;
         }
 
@@ -88,7 +97,7 @@
 
         footer {
             text-align: center;
-            color: white;
+            color: #6b7280;
             margin-top: 4rem;
             opacity: 0.8;
         }
@@ -103,13 +112,69 @@
 
         <main>
             <div class="projects-grid">
-                <a href="/perspective-engine/" class="project-card">
+                <!-- Projects ordered chronologically: newest at top, oldest at bottom -->
+
+                <a href="/vox/" class="project-card" data-track="Project: Vox">
+                    <h2>Vox</h2>
+                    <p>A conversational AI with dynamic accents. Speak or type to chat with Claude, and hear responses in voices that shift based on context—from Victorian Butler to Kiwi Casual, Ship's Captain to Zen Monk. Auto-detect mode analyzes the conversation and adapts the accent naturally, or choose your own from dozens of era, regional, character, and mood styles.</p>
+                    <span class="project-tag">AI & Voice</span>
+                </a>
+
+                <a href="/lyric-generator/" class="project-card" data-track="Project: Riff to Verse">
+                    <h2>Riff to Verse</h2>
+                    <p>Transform instrumental music into lyrics that breathe with the rhythm. Describe your track's mood, tempo, and structure, and let AI craft lyrics that were born from the music itself — finding the natural vocal melody, matching syllables to beats, and leaving space for the instruments to speak.</p>
+                    <span class="project-tag">Music & AI</span>
+                </a>
+
+                <a href="/chromesthesia-audio/" class="project-card" data-track="Project: Chromesthesia Audio">
+                    <h2>Chromesthesia Audio</h2>
+                    <p>Visualize sound as color and motion. Upload an audio file and watch as bass frequencies pulse in warm reds, mids spin in vibrant greens, and treble sparkles in cool blues. Real-time audio visualization using the Web Audio API.</p>
+                    <span class="project-tag">Audio Art</span>
+                </a>
+
+                <a href="/oneiros/" class="project-card" data-track="Project: Oneiros">
+                    <h2>Oneiros</h2>
+                    <p>A poetic dream journal. Upload images of your dream sketches or photographs, add optional feelings or fragments you remember, and receive a poem that responds to the emotional and symbolic resonance of your dream. Built with Claude's vision capabilities.</p>
+                    <span class="project-tag">Art & AI</span>
+                </a>
+
+                <a href="/nz-policy-matcher/" class="project-card" data-track="Project: NZ Policy Matcher">
+                    <h2>NZ Policy Matcher 2026</h2>
+                    <p>Ko wai tō pāti? Take a 15-question quiz to discover which political party best aligns with your values. Find out how you match with each party and see how close you are to changing your top match with just one policy shift.</p>
+                    <span class="project-tag">Political Education</span>
+                </a>
+
+                <a href="/nz-election-venn/" class="project-card" data-track="Project: NZ Election Venn">
+                    <h2>NZ 2026 Election Policy Venn</h2>
+                    <p>Interactive visualization of policy overlaps and differences between NZ political parties. Explore where National, Labour, Greens, ACT, and NZ First agree and diverge on key issues ahead of the 2026 election.</p>
+                    <span class="project-tag">Political Education</span>
+                </a>
+
+                <a href="/pwa-widget-demo/" class="project-card" data-track="Project: PWA Widget">
+                    <h2>PWA Widget Demo</h2>
+                    <p>A Progressive Web App demonstrating Android home screen widget support. Install this app on your Android device and add an inspirational quote widget to your home screen.</p>
+                    <span class="project-tag">PWA Demo</span>
+                </a>
+
+                <a href="/religion-venn-diagram/" class="project-card" data-track="Project: Religion Venn">
+                    <h2>Religion Venn Diagram</h2>
+                    <p>Discover the commonalities and differences between major world religions. An interactive visualization showing shared principles and unique aspects of Christianity, Islam, Judaism, Buddhism, and Hinduism.</p>
+                    <span class="project-tag">Educational Tool</span>
+                </a>
+
+                <a href="/chromesthesia/" class="project-card" data-track="Project: Chromesthesia">
+                    <h2>Chromesthesia</h2>
+                    <p>Transform words into watercolor art. This synesthetic web app analyzes text for emotional content and themes, then paints a representational watercolor image using those colors. Watch as speeches, poems, and prose become visual masterpieces.</p>
+                    <span class="project-tag">Art & AI</span>
+                </a>
+
+                <a href="/perspective-engine/" class="project-card" data-track="Project: Perspective Engine">
                     <h2>The Perspective Engine</h2>
                     <p>A visual meditation on time, mortality, and intentional living. Visualize your life in months and gain perspective on how you spend your time.</p>
                     <span class="project-tag">Interactive Tool</span>
                 </a>
 
-                <!-- Future projects will be added here -->
+                <!-- Future projects will be added here at the top -->
             </div>
         </main>
 
@@ -117,5 +182,20 @@
             <p>Built with care and curiosity</p>
         </footer>
     </div>
+
+    <script>
+        // Initialize analytics when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.Analytics) {
+                    Analytics.init();
+                }
+            });
+        } else {
+            if (window.Analytics) {
+                Analytics.init();
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,188 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+nav {
+    margin-bottom: 20px;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    display: inline-block;
+    transition: background 0.3s;
+}
+
+nav a:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.status-card,
+.quote-card,
+.info-card,
+.tech-card,
+.debug-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.status-card h2,
+.quote-card h2,
+.info-card h2,
+.tech-card h2,
+.debug-card h2 {
+    color: #667eea;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+}
+
+#install-status {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: #555;
+}
+
+button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: 600;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.quote-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.quote-card h2 {
+    color: white;
+}
+
+blockquote {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin: 20px 0;
+    line-height: 1.8;
+}
+
+cite {
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+#new-quote-btn {
+    background: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+#new-quote-btn:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.info-card ol,
+.tech-card ul {
+    margin-left: 20px;
+}
+
+.info-card li,
+.tech-card li {
+    margin-bottom: 12px;
+}
+
+.info-card ul {
+    margin: 8px 0 8px 20px;
+}
+
+.info-card ul li {
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+
+.debug-card p {
+    margin-bottom: 8px;
+}
+
+.debug-card strong {
+    color: #667eea;
+}
+
+#debug-info span {
+    color: #555;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    h1 {
+        font-size: 2rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .status-card,
+    .quote-card,
+    .info-card,
+    .tech-card,
+    .debug-card {
+        padding: 16px;
+    }
+
+    blockquote {
+        font-size: 1.2rem;
+    }
+}
