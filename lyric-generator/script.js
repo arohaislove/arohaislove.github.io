@@ -717,6 +717,55 @@ function renderSyncedLyrics(timestampedLines) {
 
         container.appendChild(lineDiv);
     });
+
+    // Generate waveform visualization
+    generateWaveform();
+}
+
+/**
+ * Generate simple waveform visualization
+ */
+function generateWaveform() {
+    const waveformContainer = document.getElementById('waveformBars');
+    if (!waveformContainer) return;
+
+    waveformContainer.innerHTML = '';
+
+    // Create 60 bars for a simple waveform visualization
+    const numBars = 60;
+
+    if (audioBuffer) {
+        // Use actual audio data if available
+        const channelData = audioBuffer.getChannelData(0);
+        const samplesPerBar = Math.floor(channelData.length / numBars);
+
+        for (let i = 0; i < numBars; i++) {
+            const start = i * samplesPerBar;
+            const end = start + samplesPerBar;
+
+            // Calculate RMS for this segment
+            let sum = 0;
+            for (let j = start; j < end && j < channelData.length; j++) {
+                sum += channelData[j] * channelData[j];
+            }
+            const rms = Math.sqrt(sum / samplesPerBar);
+            const height = Math.max(10, Math.min(100, rms * 200)); // Scale to percentage
+
+            const bar = document.createElement('div');
+            bar.className = 'waveform-bar';
+            bar.style.height = height + '%';
+            waveformContainer.appendChild(bar);
+        }
+    } else {
+        // Create placeholder bars if no audio data
+        for (let i = 0; i < numBars; i++) {
+            const height = Math.random() * 60 + 20; // Random height between 20-80%
+            const bar = document.createElement('div');
+            bar.className = 'waveform-bar';
+            bar.style.height = height + '%';
+            waveformContainer.appendChild(bar);
+        }
+    }
 }
 
 /**

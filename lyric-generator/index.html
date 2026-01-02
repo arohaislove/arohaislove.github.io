@@ -168,11 +168,11 @@
                 <div id="syncedLyricsSection" class="synced-lyrics-section" style="display: none;">
                     <div class="synced-header">
                         <h3>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
-                            Synchronized Lyrics
+                            Lyrics Timeline
                         </h3>
                         <div class="sync-controls">
                             <div class="beat-indicator-wrapper">
@@ -198,6 +198,14 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Waveform Visualization -->
+                    <div class="waveform-container">
+                        <div class="waveform-bars" id="waveformBars">
+                            <!-- Simple waveform visualization -->
+                        </div>
+                    </div>
+
                     <div class="synced-lyrics-container" id="syncedLyricsContainer">
                         <!-- Synced lyrics will be rendered here -->
                     </div>
