@@ -1,6 +1,6 @@
 /**
  * Vox API Worker
- * Version: 1.0.1 - Updated ElevenLabs API key permissions
+ * Version: 2.0.0 - Multiple voices for vivid accent variety!
  *
  * Handles both Claude API (conversational responses) and ElevenLabs API (text-to-speech)
  * for the Vox conversational AI with dynamic accents.
@@ -166,14 +166,74 @@ async function handleSpeak(request, env) {
     const body = await request.json();
     const { text, voiceSettings } = body;
 
-    // ElevenLabs uses different voice IDs for different styles
-    // For now, we'll use a default voice and adjust settings
-    // In production, you'd map accent styles to specific voice IDs
-    const voiceId = voiceSettings?.voiceId || '21m00Tcm4TlvDq8ikWAM'; // Default voice (Rachel)
+    // Map accent styles to specific ElevenLabs voice IDs for variety
+    // These are pre-made voices from ElevenLabs with different characteristics
+    const accentVoiceMap = {
+      // British/UK voices
+      'Victorian Butler': 'VR6AewLTigWG4xSOukaG', // Arnold - British
+      'Shakespearean': 'VR6AewLTigWG4xSOukaG', // Arnold - British
+      'Ship\'s Captain': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Deep, authoritative
+      'Welsh': 'VR6AewLTigWG4xSOukaG', // Arnold - British
+      'Scottish Highlander': 'VR6AewLTigWG4xSOukaG', // Arnold - British
+
+      // American voices - Grumpy/Gruff Men
+      '1920s Chicago Gangster': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Deep male
+      '1940s Newsreader': 'CwhRBWXzGAHq8TQ4Fs17', // Roger - Professional
+      '1950s Jazz DJ': 'CwhRBWXzGAHq8TQ4Fs17', // Roger - Smooth
+      'Texas Auctioneer': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Energetic
+      'Drunk Poet': 'pNInz6obpgDQGcFmaJgB', // Adam - Gruff, weary
+      'Stern Bureaucrat': 'CwhRBWXzGAHq8TQ4Fs17', // Roger - Rigid, formal
+      'Whispering Conspiracist': 'pNInz6obpgDQGcFmaJgB', // Adam - Paranoid, intense
+
+      // Female voices for variety
+      'Irish Storyteller': 'EXAVITQu4vr4xnSDxMaL', // Bella - Soft, storytelling
+      'Italian Nonna': 'EXAVITQu4vr4xnSDxMaL', // Bella - Warm
+      'Berlin Cabaret Singer': 'EXAVITQu4vr4xnSDxMaL', // Bella - Expressive
+
+      // Character voices - More Grumpy Men!
+      'Zen Monk': 'pNInz6obpgDQGcFmaJgB', // Adam - Calm, deep
+      'Ancient Greek Orator': 'pNInz6obpgDQGcFmaJgB', // Adam - Authoritative
+      'Medieval Herald': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Booming
+      'Soviet Broadcaster': 'pNInz6obpgDQGcFmaJgB', // Adam - Strong, serious
+      'Sports Commentator': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Energetic, loud
+
+      // Mood-based
+      'Warm & Gentle': 'EXAVITQu4vr4xnSDxMaL', // Bella - Soft female
+      'Urgent': 'TxGEqnHWrfWFTfGW9XjX', // Josh - Intense male
+      'Formal': 'CwhRBWXzGAHq8TQ4Fs17', // Roger - Professional
+      'Playful': '21m00Tcm4TlvDq8ikWAM', // Rachel - Cheerful
+      'Melancholic': 'pNInz6obpgDQGcFmaJgB', // Adam - Sad, weary
+      'Conspiratorial': 'pNInz6obpgDQGcFmaJgB', // Adam - Secretive
+    };
+
+    // Get voice ID based on accent, with fallback
+    const accentStyle = voiceSettings?.accentStyle || 'Warm & Gentle';
+    const voiceId = accentVoiceMap[accentStyle] || voiceSettings?.voiceId || '21m00Tcm4TlvDq8ikWAM';
+
+    // Make accent strength slider MORE DRAMATIC
+    // Map 0-100 slider to more extreme stability/similarity values
+    const accentStrength = voiceSettings?.style || 0;
+
+    // Low strength (0-30): Very stable, neutral
+    // Medium strength (30-70): Moderate variation
+    // High strength (70-100): Wild, exaggerated
+    let stability, similarityBoost;
+
+    if (accentStrength < 0.3) {
+      // Subtle - very consistent, neutral
+      stability = 0.75;
+      similarityBoost = 0.5;
+    } else if (accentStrength < 0.7) {
+      // Medium - balanced
+      stability = 0.5;
+      similarityBoost = 0.75;
+    } else {
+      // Strong - exaggerated, dramatic
+      stability = 0.3;
+      similarityBoost = 0.9;
+    }
 
     // Prepare voice settings
-    const stability = voiceSettings?.stability ?? 0.5;
-    const similarityBoost = voiceSettings?.similarity_boost ?? 0.75;
     const style = voiceSettings?.style ?? 0.0;
     const useSpeakerBoost = voiceSettings?.use_speaker_boost ?? true;
 
@@ -186,7 +246,7 @@ async function handleSpeak(request, env) {
       },
       body: JSON.stringify({
         text: text,
-        model_id: 'eleven_monolingual_v1',
+        model_id: 'eleven_turbo_v2_5', // Updated to free-tier compatible model
         voice_settings: {
           stability: stability,
           similarity_boost: similarityBoost,
