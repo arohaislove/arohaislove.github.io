@@ -68,7 +68,7 @@ export default {
 };
 
 /**
- * Handle chat endpoint - Claude API
+ * Handle chat endpoint - Claude API (with streaming support)
  */
 async function handleChat(request, env) {
   // Check API key
@@ -87,7 +87,7 @@ async function handleChat(request, env) {
 
   try {
     const body = await request.json();
-    const { messages, system } = body;
+    const { messages, system, stream } = body;
 
     // Call Claude API
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -101,10 +101,25 @@ async function handleChat(request, env) {
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         messages: messages,
-        system: system || 'You are Vox, a conversational AI assistant. Be helpful, friendly, and engaging in your responses.'
+        system: system || 'You are Vox, a conversational AI assistant. Be helpful, friendly, and engaging in your responses.',
+        stream: stream || false
       })
     });
 
+    // If streaming, pass through the stream with appropriate headers
+    if (stream) {
+      return new Response(response.body, {
+        status: response.status,
+        headers: {
+          ...corsHeaders(),
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        }
+      });
+    }
+
+    // Non-streaming: return full JSON response
     const data = await response.json();
 
     return new Response(JSON.stringify(data), {
