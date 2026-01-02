@@ -184,7 +184,7 @@ async function handleSendMessage() {
     const messageDiv = createStreamingMessage(messageId);
 
     try {
-        // Get AI response via streaming
+        // Get AI response via streaming (audio plays during streaming now!)
         const fullResponse = await getChatResponseStreaming(messageDiv, messageId);
 
         // Add to conversation history
@@ -193,13 +193,13 @@ async function handleSendMessage() {
             content: fullResponse
         });
 
-        // Auto-detect accent if enabled
+        // Auto-detect accent if enabled (for next message)
         if (state.autoDetect) {
             await detectAndUpdateAccent();
         }
 
-        // Speak the response
-        await speakText(fullResponse);
+        // Note: Audio is already playing from the streaming function
+        // No need to call speakText() here anymore!
 
     } catch (error) {
         console.error('Error handling message:', error);
@@ -235,7 +235,7 @@ async function getChatResponse(userMessage) {
 }
 
 /**
- * Get chat response with streaming
+ * Get chat response with streaming and real-time sentence-by-sentence audio
  */
 async function getChatResponseStreaming(messageDiv, messageId) {
     const response = await fetch(`${CONFIG.workerUrl}/chat`, {
@@ -260,7 +260,53 @@ async function getChatResponseStreaming(messageDiv, messageId) {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let fullText = '';
+    let unspokenText = ''; // Buffer for incomplete sentences
     const contentDiv = messageDiv.querySelector('.message-content');
+    const audioQueue = []; // Queue of audio blobs to play
+    let isPlayingAudio = false;
+
+    // Function to play next audio in queue
+    const playNextAudio = async () => {
+        if (isPlayingAudio || audioQueue.length === 0) return;
+
+        isPlayingAudio = true;
+        const audioBlob = audioQueue.shift();
+
+        try {
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+
+            state.currentAudio = audio;
+
+            audio.onended = () => {
+                URL.revokeObjectURL(audioUrl);
+                state.currentAudio = null;
+                isPlayingAudio = false;
+                playNextAudio(); // Play next in queue
+            };
+
+            await audio.play();
+        } catch (err) {
+            console.warn('Audio playback error:', err);
+            isPlayingAudio = false;
+            playNextAudio(); // Try next one
+        }
+    };
+
+    // Function to speak a complete sentence
+    const speakSentence = async (sentence) => {
+        if (!sentence.trim()) return;
+
+        try {
+            const audioBlob = await getAudioForText(sentence);
+            if (audioBlob) {
+                audioQueue.push(audioBlob);
+                playNextAudio();
+            }
+        } catch (err) {
+            console.warn('Failed to generate audio for sentence:', err);
+        }
+    };
 
     try {
         while (true) {
@@ -280,7 +326,18 @@ async function getChatResponseStreaming(messageDiv, messageId) {
                         if (parsed.type === 'content_block_delta') {
                             const text = parsed.delta?.text || '';
                             fullText += text;
+                            unspokenText += text;
                             contentDiv.textContent = fullText;
+
+                            // Check if we have complete sentences to speak
+                            const sentences = extractCompleteSentences(unspokenText);
+                            if (sentences.complete.length > 0) {
+                                // Speak the complete sentences
+                                const textToSpeak = sentences.complete.join(' ');
+                                speakSentence(textToSpeak);
+                                // Keep only the incomplete part
+                                unspokenText = sentences.incomplete;
+                            }
 
                             // Auto-scroll to bottom
                             elements.conversationHistory.parentElement.scrollTop =
@@ -291,6 +348,11 @@ async function getChatResponseStreaming(messageDiv, messageId) {
                     }
                 }
             }
+        }
+
+        // Speak any remaining text that wasn't a complete sentence
+        if (unspokenText.trim()) {
+            await speakSentence(unspokenText);
         }
     } finally {
         reader.releaseLock();
@@ -303,6 +365,67 @@ async function getChatResponseStreaming(messageDiv, messageId) {
     contentDiv.appendChild(accentBadge);
 
     return fullText;
+}
+
+/**
+ * Extract complete sentences from text buffer
+ * Returns { complete: [...], incomplete: '...' }
+ */
+function extractCompleteSentences(text) {
+    // Match sentences ending with . ! ? followed by space or end of string
+    const sentenceRegex = /[^.!?]+[.!?]+(?:\s|$)/g;
+    const completeSentences = text.match(sentenceRegex) || [];
+
+    // Calculate what's left (incomplete sentence)
+    let processedLength = 0;
+    completeSentences.forEach(s => {
+        processedLength += s.length;
+    });
+
+    const incomplete = text.substring(processedLength);
+
+    return {
+        complete: completeSentences.map(s => s.trim()).filter(s => s.length > 0),
+        incomplete: incomplete
+    };
+}
+
+/**
+ * Get audio blob for text using ElevenLabs
+ */
+async function getAudioForText(text) {
+    try {
+        const strength = state.accentStrength / 100;
+        const voiceSettings = {
+            voiceId: CONFIG.defaultVoiceId,
+            accentStyle: state.currentAccent,
+            stability: 0.5,
+            similarity_boost: 0.75,
+            style: strength,
+            use_speaker_boost: true
+        };
+
+        const response = await fetch(`${CONFIG.workerUrl}/speak`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: text,
+                voiceSettings: voiceSettings
+            })
+        });
+
+        if (!response.ok) {
+            console.warn('Audio generation failed:', response.status);
+            return null;
+        }
+
+        return await response.blob();
+    } catch (error) {
+        console.warn('Error generating audio:', error);
+        return null;
+    }
 }
 
 /**
@@ -370,6 +493,12 @@ function buildSystemPrompt() {
     return `You are Vox, a conversational AI assistant with dynamic voice personality. ${accentInstruction}
 
 ${lengthInstruction}
+
+CRITICAL: Your response will be SPOKEN ALOUD by text-to-speech. NEVER use:
+- Asterisks or action descriptions like *nods*, *smiles*, *laughs*
+- Stage directions or parentheticals like (pauses) or (thoughtfully)
+- Any formatting meant for written text
+Just speak naturally as if having a real voice conversation. Use tone and word choice to convey emotion, not written descriptions.
 
 Be warm, engaging, and helpful. Keep responses conversational but informative. Don't mention that you're speaking in a particular accent unless directly asked about it.`;
 }
