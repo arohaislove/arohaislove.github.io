@@ -118,12 +118,31 @@
             return 1 / age;
           };
 
-          // Calculate dot size based on perceived time
-          const getDotSize = (yearAge) => {
-            if (yearAge === 0) return 4;
-            const ratio = getPerceivedTimeRatio(yearAge);
-            // Scale from 1 (smallest, older ages) to 4 (largest, younger ages)
-            const size = Math.max(1, Math.min(4, ratio * 20));
+          // Calculate total perceived time for normalization
+          const getTotalPerceivedTime = () => {
+            let total = 0;
+            for (let age = 1; age <= goalAge; age++) {
+              total += getPerceivedTimeRatio(age);
+            }
+            return total;
+          };
+
+          // Calculate dot size based on perceived time contribution
+          // All dots together = 100%, each sized by its perceived time weight
+          const getDotSize = (monthIndex) => {
+            const yearAge = Math.floor(monthIndex / 12) + 1;
+            if (yearAge === 0) return 2;
+
+            // Each month in this year has 1/12th of that year's perceived time
+            const monthPerceivedValue = getPerceivedTimeRatio(yearAge) / 12;
+            const totalPerceivedTime = getTotalPerceivedTime();
+
+            // Normalize to percentage of total perceived life
+            const percentageOfLife = monthPerceivedValue / totalPerceivedTime;
+
+            // Scale to reasonable pixel sizes (1-8px range)
+            // Multiply by a factor to make dots visible
+            const size = Math.max(1, Math.min(8, percentageOfLife * 3000));
             return size;
           };
 
@@ -182,25 +201,27 @@
             for (let i = 0; i < metrics.totalMonths; i++) {
               const isPast = i < currentMonth;
               const isCurrent = i === currentMonth;
-              const yearAge = Math.floor(i / 12) + 1;
-              const dotSize = getDotSize(yearAge);
+              const dotSize = getDotSize(i);
               const healthColor = getHealthColor(i);
+
+              // Future dots get a glow effect to represent remaining perceived time
+              const glowClass = !isPast && !isCurrent ? 'shadow-md' : '';
 
               squares.push(
                 <div
                   key={i}
-                  className={`transition-all duration-300 rounded-sm ${
+                  className={`transition-all duration-300 rounded-sm ${glowClass} ${
                     isCurrent
                       ? 'bg-green-400 shadow-lg shadow-green-400/50 scale-125'
                       : isPast
-                      ? 'bg-gray-500/70'
-                      : `${healthColor} hover:opacity-80`
+                      ? 'bg-gray-600/60'
+                      : `${healthColor} shadow-${healthColor.replace('bg-', '')}/50`
                   }`}
                   style={{
                     width: `${dotSize * 2}px`,
                     height: `${dotSize * 2}px`
                   }}
-                  title={`Month ${i + 1} - Age ${Math.floor(i / 12)} - Perceived size: ${dotSize.toFixed(1)}`}
+                  title={`Month ${i + 1} - Age ${Math.floor(i / 12)} - Perceived contribution: ${(dotSize / 8 * 100).toFixed(2)}%`}
                 />
               );
             }
