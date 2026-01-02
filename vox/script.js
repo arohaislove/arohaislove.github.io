@@ -179,23 +179,18 @@ async function handleSendMessage() {
         content: message
     });
 
-    // Show loading indicator
-    const loadingId = addLoadingMessage();
+    // Create empty assistant message that we'll stream into
+    const messageId = 'msg-' + Date.now();
+    const messageDiv = createStreamingMessage(messageId);
 
     try {
-        // Get AI response
-        const response = await getChatResponse(message);
-
-        // Remove loading indicator
-        removeLoadingMessage(loadingId);
-
-        // Add AI message to UI
-        addMessageToUI('assistant', response, state.currentAccent);
+        // Get AI response via streaming
+        const fullResponse = await getChatResponseStreaming(messageDiv, messageId);
 
         // Add to conversation history
         state.conversationHistory.push({
             role: 'assistant',
-            content: response
+            content: fullResponse
         });
 
         // Auto-detect accent if enabled
@@ -204,17 +199,17 @@ async function handleSendMessage() {
         }
 
         // Speak the response
-        await speakText(response);
+        await speakText(fullResponse);
 
     } catch (error) {
         console.error('Error handling message:', error);
-        removeLoadingMessage(loadingId);
+        removeStreamingMessage(messageId);
         addMessageToUI('assistant', 'Sorry, I encountered an error. Please try again.', state.currentAccent);
     }
 }
 
 /**
- * Get chat response from Claude API via worker
+ * Get chat response from Claude API via worker (non-streaming fallback)
  */
 async function getChatResponse(userMessage) {
     const response = await fetch(`${CONFIG.workerUrl}/chat`, {
@@ -237,6 +232,121 @@ async function getChatResponse(userMessage) {
 
     const data = await response.json();
     return data.content[0].text;
+}
+
+/**
+ * Get chat response with streaming
+ */
+async function getChatResponseStreaming(messageDiv, messageId) {
+    const response = await fetch(`${CONFIG.workerUrl}/chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            messages: state.conversationHistory.map(msg => ({
+                role: msg.role,
+                content: msg.content
+            })),
+            system: buildSystemPrompt(),
+            stream: true  // Enable streaming
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Chat API error: ${response.status}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    const contentDiv = messageDiv.querySelector('.message-content');
+
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') continue;
+
+                    try {
+                        const parsed = JSON.parse(data);
+                        if (parsed.type === 'content_block_delta') {
+                            const text = parsed.delta?.text || '';
+                            fullText += text;
+                            contentDiv.textContent = fullText;
+
+                            // Auto-scroll to bottom
+                            elements.conversationHistory.parentElement.scrollTop =
+                                elements.conversationHistory.parentElement.scrollHeight;
+                        }
+                    } catch (e) {
+                        // Skip invalid JSON
+                    }
+                }
+            }
+        }
+    } finally {
+        reader.releaseLock();
+    }
+
+    // Add accent badge
+    const accentBadge = document.createElement('div');
+    accentBadge.className = 'message-style';
+    accentBadge.textContent = `Speaking as: ${state.currentAccent}`;
+    contentDiv.appendChild(accentBadge);
+
+    return fullText;
+}
+
+/**
+ * Create streaming message UI element
+ */
+function createStreamingMessage(messageId) {
+    // Remove welcome message if it exists
+    const welcomeMessage = elements.conversationHistory.querySelector('.welcome-message');
+    if (welcomeMessage) {
+        welcomeMessage.remove();
+    }
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message assistant';
+    messageDiv.id = messageId;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.textContent = 'V';
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+    contentDiv.textContent = ''; // Empty, will be filled by stream
+
+    messageDiv.appendChild(avatar);
+    messageDiv.appendChild(contentDiv);
+
+    elements.conversationHistory.appendChild(messageDiv);
+
+    // Scroll to bottom
+    elements.conversationHistory.parentElement.scrollTop =
+        elements.conversationHistory.parentElement.scrollHeight;
+
+    return messageDiv;
+}
+
+/**
+ * Remove streaming message (on error)
+ */
+function removeStreamingMessage(messageId) {
+    const messageDiv = document.getElementById(messageId);
+    if (messageDiv) {
+        messageDiv.remove();
+    }
 }
 
 /**
