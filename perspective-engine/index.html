@@ -69,6 +69,20 @@
             </svg>
         );
 
+        const InfoIcon = () => (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                <path d="M12 16v-4M12 8h.01" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+        );
+
+        const SproutIcon = () => (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M7 20h10M10 20c0-4.4 3.6-8 8-8h2M10 20c0-4.4-3.6-8-8-8H0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 20V10c0-4.4 3.6-8 8-8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+        );
+
         const PerspectiveEngine = () => {
           const [currentAge, setCurrentAge] = useState(30);
           const [goalAge, setGoalAge] = useState(85);
@@ -237,7 +251,7 @@
                     The Perspective Engine
                   </h1>
                   <p className="text-gray-400 text-lg font-light max-w-2xl mx-auto">
-                    A visual meditation on time, mortality, and perceptual acceleration
+                    A visual meditation on time, presence, and making it count
                   </p>
                   <nav className="pt-4">
                     <a href="/" className="text-green-400 hover:text-green-300 transition-colors" data-track="Back to Projects">
@@ -245,6 +259,21 @@
                     </a>
                   </nav>
                 </header>
+
+                {/* Gentle Warning/Framing */}
+                <div className="bg-amber-900/10 backdrop-blur-sm rounded-xl p-6 border border-amber-700/20 max-w-3xl mx-auto">
+                  <div className="flex items-start gap-3">
+                    <div className="text-amber-400/70 mt-1">⚡</div>
+                    <div className="space-y-2 text-gray-300 font-light leading-relaxed text-sm">
+                      <p className="font-medium text-amber-300/90">A note before you scroll:</p>
+                      <p>
+                        This tool visualizes theories about time perception that can feel confronting.
+                        It's meant to inspire presence, not despair. Take what resonates, leave what doesn't—and
+                        maybe don't operate heavy machinery while contemplating mortality.
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Input Section with Sliders */}
                 <div className="bg-gray-800/30 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50 shadow-2xl">
@@ -338,10 +367,16 @@
                     </p>
                   </div>
 
-                  <div className="bg-gradient-to-br from-purple-900/30 to-purple-800/20 backdrop-blur-sm rounded-2xl p-6 border border-purple-700/50 space-y-3">
-                    <div className="flex items-center gap-3 text-purple-300">
+                  <div className="bg-gradient-to-br from-purple-900/20 to-purple-800/10 backdrop-blur-sm rounded-2xl p-6 border border-purple-700/30 space-y-3">
+                    <div className="flex items-center gap-2 text-purple-300">
                       <ZapIcon />
-                      <span className="text-sm font-light tracking-wide">Perceived Time Left</span>
+                      <span className="text-sm font-light tracking-wide">Perceived Time (One Theory)</span>
+                      <div
+                        className="cursor-help text-purple-400/60 hover:text-purple-300 transition-colors"
+                        title="Based on the proportional theory—one model of time perception. Your actual experience may vary based on novelty, presence, and how you live."
+                      >
+                        <InfoIcon />
+                      </div>
                     </div>
                     <p className="text-4xl font-extralight text-purple-200">
                       {metrics.perceivedPercentageRemaining}%
@@ -359,7 +394,8 @@
                         Notice how the dots grow smaller as you age? This visualizes the <strong>Proportional Theory</strong>:
                         at age 5, one year is 20% of your entire life. At 50, it's just 2%. Your brain encodes less novelty
                         as routines form, and neural processing slows—making time feel like it's accelerating. The perceived
-                        time metric above shows how much of your <em>felt experience</em> remains, not just calendar time.
+                        time metric above offers <em>one model</em> of how much felt experience might remain—though your
+                        mileage may vary. Novelty, presence, and intentional living can stretch time back out.
                       </p>
                     </div>
                   </div>
@@ -442,6 +478,55 @@
                   </div>
                 </div>
 
+                {/* Reclaim Your Time - Hope Section */}
+                <div className="bg-gradient-to-br from-green-900/15 to-emerald-900/10 backdrop-blur-sm rounded-2xl p-8 border border-green-700/30">
+                  <div className="flex items-start gap-4 max-w-4xl mx-auto">
+                    <div className="text-green-400 mt-1">
+                      <SproutIcon />
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="text-2xl font-light text-green-200">The Good News: Time Expands With Presence</h3>
+                      <p className="text-gray-300 font-light leading-relaxed">
+                        The science of time perception suggests you can push back against acceleration. While routines
+                        and comfort tend to compress our experience of time, you have agency in how time feels:
+                      </p>
+                      <ul className="space-y-3 text-gray-300 font-light leading-relaxed">
+                        <li className="flex gap-3">
+                          <span className="text-green-400 mt-1">•</span>
+                          <div>
+                            <strong className="text-green-300">Seek novelty:</strong> New experiences create richer memories,
+                            making time feel longer in retrospect. Travel, learn new skills, break your routines.
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-green-400 mt-1">•</span>
+                          <div>
+                            <strong className="text-green-300">Practice presence:</strong> Mindfulness and attention to the
+                            current moment expand subjective time. The opposite of "where did the day go?"
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-green-400 mt-1">•</span>
+                          <div>
+                            <strong className="text-green-300">Create milestones:</strong> Memorable events anchor time.
+                            A year with distinct chapters feels longer than one undifferentiated blur.
+                          </div>
+                        </li>
+                        <li className="flex gap-3">
+                          <span className="text-green-400 mt-1">•</span>
+                          <div>
+                            <strong className="text-green-300">Embrace discomfort:</strong> Growth and challenge stretch
+                            time. Comfort and routine compress it.
+                          </div>
+                        </li>
+                      </ul>
+                      <p className="text-gray-400 font-light italic text-sm pt-2">
+                        Your perception of time isn't fixed—it's shaped by how intentionally you live.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Quote Section */}
                 <div className="bg-gradient-to-br from-gray-800/40 to-gray-800/20 backdrop-blur-sm rounded-2xl p-12 border border-gray-700/50">
                   <blockquote className="space-y-6 text-center max-w-3xl mx-auto">
@@ -452,6 +537,46 @@
                       — {currentQuote.author}
                     </footer>
                   </blockquote>
+                </div>
+
+                {/* Sources / Learn More */}
+                <div className="bg-gray-800/20 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30 max-w-3xl mx-auto">
+                  <h4 className="text-sm font-medium text-gray-400 mb-3 tracking-wide">Further Reading</h4>
+                  <div className="space-y-2 text-xs text-gray-500 font-light">
+                    <p>
+                      <a
+                        href="https://www.amazon.com/Why-Time-Flies-Mostly-Scientific/dp/1416540288"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-green-400 transition-colors underline decoration-dotted"
+                      >
+                        Why Time Flies
+                      </a>
+                      {' '}by Alan Burdick — A beautifully written exploration of time perception
+                    </p>
+                    <p>
+                      <a
+                        href="https://en.wikipedia.org/wiki/Time_perception#Changes_with_age"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-green-400 transition-colors underline decoration-dotted"
+                      >
+                        The Proportional Theory
+                      </a>
+                      {' '}— Wikipedia on time perception and aging
+                    </p>
+                    <p>
+                      <a
+                        href="https://pubmed.ncbi.nlm.nih.gov/23643368/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-green-400 transition-colors underline decoration-dotted"
+                      >
+                        Mindfulness and Time Perception
+                      </a>
+                      {' '}— Research on how mindfulness expands subjective time
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
