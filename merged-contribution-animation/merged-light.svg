@@ -1,0 +1,150 @@
+<svg width="720" height="112" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @keyframes disappear {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes appear {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    .square {
+      animation: disappear 0.1s ease-in-out forwards;
+    }
+
+    .merged-text {
+      opacity: 0;
+      animation: appear 0.5s ease-in-out forwards;
+      animation-delay: 5.5s;
+    }
+  </style>
+
+  <rect width="720" height="112" fill="#ffffff"/>
+
+  <g id="contribution-grid">
+    <!-- GitHub contribution graph: 52 weeks × 7 days -->
+    <!-- Each square is 10x10 with 3px spacing -->
+    <!-- Total: 52 * 13 = 676px width (fits in 720) -->
+    <script>
+      <![CDATA[
+      (function() {
+        const svg = document.currentScript.closest('svg');
+        const grid = svg.getElementById('contribution-grid');
+        const colors = ['#ebedf0', '#9be9a8', '#40c463', '#30a14e', '#216e39'];
+
+        let delay = 0;
+        const delayIncrement = 0.01; // 10ms per square
+
+        // Create contribution squares in snake pattern
+        for (let week = 0; week < 52; week++) {
+          const isEvenWeek = week % 2 === 0;
+          const days = isEvenWeek ? [0,1,2,3,4,5,6] : [6,5,4,3,2,1,0];
+
+          for (let dayIdx = 0; dayIdx < days.length; dayIdx++) {
+            const day = days[dayIdx];
+            const x = 10 + week * 13;
+            const y = 10 + day * 13;
+
+            // Random contribution level for visual variety
+            const level = Math.floor(Math.random() * 5);
+            const color = colors[level];
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x);
+            rect.setAttribute('y', y);
+            rect.setAttribute('width', '10');
+            rect.setAttribute('height', '10');
+            rect.setAttribute('rx', '2');
+            rect.setAttribute('fill', color);
+            rect.setAttribute('class', 'square');
+            rect.style.animationDelay = delay + 's';
+
+            grid.appendChild(rect);
+            delay += delayIncrement;
+          }
+        }
+      })();
+      ]]>
+    </script>
+  </g>
+
+  <g id="merged-text" class="merged-text">
+    <!-- "MERGED" in pixel/grid style -->
+    <!-- Each letter is made of grid squares -->
+
+    <!-- M -->
+    <rect x="180" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="180" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="180" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="180" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="193" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="193" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="206" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="206" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="219" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="219" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="219" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="219" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+
+    <!-- E -->
+    <rect x="245" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="245" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="245" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="245" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="258" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="258" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="258" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="271" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="271" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="271" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+
+    <!-- R -->
+    <rect x="297" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="297" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="297" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="297" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="310" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="310" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="323" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="323" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="323" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="323" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+
+    <!-- G -->
+    <rect x="349" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="349" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="349" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="349" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="362" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="362" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="375" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="375" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="375" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="388" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="388" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+
+    <!-- E -->
+    <rect x="414" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="414" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="414" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="414" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="427" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="427" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="427" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="440" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="440" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="440" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+
+    <!-- D -->
+    <rect x="466" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="466" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="466" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="466" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="479" y="30" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="479" y="69" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="492" y="43" width="10" height="10" rx="2" fill="#216e39"/>
+    <rect x="492" y="56" width="10" height="10" rx="2" fill="#216e39"/>
+  </g>
+</svg>
