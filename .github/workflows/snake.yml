@@ -1,1 +1,151 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GitHub Snake Progress - Real Activity</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --empty: #161b22;
+            --L1: #0e4429;
+            --L2: #006d32;
+            --L3: #26a641;
+            --L4: #39d353;
+            --snake-head: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(53, 12px);
+            grid-template-rows: repeat(7, 12px);
+            gap: 3px;
+            padding: 20px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+        }
+
+        .cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background-color: var(--empty);
+            transition: background-color 0.2s;
+        }
+
+        /* Activity Levels */
+        .lvl-1 { background-color: var(--L1); }
+        .lvl-2 { background-color: var(--L2); }
+        .lvl-3 { background-color: var(--L3); }
+
+        /* The Snake and the Target Word */
+        .snake-head {
+            background-color: var(--snake-head) !important;
+            box-shadow: 0 0 8px var(--snake-head);
+            z-index: 10;
+        }
+
+        .merged-pixel {
+            background-color: var(--L4) !important;
+            box-shadow: 0 0 4px var(--L4);
+        }
+    </style>
+</head>
+<body>
+
+    <h2 style="margin-bottom: 20px;">Contribution Progress</h2>
+    <div class="grid" id="calendar"></div>
+
+    <script>
+        const gridElement = document.getElementById('calendar');
+        const rows = 7;
+        const cols = 53;
+        const cells = [];
+
+        // 1. Initialize Grid with "Background Noise" (Realism)
+        function initGrid() {
+            gridElement.innerHTML = '';
+            cells.length = 0;
+            for (let i = 0; i < rows * cols; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                
+                // Randomly add some existing "work" to the calendar
+                const rand = Math.random();
+                if (rand > 0.95) cell.classList.add('lvl-3');
+                else if (rand > 0.90) cell.classList.add('lvl-2');
+                else if (rand > 0.80) cell.classList.add('lvl-1');
+                
+                gridElement.appendChild(cell);
+                cells.push(cell);
+            }
+        }
+
+        // 2. Define "MERGED" Pattern
+        const pattern = [
+            "10001 11111 11110  11110  11111 11110 ",
+            "11011 10000 10001  10001  10000 10001",
+            "10101 11100 11110  11110  11100 10001",
+            "10001 10000 10010  10010  10000 10001",
+            "10001 11111 10001  10001  11111 11110 "
+        ];
+
+        const startX = 6; 
+        const startY = 1;
+        let targetIndices = [];
+
+        pattern.forEach((line, r) => {
+            for (let c = 0; c < line.length; c++) {
+                if (line[c] === '1') {
+                    targetIndices.push((startY + r) + (startX + c) * 7);
+                }
+            }
+        });
+
+        // 3. Animation Loop
+        let currentStep = 0;
+
+        function animate() {
+            if (currentStep < targetIndices.length) {
+                // Remove old head
+                cells.forEach(c => c.classList.remove('snake-head'));
+
+                const targetIdx = targetIndices[currentStep];
+                const cell = cells[targetIdx];
+
+                // Move head and mark as "Merged"
+                cell.classList.add('snake-head');
+                
+                setTimeout(() => {
+                    cell.classList.add('merged-pixel');
+                    currentStep++;
+                    animate();
+                }, 60); // Speed of snake
+            } else {
+                // Finished! Wait and Restart
+                setTimeout(() => {
+                    currentStep = 0;
+                    initGrid();
+                    animate();
+                }, 4000);
+            }
+        }
+
+        initGrid();
+        animate();
+    </script>
+</body>
+</html>
