@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afterlife Module Test Harness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        /* Standard death animation (all modules start with this) */
+        @keyframes die {
+            to {
+                background-color: rgb(75 85 99 / 0.6);
+                box-shadow: none;
+            }
+        }
+
+        /* Module-specific animations will be injected here */
+        #module-styles {
+            /* Placeholder for dynamically loaded styles */
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-2">Afterlife Module Test Harness</h1>
+        <p class="text-gray-400 mb-6">Test individual afterlife perspectives in isolation</p>
+
+        <!-- Module selector -->
+        <div class="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <label class="block text-sm font-medium mb-2">Select Module to Test:</label>
+            <select id="module-select" class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white">
+                <option value="">-- Select a module --</option>
+                <option value="buddhism">Buddhism (Rebirth & Nirvana)</option>
+                <option value="christianity">Christianity (Heaven, Purgatory, Hell)</option>
+                <option value="islam">Islam (Jannah, Jahannam)</option>
+                <option value="hinduism">Hinduism (Reincarnation, Moksha)</option>
+            </select>
+        </div>
+
+        <!-- Controls -->
+        <div class="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Your Age:</label>
+                    <input type="number" id="current-age" value="30" min="0" max="120"
+                           class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Life Expectancy:</label>
+                    <input type="number" id="life-expectancy" value="80" min="0" max="120"
+                           class="w-full p-2 bg-gray-700 border border-gray-600 rounded text-white">
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <button id="trigger-death" class="px-6 py-2 bg-red-600 hover:bg-red-700 rounded font-medium">
+                    Trigger Death Sequence
+                </button>
+                <button id="trigger-afterlife" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium">
+                    Show Afterlife
+                </button>
+                <button id="reset" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded font-medium">
+                    Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Module info -->
+        <div id="module-info" class="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700 hidden">
+            <h2 class="text-xl font-bold mb-2" id="module-name"></h2>
+            <p class="text-gray-400 mb-2" id="module-description"></p>
+            <a id="module-source" href="#" target="_blank" class="text-blue-400 hover:underline text-sm">
+                Academic Source →
+            </a>
+        </div>
+
+        <!-- Dot grid (life timeline) -->
+        <div class="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
+            <div id="dot-grid" class="flex flex-wrap gap-1 justify-center">
+                <!-- Dots will be generated here -->
+            </div>
+        </div>
+
+        <!-- Debug info -->
+        <div class="mt-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+            <h3 class="text-sm font-bold mb-2">Debug Info:</h3>
+            <pre id="debug-info" class="text-xs text-gray-400"></pre>
+        </div>
+    </div>
+
+    <script type="module">
+        // Simple test harness - no external dependencies needed for now
+        // We'll load modules dynamically as we create them
+
+        let currentModule = null;
+        let userData = {
+            currentAge: 30,
+            lifeExpectancy: 80,
+            currentMonth: 30 * 12,
+            totalMonths: 80 * 12,
+            deathMonth: 80 * 12
+        };
+        let isDeathSequence = false;
+        let showAfterlife = false;
+
+        const moduleSelect = document.getElementById('module-select');
+        const currentAgeInput = document.getElementById('current-age');
+        const lifeExpectancyInput = document.getElementById('life-expectancy');
+        const triggerDeathBtn = document.getElementById('trigger-death');
+        const triggerAfterlifeBtn = document.getElementById('trigger-afterlife');
+        const resetBtn = document.getElementById('reset');
+        const dotGrid = document.getElementById('dot-grid');
+        const moduleInfo = document.getElementById('module-info');
+        const debugInfo = document.getElementById('debug-info');
+
+        // Update user data from inputs
+        function updateUserData() {
+            userData.currentAge = parseInt(currentAgeInput.value);
+            userData.lifeExpectancy = parseInt(lifeExpectancyInput.value);
+            userData.currentMonth = userData.currentAge * 12;
+            userData.totalMonths = userData.lifeExpectancy * 12;
+            userData.deathMonth = userData.totalMonths;
+            renderDots();
+        }
+
+        // Render the dot grid
+        function renderDots() {
+            dotGrid.innerHTML = '';
+
+            for (let i = 0; i < userData.totalMonths; i++) {
+                const dot = document.createElement('div');
+                const isPast = i < userData.currentMonth;
+                const isCurrent = i === userData.currentMonth;
+                const isFuture = i > userData.currentMonth;
+
+                // Base dot styling
+                dot.className = 'w-2 h-2 rounded-full transition-all duration-300';
+
+                // Standard states
+                if (isPast) {
+                    dot.className += ' bg-blue-500/60';
+                } else if (isCurrent) {
+                    dot.className += ' bg-yellow-400 shadow-lg shadow-yellow-500/50';
+                } else {
+                    dot.className += ' bg-gray-400/40';
+                }
+
+                // Apply module-specific styling
+                if (currentModule && showAfterlife) {
+                    const dotData = { index: i, isPast, isCurrent, isFuture, size: 8, healthColor: 'gray' };
+
+                    // Add border
+                    const borderClass = currentModule.getBorderClass();
+                    if (borderClass) {
+                        dot.className += ` border ${borderClass}`;
+                    }
+
+                    // Add animation
+                    const animClass = currentModule.getAnimationClass(dotData, userData, isDeathSequence);
+                    if (animClass) {
+                        dot.className += ` ${animClass}`;
+                    }
+
+                    // Add inline styles
+                    const animStyle = currentModule.getAnimationStyle(dotData, userData);
+                    Object.assign(dot.style, animStyle);
+                }
+
+                dotGrid.appendChild(dot);
+            }
+
+            updateDebugInfo();
+        }
+
+        // Update debug info
+        function updateDebugInfo() {
+            debugInfo.textContent = JSON.stringify({
+                userData,
+                isDeathSequence,
+                showAfterlife,
+                moduleLoaded: !!currentModule,
+                moduleName: currentModule?.metadata?.name || 'None'
+            }, null, 2);
+        }
+
+        // Load a module (placeholder - will be dynamic once we create modules)
+        moduleSelect.addEventListener('change', async (e) => {
+            const moduleId = e.target.value;
+            if (!moduleId) {
+                currentModule = null;
+                moduleInfo.classList.add('hidden');
+                renderDots();
+                return;
+            }
+
+            try {
+                // Dynamic import - will work once we create the modules
+                const module = await import(`./${moduleId}.js`);
+                currentModule = module.default;
+
+                // Inject styles
+                const styleEl = document.createElement('style');
+                styleEl.id = 'module-styles';
+                const existing = document.getElementById('module-styles');
+                if (existing) existing.remove();
+                styleEl.textContent = currentModule.getStyles();
+                document.head.appendChild(styleEl);
+
+                // Show module info
+                document.getElementById('module-name').textContent = currentModule.metadata.name;
+                document.getElementById('module-description').textContent = currentModule.metadata.description;
+                document.getElementById('module-source').href = currentModule.metadata.source;
+                moduleInfo.classList.remove('hidden');
+
+                // Initialize module
+                if (currentModule.init) currentModule.init();
+
+                renderDots();
+            } catch (err) {
+                alert(`Failed to load module: ${err.message}\n\nMake sure the module file exists!`);
+                console.error(err);
+            }
+        });
+
+        // Event listeners
+        currentAgeInput.addEventListener('input', updateUserData);
+        lifeExpectancyInput.addEventListener('input', updateUserData);
+
+        triggerDeathBtn.addEventListener('click', () => {
+            isDeathSequence = true;
+            showAfterlife = false;
+            renderDots();
+            setTimeout(() => {
+                isDeathSequence = false;
+                renderDots();
+            }, 2000);
+        });
+
+        triggerAfterlifeBtn.addEventListener('click', () => {
+            showAfterlife = true;
+            isDeathSequence = false;
+            renderDots();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            isDeathSequence = false;
+            showAfterlife = false;
+            if (currentModule?.reset) currentModule.reset();
+            renderDots();
+        });
+
+        // Initial render
+        renderDots();
+    </script>
+</body>
+</html>
