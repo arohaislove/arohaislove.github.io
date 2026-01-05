@@ -1504,144 +1504,144 @@
                           </h3>
                           <div className="grid md:grid-cols-2 gap-3">
                             <button
-                              onClick={() => handleWorldviewSelect('buddhism')}
+                              onClick={() => handleWorldviewSelect('buddhism-rebirth')}
                               className="p-4 bg-gray-700/50 hover:bg-blue-900/30 rounded-lg border border-gray-600/50 hover:border-blue-500/50 transition-all text-left"
                               data-track="Select Buddhism Rebirth"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Buddhism - Rebirth</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.buddhism.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['buddhism-rebirth']?.description}</div>
                                 </div>
-                                <a href={worldviews.buddhism.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['buddhism-rebirth']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('nirvana')}
+                              onClick={() => handleWorldviewSelect('buddhism-nirvana')}
                               className="p-4 bg-gray-700/50 hover:bg-blue-900/30 rounded-lg border border-gray-600/50 hover:border-blue-500/50 transition-all text-left"
                               data-track="Select Buddhism Nirvana"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Buddhism - Nirvana</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.nirvana.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['buddhism-nirvana']?.description}</div>
                                 </div>
-                                <a href={worldviews.nirvana.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['buddhism-nirvana']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('heaven')}
+                              onClick={() => handleWorldviewSelect('christianity-heaven')}
                               className="p-4 bg-gray-700/50 hover:bg-yellow-900/30 rounded-lg border border-gray-600/50 hover:border-yellow-500/50 transition-all text-left"
                               data-track="Select Christianity Heaven"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Christianity - Heaven</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.heaven.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['christianity-heaven']?.description}</div>
                                 </div>
-                                <a href={worldviews.heaven.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['christianity-heaven']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('purgatory')}
+                              onClick={() => handleWorldviewSelect('christianity-purgatory')}
                               className="p-4 bg-gray-700/50 hover:bg-yellow-900/30 rounded-lg border border-gray-600/50 hover:border-yellow-500/50 transition-all text-left"
                               data-track="Select Christianity Purgatory"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Christianity - Purgatory</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.purgatory.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['christianity-purgatory']?.description}</div>
                                 </div>
-                                <a href={worldviews.purgatory.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['christianity-purgatory']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('hell')}
+                              onClick={() => handleWorldviewSelect('christianity-hell')}
                               className="p-4 bg-gray-700/50 hover:bg-red-900/30 rounded-lg border border-gray-600/50 hover:border-red-500/50 transition-all text-left"
                               data-track="Select Christianity Hell"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Christianity - Hell</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.hell.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['christianity-hell']?.description}</div>
                                 </div>
-                                <a href={worldviews.hell.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['christianity-hell']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('jannah')}
+                              onClick={() => handleWorldviewSelect('islam-jannah')}
                               className="p-4 bg-gray-700/50 hover:bg-green-900/30 rounded-lg border border-gray-600/50 hover:border-green-500/50 transition-all text-left"
                               data-track="Select Islam Jannah"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Islam - Jannah</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.jannah.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['islam-jannah']?.description}</div>
                                 </div>
-                                <a href={worldviews.jannah.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['islam-jannah']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('jahannam')}
+                              onClick={() => handleWorldviewSelect('islam-jahannam')}
                               className="p-4 bg-gray-700/50 hover:bg-red-900/30 rounded-lg border border-gray-600/50 hover:border-red-500/50 transition-all text-left"
                               data-track="Select Islam Jahannam"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Islam - Jahannam</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.jahannam.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['islam-jahannam']?.description}</div>
                                 </div>
-                                <a href={worldviews.jahannam.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['islam-jahannam']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('reincarnation')}
+                              onClick={() => handleWorldviewSelect('hinduism-reincarnation')}
                               className="p-4 bg-gray-700/50 hover:bg-orange-900/30 rounded-lg border border-gray-600/50 hover:border-orange-500/50 transition-all text-left"
                               data-track="Select Hinduism Reincarnation"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Hinduism - Reincarnation</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.reincarnation.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['hinduism-reincarnation']?.description}</div>
                                 </div>
-                                <a href={worldviews.reincarnation.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['hinduism-reincarnation']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
                             </button>
 
                             <button
-                              onClick={() => handleWorldviewSelect('moksha')}
+                              onClick={() => handleWorldviewSelect('hinduism-moksha')}
                               className="p-4 bg-gray-700/50 hover:bg-orange-900/30 rounded-lg border border-gray-600/50 hover:border-orange-500/50 transition-all text-left"
                               data-track="Select Hinduism Moksha"
                             >
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Hinduism - Moksha</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.moksha.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews['hinduism-moksha']?.description}</div>
                                 </div>
-                                <a href={worldviews.moksha.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews['hinduism-moksha']?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1655,9 +1655,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Judaism - Olam Ha-Ba</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.judaism.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.judaism?.description}</div>
                                 </div>
-                                <a href={worldviews.judaism.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.judaism?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1671,9 +1671,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Ancestor Traditions</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.ancestor.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.ancestor?.description}</div>
                                 </div>
-                                <a href={worldviews.ancestor.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.ancestor?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1693,9 +1693,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Analytic Idealism</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.idealism.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.idealism?.description}</div>
                                 </div>
-                                <a href={worldviews.idealism.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.idealism?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1709,9 +1709,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Panpsychism</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.panpsychism.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.panpsychism?.description}</div>
                                 </div>
-                                <a href={worldviews.panpsychism.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.panpsychism?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1725,9 +1725,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Illusionism</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.illusionism.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.illusionism?.description}</div>
                                 </div>
-                                <a href={worldviews.illusionism.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.illusionism?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1741,9 +1741,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Simulation Theory</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.simulation.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.simulation?.description}</div>
                                 </div>
-                                <a href={worldviews.simulation.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.simulation?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1763,9 +1763,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Atomic Dispersal</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.atomic.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.atomic?.description}</div>
                                 </div>
-                                <a href={worldviews.atomic.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.atomic?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
@@ -1779,9 +1779,9 @@
                               <div className="flex items-start justify-between">
                                 <div>
                                   <div className="font-medium text-gray-200">Heat Death</div>
-                                  <div className="text-sm text-gray-400 mt-1">{worldviews.heatdeath.description}</div>
+                                  <div className="text-sm text-gray-400 mt-1">{worldviews.heatdeath?.description}</div>
                                 </div>
-                                <a href={worldviews.heatdeath.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
+                                <a href={worldviews.heatdeath?.source} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-gray-500 hover:text-gray-300 ml-2">
                                   <InfoIcon />
                                 </a>
                               </div>
