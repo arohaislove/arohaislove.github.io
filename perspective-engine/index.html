@@ -855,6 +855,115 @@
         });
     </script>
 
+    <!-- Haptic Feedback Utility -->
+    <script>
+        /**
+         * Haptic Feedback Manager
+         * Provides subtle vibration feedback for Christian Heaven afterlife transitions
+         * with rate limiting to prevent overwhelming vibrations
+         */
+        window.HapticFeedback = {
+            // Settings
+            enabled: false,
+            lastVibrationTime: 0,
+            minTimeBetweenVibrations: 500, // ms - prevents vibration stacking
+
+            // Vibration patterns
+            patterns: {
+                // Gentle double-pulse pattern suggesting a heartbeat fading
+                death: [30, 50, 30],
+                // Single gentle pulse for ascension
+                ascent: [50]
+            },
+
+            /**
+             * Check if Vibration API is supported
+             */
+            isSupported() {
+                return 'vibrate' in navigator;
+            },
+
+            /**
+             * Enable haptic feedback
+             */
+            enable() {
+                this.enabled = true;
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('hapticFeedbackEnabled', 'true');
+                }
+                console.log('[Haptic Feedback] Enabled');
+            },
+
+            /**
+             * Disable haptic feedback
+             */
+            disable() {
+                this.enabled = false;
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('hapticFeedbackEnabled', 'false');
+                }
+                console.log('[Haptic Feedback] Disabled');
+            },
+
+            /**
+             * Load setting from localStorage
+             */
+            loadSetting() {
+                if (typeof localStorage !== 'undefined') {
+                    const saved = localStorage.getItem('hapticFeedbackEnabled');
+                    this.enabled = saved === 'true';
+                }
+            },
+
+            /**
+             * Check if enough time has passed since last vibration
+             */
+            canVibrate() {
+                const now = Date.now();
+                return now - this.lastVibrationTime >= this.minTimeBetweenVibrations;
+            },
+
+            /**
+             * Trigger haptic feedback with rate limiting
+             * @param {string} pattern - Pattern name ('death' or 'ascent')
+             */
+            vibrate(pattern = 'death') {
+                // Check all conditions
+                if (!this.enabled) return;
+                if (!this.isSupported()) return;
+                if (!this.canVibrate()) return;
+
+                const vibrationPattern = this.patterns[pattern] || this.patterns.death;
+
+                try {
+                    navigator.vibrate(vibrationPattern);
+                    this.lastVibrationTime = Date.now();
+                    console.log(`[Haptic Feedback] Vibrated with pattern: ${pattern}`);
+                } catch (error) {
+                    console.warn('[Haptic Feedback] Failed to vibrate:', error);
+                }
+            },
+
+            /**
+             * Trigger vibration on death sequence start
+             */
+            onDeathSequence() {
+                this.vibrate('death');
+            },
+
+            /**
+             * Trigger vibration on ascent to heaven
+             * (Currently not used, but available for future enhancement)
+             */
+            onAscent() {
+                this.vibrate('ascent');
+            }
+        };
+
+        // Load saved setting on page load
+        window.HapticFeedback.loadSetting();
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect } = React;
 
@@ -921,6 +1030,9 @@
           const [selectedWorldview, setSelectedWorldview] = useState(null);
           const [pageAtmosphere, setPageAtmosphere] = useState('');
 
+          // Haptic feedback state (synced with HapticFeedback utility)
+          const [hapticEnabled, setHapticEnabled] = useState(window.HapticFeedback.enabled);
+
           // Ref for scrolling to life grid
           const lifeGridRef = React.useRef(null);
 
@@ -974,6 +1086,11 @@
             setShowAfterlife(true);
             setIsDeathSequence(true);
 
+            // Trigger haptic feedback for death sequence
+            if (window.HapticFeedback) {
+              window.HapticFeedback.onDeathSequence();
+            }
+
             // Death sequence: dim all future dots then show selector (reduced for snappier UX)
             setTimeout(() => {
               setIsDeathSequence(false);
@@ -985,6 +1102,14 @@
             setSelectedWorldview(worldviewKey);
             setShowWorldviewSelector(false);
             setPageAtmosphere(worldviews[worldviewKey].atmosphere);
+
+            // Trigger haptic feedback for Christian Heaven ascension
+            if (worldviewKey === 'christianity-heaven' && window.HapticFeedback) {
+              // Slight delay to sync with animation start
+              setTimeout(() => {
+                window.HapticFeedback.onAscent();
+              }, 100);
+            }
 
             // Scroll to life grid with smooth animation
             setTimeout(() => {
@@ -1017,6 +1142,16 @@
             const age = Number(value);
             if (age > currentAge) {
               setGoalAge(age);
+            }
+          };
+
+          const handleHapticToggle = () => {
+            const newValue = !hapticEnabled;
+            setHapticEnabled(newValue);
+            if (newValue) {
+              window.HapticFeedback.enable();
+            } else {
+              window.HapticFeedback.disable();
             }
           };
 
@@ -1276,6 +1411,28 @@
                         <span>120</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Haptic Feedback Toggle */}
+                  <div className="flex justify-center mt-8 pt-6 border-t border-gray-700/30">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                      <span className="text-sm font-light text-gray-400 group-hover:text-gray-300 transition-colors tracking-wide">
+                        Haptic Feedback
+                      </span>
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={hapticEnabled}
+                          onChange={handleHapticToggle}
+                          className="sr-only peer"
+                          data-track="Toggle Haptic Feedback"
+                        />
+                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                      </div>
+                      {window.HapticFeedback && !window.HapticFeedback.isSupported() && (
+                        <span className="text-xs text-gray-600 italic">(Not supported on this device)</span>
+                      )}
+                    </label>
                   </div>
                 </div>
 
