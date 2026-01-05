@@ -843,10 +843,15 @@
                 return { class: '', style: {} };
             }
 
-            return {
-                class: module.getAnimationClass(dot, userData, isDeathSequence),
-                style: module.getAnimationStyle ? module.getAnimationStyle(dot, userData) : {}
-            };
+            try {
+                return {
+                    class: module.getAnimationClass(dot, userData, isDeathSequence),
+                    style: module.getAnimationStyle ? module.getAnimationStyle(dot, userData) : {}
+                };
+            } catch (error) {
+                console.error(`[Afterlife Engine] Error getting animation for ${worldviewKey}:`, error);
+                return { class: '', style: {} };
+            }
         };
 
         // Load modules immediately
@@ -1299,25 +1304,32 @@
               }
               // Use module-based animation system for afterlife perspectives
               else if (selectedWorldview && window.getAnimationForDot) {
-                const dot = {
-                  index: i,
-                  isPast,
-                  isCurrent,
-                  isFuture,
-                  size: dotSize,
-                  healthColor
-                };
-                const userData = {
-                  currentAge,
-                  lifeExpectancy: goalAge,
-                  currentMonth: currentMonth,
-                  totalMonths: metrics.totalMonths,
-                  deathMonth: currentMonth
-                };
+                try {
+                  const dot = {
+                    index: i,
+                    isPast,
+                    isCurrent,
+                    isFuture,
+                    size: dotSize,
+                    healthColor
+                  };
+                  const userData = {
+                    currentAge,
+                    lifeExpectancy: goalAge,
+                    currentMonth: currentMonth,
+                    totalMonths: metrics.totalMonths,
+                    deathMonth: currentMonth
+                  };
 
-                const animation = window.getAnimationForDot(dot, userData, selectedWorldview, false);
-                animationClass = animation.class;
-                animationStyle = { ...animationStyle, ...animation.style };
+                  const animation = window.getAnimationForDot(dot, userData, selectedWorldview, false);
+                  if (animation) {
+                    animationClass = animation.class || '';
+                    animationStyle = { ...animationStyle, ...(animation.style || {}) };
+                  }
+                } catch (error) {
+                  console.error('[Perspective Engine] Error applying animation to dot:', error);
+                  // Fail silently - dot will just not animate
+                }
               }
 
               // NOW dot specific styling
