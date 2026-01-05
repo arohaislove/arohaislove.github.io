@@ -749,42 +749,69 @@
          * Load and register all afterlife modules
          */
         async function loadAfterlifeModules() {
-            console.log('[Afterlife Engine] Loading modules...');
+            try {
+                console.log('[Afterlife Engine] ========== MODULE LOADING START ==========');
+                console.log('[Afterlife Engine] afterlifeModules object:', afterlifeModules);
+                console.log('[Afterlife Engine] afterlifeModules keys:', Object.keys(afterlifeModules));
 
-            // Process each module from the registry
-            Object.entries(afterlifeModules).forEach(([key, module]) => {
-                const moduleDefault = module.default;
+                // Process each module from the registry
+                const entries = Object.entries(afterlifeModules);
+                console.log('[Afterlife Engine] Number of module entries:', entries.length);
 
-                // Check if this module has multiple variants (e.g., Christianity: heaven, purgatory, hell)
-                if (moduleDefault.metadata && moduleDefault.metadata.variants) {
-                    console.log(`[Afterlife Engine] Loading multi-variant module: ${moduleDefault.metadata.name}`);
-
-                    // Register each variant as a separate perspective
-                    moduleDefault.metadata.variants.forEach(variant => {
-                        const variantModule = moduleDefault[variant];
-                        if (variantModule && variantModule.metadata) {
-                            window.AfterlifeModules[variantModule.metadata.id] = variantModule;
-                            console.log(`  ✓ Registered: ${variantModule.metadata.id}`);
-                        }
-                    });
-                } else if (moduleDefault.metadata) {
-                    // Single perspective module
-                    window.AfterlifeModules[moduleDefault.metadata.id] = moduleDefault;
-                    console.log(`[Afterlife Engine] ✓ Registered: ${moduleDefault.metadata.id}`);
+                if (entries.length === 0) {
+                    console.error('[Afterlife Engine] ERROR: No modules found in afterlifeModules!');
+                    console.error('[Afterlife Engine] This means the import from ./afterlives/index.js failed or returned nothing');
+                    throw new Error('No afterlife modules found');
                 }
-            });
 
-            // Build worldviews object from module metadata
-            buildWorldviews();
+                entries.forEach(([key, module]) => {
+                    console.log(`[Afterlife Engine] Processing module entry: ${key}`, module);
+                    const moduleDefault = module.default || module;
 
-            // Inject CSS from all modules
-            injectModuleStyles();
+                    // Check if this module has multiple variants (e.g., Christianity: heaven, purgatory, hell)
+                    if (moduleDefault.metadata && moduleDefault.metadata.variants) {
+                        console.log(`[Afterlife Engine] Loading multi-variant module: ${moduleDefault.metadata.name}`);
 
-            console.log(`[Afterlife Engine] ✓ Loaded ${Object.keys(window.AfterlifeModules).length} perspectives`);
+                        // Register each variant as a separate perspective
+                        moduleDefault.metadata.variants.forEach(variant => {
+                            const variantModule = moduleDefault[variant];
+                            if (variantModule && variantModule.metadata) {
+                                window.AfterlifeModules[variantModule.metadata.id] = variantModule;
+                                console.log(`  ✓ Registered: ${variantModule.metadata.id}`);
+                            } else {
+                                console.warn(`  ⚠ Variant ${variant} not found or invalid`);
+                            }
+                        });
+                    } else if (moduleDefault.metadata) {
+                        // Single perspective module
+                        window.AfterlifeModules[moduleDefault.metadata.id] = moduleDefault;
+                        console.log(`[Afterlife Engine] ✓ Registered: ${moduleDefault.metadata.id}`);
+                    } else {
+                        console.warn(`[Afterlife Engine] ⚠ Module ${key} has no metadata, skipping`);
+                    }
+                });
 
-            // Signal that modules are ready
-            window.afterlifeModulesReady = true;
-            window.dispatchEvent(new Event('afterlifeModulesLoaded'));
+                console.log('[Afterlife Engine] Building worldviews...');
+                // Build worldviews object from module metadata
+                buildWorldviews();
+
+                console.log('[Afterlife Engine] Injecting module styles...');
+                // Inject CSS from all modules
+                injectModuleStyles();
+
+                console.log(`[Afterlife Engine] ✓ Loaded ${Object.keys(window.AfterlifeModules).length} perspectives`);
+
+                // Signal that modules are ready
+                window.afterlifeModulesReady = true;
+                console.log('[Afterlife Engine] Dispatching afterlifeModulesLoaded event...');
+                window.dispatchEvent(new Event('afterlifeModulesLoaded'));
+                console.log('[Afterlife Engine] ========== MODULE LOADING COMPLETE ==========');
+            } catch (error) {
+                console.error('[Afterlife Engine] ========== MODULE LOADING FAILED ==========');
+                console.error('[Afterlife Engine] Error:', error);
+                console.error('[Afterlife Engine] Stack:', error.stack);
+                throw error; // Re-throw so the .catch() handler gets it
+            }
         }
 
         /**
@@ -855,9 +882,17 @@
         };
 
         // Load modules immediately
-        loadAfterlifeModules().catch(error => {
-            console.error('[Afterlife Engine] Failed to load modules:', error);
-        });
+        console.log('[Afterlife Engine] *** About to call loadAfterlifeModules() ***');
+        console.log('[Afterlife Engine] Current timestamp:', Date.now());
+        loadAfterlifeModules()
+            .then(() => {
+                console.log('[Afterlife Engine] *** loadAfterlifeModules() completed successfully ***');
+            })
+            .catch(error => {
+                console.error('[Afterlife Engine] *** loadAfterlifeModules() FAILED ***');
+                console.error('[Afterlife Engine] Error:', error);
+                console.error('[Afterlife Engine] Stack:', error.stack);
+            });
     </script>
 
     <!-- Haptic Feedback Utility -->
