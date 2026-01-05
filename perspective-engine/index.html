@@ -722,6 +722,139 @@
 <body>
     <div id="root"></div>
 
+    <!-- Module Loader: Dynamically loads all afterlife perspective modules -->
+    <script type="module">
+        /**
+         * Afterlife Module Loader
+         *
+         * This script dynamically loads all afterlife perspective modules from the
+         * /afterlives/ directory and makes them available to the React app.
+         *
+         * Architecture:
+         * 1. Load all modules from the registry (afterlives/index.js)
+         * 2. Flatten multi-variant modules (e.g., Buddhism has rebirth + nirvana)
+         * 3. Build worldviews object from module metadata
+         * 4. Inject CSS from modules into the page
+         * 5. Store in global window object for React app to use
+         */
+
+        // Import all afterlife modules from the registry
+        import * as afterlifeModules from './afterlives/index.js';
+
+        // Global storage for loaded modules
+        window.AfterlifeModules = {};
+        window.AfterlifeWorldviews = {};
+
+        /**
+         * Load and register all afterlife modules
+         */
+        async function loadAfterlifeModules() {
+            console.log('[Afterlife Engine] Loading modules...');
+
+            // Process each module from the registry
+            Object.entries(afterlifeModules).forEach(([key, module]) => {
+                const moduleDefault = module.default;
+
+                // Check if this module has multiple variants (e.g., Christianity: heaven, purgatory, hell)
+                if (moduleDefault.metadata && moduleDefault.metadata.variants) {
+                    console.log(`[Afterlife Engine] Loading multi-variant module: ${moduleDefault.metadata.name}`);
+
+                    // Register each variant as a separate perspective
+                    moduleDefault.metadata.variants.forEach(variant => {
+                        const variantModule = moduleDefault[variant];
+                        if (variantModule && variantModule.metadata) {
+                            window.AfterlifeModules[variantModule.metadata.id] = variantModule;
+                            console.log(`  ✓ Registered: ${variantModule.metadata.id}`);
+                        }
+                    });
+                } else if (moduleDefault.metadata) {
+                    // Single perspective module
+                    window.AfterlifeModules[moduleDefault.metadata.id] = moduleDefault;
+                    console.log(`[Afterlife Engine] ✓ Registered: ${moduleDefault.metadata.id}`);
+                }
+            });
+
+            // Build worldviews object from module metadata
+            buildWorldviews();
+
+            // Inject CSS from all modules
+            injectModuleStyles();
+
+            console.log(`[Afterlife Engine] ✓ Loaded ${Object.keys(window.AfterlifeModules).length} perspectives`);
+
+            // Signal that modules are ready
+            window.afterlifeModulesReady = true;
+            window.dispatchEvent(new Event('afterlifeModulesLoaded'));
+        }
+
+        /**
+         * Build the worldviews object from module metadata
+         * This replaces the hardcoded worldviews object
+         */
+        function buildWorldviews() {
+            Object.entries(window.AfterlifeModules).forEach(([id, module]) => {
+                const meta = module.metadata;
+                window.AfterlifeWorldviews[id] = {
+                    name: meta.name,
+                    description: meta.description,
+                    source: meta.source,
+                    atmosphere: module.getAtmosphereClass ? module.getAtmosphereClass() : '',
+                    borderClass: module.getBorderClass ? module.getBorderClass() : '',
+                    category: meta.category || 'philosophical',
+                    tradition: meta.tradition || null
+                };
+            });
+        }
+
+        /**
+         * Inject CSS styles from all modules into the page
+         * This allows each module to define its own animations
+         */
+        function injectModuleStyles() {
+            const styleElement = document.createElement('style');
+            styleElement.id = 'afterlife-module-styles';
+            let allStyles = '/* Dynamically injected module styles */\n\n';
+
+            Object.entries(window.AfterlifeModules).forEach(([id, module]) => {
+                if (module.getStyles) {
+                    allStyles += `/* ${module.metadata.name} */\n`;
+                    allStyles += module.getStyles();
+                    allStyles += '\n\n';
+                }
+            });
+
+            styleElement.textContent = allStyles;
+            document.head.appendChild(styleElement);
+            console.log('[Afterlife Engine] ✓ Injected module styles');
+        }
+
+        /**
+         * Helper function to get animation for a specific dot
+         * This replaces the massive switch statements
+         */
+        window.getAnimationForDot = function(dot, userData, worldviewKey, isDeathSequence) {
+            if (!worldviewKey || isDeathSequence) {
+                return { class: '', style: {} };
+            }
+
+            const module = window.AfterlifeModules[worldviewKey];
+            if (!module) {
+                console.warn(`[Afterlife Engine] Module not found: ${worldviewKey}`);
+                return { class: '', style: {} };
+            }
+
+            return {
+                class: module.getAnimationClass(dot, userData, isDeathSequence),
+                style: module.getAnimationStyle ? module.getAnimationStyle(dot, userData) : {}
+            };
+        };
+
+        // Load modules immediately
+        loadAfterlifeModules().catch(error => {
+            console.error('[Afterlife Engine] Failed to load modules:', error);
+        });
+    </script>
+
     <script type="text/babel">
         const { useState, useEffect } = React;
 
@@ -778,6 +911,9 @@
           const [goalAge, setGoalAge] = useState(85);
           const [quoteIndex, setQuoteIndex] = useState(0);
 
+          // Module loading state
+          const [modulesLoaded, setModulesLoaded] = useState(window.afterlifeModulesReady || false);
+
           // Afterlife feature state
           const [showAfterlife, setShowAfterlife] = useState(false);
           const [isDeathSequence, setIsDeathSequence] = useState(false);
@@ -787,6 +923,24 @@
 
           // Ref for scrolling to life grid
           const lifeGridRef = React.useRef(null);
+
+          // Wait for modules to load
+          useEffect(() => {
+            const handleModulesLoaded = () => {
+              setModulesLoaded(true);
+              console.log('[Perspective Engine] Modules loaded, UI ready');
+            };
+
+            if (window.afterlifeModulesReady) {
+              setModulesLoaded(true);
+            } else {
+              window.addEventListener('afterlifeModulesLoaded', handleModulesLoaded);
+            }
+
+            return () => {
+              window.removeEventListener('afterlifeModulesLoaded', handleModulesLoaded);
+            };
+          }, []);
 
           // Initialize analytics on component mount
           useEffect(() => {
@@ -804,111 +958,9 @@
             { text: "Do not act as if you had ten thousand years to live.", author: "Marcus Aurelius" }
           ];
 
-          // Worldview data with descriptions and sources
-          const worldviews = {
-            buddhism: {
-              name: 'Buddhism - Rebirth',
-              description: 'Consciousness dissolves and reforms in a new existence based on karma.',
-              source: 'https://plato.stanford.edu/entries/buddhism/',
-              atmosphere: 'atmosphere-buddhism'
-            },
-            nirvana: {
-              name: 'Buddhism - Nirvana',
-              description: 'Liberation from the cycle of rebirth; merging with the ultimate reality.',
-              source: 'https://plato.stanford.edu/entries/buddhism/',
-              atmosphere: 'atmosphere-buddhism'
-            },
-            heaven: {
-              name: 'Christianity - Heaven',
-              description: 'Eternal communion with God in paradise.',
-              source: 'https://www.britannica.com/topic/Christianity',
-              atmosphere: 'atmosphere-heaven'
-            },
-            purgatory: {
-              name: 'Christianity - Purgatory',
-              description: 'Purification before entering heaven.',
-              source: 'https://www.britannica.com/topic/purgatory',
-              atmosphere: 'atmosphere-heaven'
-            },
-            hell: {
-              name: 'Christianity - Hell',
-              description: 'Separation from God; eternal suffering.',
-              source: 'https://www.britannica.com/topic/hell-Christianity',
-              atmosphere: 'atmosphere-hell'
-            },
-            jannah: {
-              name: 'Islam - Jannah',
-              description: 'Paradise; eternal bliss in the presence of Allah.',
-              source: 'https://www.britannica.com/topic/Islam',
-              atmosphere: 'atmosphere-jannah'
-            },
-            jahannam: {
-              name: 'Islam - Jahannam',
-              description: 'Hell; punishment for those who rejected faith.',
-              source: 'https://www.britannica.com/topic/Islam',
-              atmosphere: 'atmosphere-jahannam'
-            },
-            reincarnation: {
-              name: 'Hinduism - Reincarnation',
-              description: 'Soul reborn in a new body based on karma.',
-              source: 'https://plato.stanford.edu/entries/hinduism/',
-              atmosphere: 'atmosphere-hinduism'
-            },
-            moksha: {
-              name: 'Hinduism - Moksha',
-              description: 'Liberation from the cycle of rebirth; union with Brahman.',
-              source: 'https://plato.stanford.edu/entries/hinduism/',
-              atmosphere: 'atmosphere-hinduism'
-            },
-            judaism: {
-              name: 'Judaism - Olam Ha-Ba',
-              description: 'The World to Come; emphasis on legacy and remembrance.',
-              source: 'https://www.myjewishlearning.com/article/olam-ha-ba-the-afterlife/',
-              atmosphere: 'atmosphere-judaism'
-            },
-            ancestor: {
-              name: 'Ancestor Traditions',
-              description: 'Joining ancestors; continuing presence in the spiritual realm.',
-              source: 'https://www.britannica.com/topic/ancestor-worship',
-              atmosphere: 'atmosphere-ancestor'
-            },
-            idealism: {
-              name: 'Analytic Idealism',
-              description: 'Individual consciousness dissolves back into universal consciousness.',
-              source: 'https://plato.stanford.edu/entries/idealism/',
-              atmosphere: 'atmosphere-idealism'
-            },
-            panpsychism: {
-              name: 'Panpsychism',
-              description: 'Consciousness fragments and continues in all matter.',
-              source: 'https://plato.stanford.edu/entries/panpsychism/',
-              atmosphere: 'atmosphere-panpsychism'
-            },
-            illusionism: {
-              name: 'Illusionism',
-              description: 'Consciousness ceases; subjective experience ends completely.',
-              source: 'https://plato.stanford.edu/entries/consciousness-illusionism/',
-              atmosphere: 'atmosphere-illusionism'
-            },
-            simulation: {
-              name: 'Simulation Theory',
-              description: 'Process terminates or transitions to another level of simulation.',
-              source: 'https://www.scientificamerican.com/article/do-we-live-in-a-simulation-chances-are-about-50-50/',
-              atmosphere: 'atmosphere-simulation'
-            },
-            atomic: {
-              name: 'Atomic Dispersal',
-              description: 'Atoms scatter and recombine in new forms; carbon cycle continues.',
-              source: 'https://www.scientificamerican.com/article/what-happens-to-atoms-after-death/',
-              atmosphere: 'atmosphere-atomic'
-            },
-            heatdeath: {
-              name: 'Heat Death',
-              description: 'Energy dissipates toward universal entropy and stillness.',
-              source: 'https://www.britannica.com/science/thermodynamics',
-              atmosphere: 'atmosphere-heatdeath'
-            }
-          };
+          // Use dynamically loaded worldviews from modules
+          // This object is built from module metadata by the module loader
+          const worldviews = window.AfterlifeWorldviews || {};
 
           useEffect(() => {
             const interval = setInterval(() => {
@@ -1051,27 +1103,12 @@
           };
 
           // Helper function to get border class for worldview
+          // Uses module-provided border class from metadata
           const getBorderClass = (worldviewKey) => {
-            const borderMap = {
-              buddhism: 'border-buddhism',
-              nirvana: 'border-buddhism',
-              heaven: 'border-heaven',
-              purgatory: 'border-heaven',
-              hell: 'border-hell',
-              jannah: 'border-jannah',
-              jahannam: 'border-jahannam',
-              reincarnation: 'border-hinduism',
-              moksha: 'border-hinduism',
-              judaism: 'border-judaism',
-              ancestor: 'border-ancestor',
-              idealism: 'border-idealism',
-              panpsychism: 'border-panpsychism',
-              illusionism: 'border-illusionism',
-              simulation: 'border-simulation',
-              atomic: 'border-atomic',
-              heatdeath: 'border-heatdeath'
-            };
-            return borderMap[worldviewKey] || '';
+            if (window.AfterlifeWorldviews && window.AfterlifeWorldviews[worldviewKey]) {
+              return window.AfterlifeWorldviews[worldviewKey].borderClass || '';
+            }
+            return '';
           };
 
           const renderLifeGrid = () => {
@@ -1095,171 +1132,34 @@
                 borderClass = getBorderClass(selectedWorldview);
               }
 
-              if (showAfterlife && isFuture) {
-                if (isDeathSequence) {
-                  animationClass = 'animate-[die_0.5s_ease-out_forwards]';
+              // Handle death sequence animation
+              if (isDeathSequence) {
+                animationClass = 'animate-[die_0.5s_ease-out_forwards]';
+                if (isFuture) {
                   animationStyle.animationDelay = `${(metrics.totalMonths - i) * 0.01}s`;
-                } else if (selectedWorldview) {
-                  // Apply worldview-specific transformations
-                  switch (selectedWorldview) {
-                    case 'buddhism':
-                      animationClass = 'animate-[buddhist-dissolve_3s_ease-in-out_infinite]';
-                      break;
-                    case 'nirvana':
-                      animationClass = 'animate-[nirvana-merge_4s_ease-out_forwards]';
-                      break;
-                    case 'heaven':
-                      animationClass = 'animate-[rise-to-heaven_3s_ease-out_forwards]';
-                      break;
-                    case 'purgatory':
-                      animationClass = 'animate-[purgatory-purify_2s_ease-in-out_infinite]';
-                      break;
-                    case 'hell':
-                      animationClass = 'animate-[descend-to-hell_3s_ease-out_forwards]';
-                      break;
-                    case 'jannah':
-                      animationClass = 'animate-[barzakh-pause_1s_ease-in_forwards,rise-to-jannah_3s_1s_ease-out_forwards]';
-                      break;
-                    case 'jahannam':
-                      animationClass = 'animate-[barzakh-pause_1s_ease-in_forwards,descend-to-jahannam_3s_1s_ease-out_forwards]';
-                      break;
-                    case 'reincarnation':
-                      animationClass = 'animate-[reincarnate-scatter_4s_ease-in-out_infinite]';
-                      const scatterX = (Math.random() - 0.5) * 400;
-                      const scatterY = (Math.random() - 0.5) * 400;
-                      const rebornX = (Math.random() - 0.5) * 200;
-                      const rebornY = (Math.random() - 0.5) * 200;
-                      animationStyle = {
-                        '--scatter-x': `${scatterX}px`,
-                        '--scatter-y': `${scatterY}px`,
-                        '--reborn-x': `${rebornX}px`,
-                        '--reborn-y': `${rebornY}px`
-                      };
-                      break;
-                    case 'moksha':
-                      animationClass = 'animate-[moksha-expand_5s_ease-out_forwards]';
-                      break;
-                    case 'judaism':
-                      animationClass = 'animate-[judaic-rest_2s_ease-out_forwards]';
-                      break;
-                    case 'ancestor':
-                      animationClass = 'animate-[move-to-past_3s_ease-out_forwards]';
-                      break;
-                    case 'idealism':
-                      animationClass = 'animate-[dissolve-boundaries_4s_ease-out_forwards]';
-                      break;
-                    case 'panpsychism':
-                      animationClass = 'animate-[fragment-consciousness_3s_ease-out_forwards]';
-                      const fragmentX = (Math.random() - 0.5) * 600;
-                      const fragmentY = (Math.random() - 0.5) * 600;
-                      animationStyle = {
-                        '--fragment-x': `${fragmentX}px`,
-                        '--fragment-y': `${fragmentY}px`
-                      };
-                      break;
-                    case 'illusionism':
-                      animationClass = 'animate-[switch-off_1s_ease-out_forwards]';
-                      break;
-                    case 'simulation':
-                      animationClass = 'animate-[glitch_2s_ease-in-out_forwards]';
-                      break;
-                    case 'atomic':
-                      animationClass = 'animate-[atomic-drift_5s_ease-out_forwards]';
-                      const driftX = (Math.random() - 0.5) * 500;
-                      const driftY = (Math.random() - 0.5) * 500;
-                      const newColors = ['#10b981', '#3b82f6', '#78350f'];
-                      animationStyle = {
-                        '--drift-x': `${driftX}px`,
-                        '--drift-y': `${driftY}px`,
-                        backgroundColor: newColors[Math.floor(Math.random() * newColors.length)]
-                      };
-                      break;
-                    case 'heatdeath':
-                      animationClass = 'animate-[heat-death_8s_ease-out_forwards]';
-                      break;
-                  }
                 }
               }
+              // Use module-based animation system for afterlife perspectives
+              else if (selectedWorldview && window.getAnimationForDot) {
+                const dot = {
+                  index: i,
+                  isPast,
+                  isCurrent,
+                  isFuture,
+                  size: dotSize,
+                  healthColor
+                };
+                const userData = {
+                  currentAge,
+                  lifeExpectancy: goalAge,
+                  currentMonth: currentMonth,
+                  totalMonths: metrics.totalMonths,
+                  deathMonth: currentMonth
+                };
 
-              // Apply transformations to ALL dots when a worldview is selected (not just future)
-              if (selectedWorldview && !isDeathSequence) {
-                switch (selectedWorldview) {
-                  case 'buddhism':
-                    animationClass = 'animate-[buddhist-dissolve_3s_ease-in-out_infinite]';
-                    break;
-                  case 'nirvana':
-                    animationClass = 'animate-[nirvana-merge_4s_ease-out_forwards]';
-                    break;
-                  case 'heaven':
-                    animationClass = 'animate-[rise-to-heaven_3s_ease-out_forwards]';
-                    break;
-                  case 'purgatory':
-                    animationClass = 'animate-[purgatory-purify_2s_ease-in-out_infinite]';
-                    break;
-                  case 'hell':
-                    animationClass = 'animate-[descend-to-hell_3s_ease-out_forwards]';
-                    break;
-                  case 'jannah':
-                    animationClass = 'animate-[barzakh-pause_1s_ease-in_forwards,rise-to-jannah_3s_1s_ease-out_forwards]';
-                    break;
-                  case 'jahannam':
-                    animationClass = 'animate-[barzakh-pause_1s_ease-in_forwards,descend-to-jahannam_3s_1s_ease-out_forwards]';
-                    break;
-                  case 'reincarnation':
-                    animationClass = 'animate-[reincarnate-scatter_4s_ease-in-out_infinite]';
-                    const scatterX = (Math.random() - 0.5) * 400;
-                    const scatterY = (Math.random() - 0.5) * 400;
-                    const rebornX = (Math.random() - 0.5) * 200;
-                    const rebornY = (Math.random() - 0.5) * 200;
-                    animationStyle = {
-                      '--scatter-x': `${scatterX}px`,
-                      '--scatter-y': `${scatterY}px`,
-                      '--reborn-x': `${rebornX}px`,
-                      '--reborn-y': `${rebornY}px`
-                    };
-                    break;
-                  case 'moksha':
-                    animationClass = 'animate-[moksha-expand_5s_ease-out_forwards]';
-                    break;
-                  case 'judaism':
-                    animationClass = 'animate-[judaic-rest_2s_ease-out_forwards]';
-                    break;
-                  case 'ancestor':
-                    animationClass = 'animate-[move-to-past_3s_ease-out_forwards]';
-                    break;
-                  case 'idealism':
-                    animationClass = 'animate-[dissolve-boundaries_4s_ease-out_forwards]';
-                    break;
-                  case 'panpsychism':
-                    animationClass = 'animate-[fragment-consciousness_3s_ease-out_forwards]';
-                    const fragmentX = (Math.random() - 0.5) * 600;
-                    const fragmentY = (Math.random() - 0.5) * 600;
-                    animationStyle = {
-                      '--fragment-x': `${fragmentX}px`,
-                      '--fragment-y': `${fragmentY}px`
-                    };
-                    break;
-                  case 'illusionism':
-                    animationClass = 'animate-[switch-off_1s_ease-out_forwards]';
-                    break;
-                  case 'simulation':
-                    animationClass = 'animate-[glitch_2s_ease-in-out_forwards]';
-                    break;
-                  case 'atomic':
-                    animationClass = 'animate-[atomic-drift_5s_ease-out_forwards]';
-                    const driftX = (Math.random() - 0.5) * 500;
-                    const driftY = (Math.random() - 0.5) * 500;
-                    const newColors = ['#10b981', '#3b82f6', '#78350f'];
-                    animationStyle = {
-                      '--drift-x': `${driftX}px`,
-                      '--drift-y': `${driftY}px`,
-                      backgroundColor: newColors[Math.floor(Math.random() * newColors.length)]
-                    };
-                    break;
-                  case 'heatdeath':
-                    animationClass = 'animate-[heat-death_8s_ease-out_forwards]';
-                    break;
-                }
+                const animation = window.getAnimationForDot(dot, userData, selectedWorldview, false);
+                animationClass = animation.class;
+                animationStyle = { ...animationStyle, ...animation.style };
               }
 
               // NOW dot specific styling
