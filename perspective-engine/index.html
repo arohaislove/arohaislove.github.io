@@ -1081,8 +1081,19 @@
             return () => clearInterval(interval);
           }, []);
 
+          // Debug: Log modal state changes
+          useEffect(() => {
+            console.log('[Perspective Engine] showWorldviewSelector changed to:', showWorldviewSelector);
+            console.log('[Perspective Engine] showAfterlife:', showAfterlife);
+            console.log('[Perspective Engine] selectedWorldview:', selectedWorldview);
+          }, [showWorldviewSelector, showAfterlife, selectedWorldview]);
+
           // Afterlife feature handlers
           const handleWhatComesAfter = () => {
+            console.log('[Perspective Engine] "What Comes After" button clicked');
+            console.log('[Perspective Engine] Modules loaded:', Object.keys(window.AfterlifeModules || {}).length);
+            console.log('[Perspective Engine] Worldviews available:', Object.keys(window.AfterlifeWorldviews || {}).length);
+
             setShowAfterlife(true);
             setIsDeathSequence(true);
 
@@ -1095,13 +1106,25 @@
             setTimeout(() => {
               setIsDeathSequence(false);
               setShowWorldviewSelector(true);
+              console.log('[Perspective Engine] Worldview selector should now be visible');
             }, 500);
           };
 
           const handleWorldviewSelect = (worldviewKey) => {
+            console.log('[Perspective Engine] Worldview selected:', worldviewKey);
+            console.log('[Perspective Engine] Worldview data:', worldviews[worldviewKey]);
+
             setSelectedWorldview(worldviewKey);
             setShowWorldviewSelector(false);
-            setPageAtmosphere(worldviews[worldviewKey].atmosphere);
+
+            // Safely set atmosphere with fallback
+            const selectedWorldview = worldviews[worldviewKey];
+            if (selectedWorldview && selectedWorldview.atmosphere) {
+              setPageAtmosphere(selectedWorldview.atmosphere);
+            } else {
+              console.warn('[Perspective Engine] No atmosphere found for', worldviewKey);
+              setPageAtmosphere('');
+            }
 
             // Trigger haptic feedback for Christian Heaven ascension
             if (worldviewKey === 'christianity-heaven' && window.HapticFeedback) {
