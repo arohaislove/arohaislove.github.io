@@ -1020,6 +1020,46 @@
             </svg>
         );
 
+        // Error Boundary to catch render crashes and prevent white screen
+        class ErrorBoundary extends React.Component {
+          constructor(props) {
+            super(props);
+            this.state = { hasError: false, error: null };
+          }
+
+          static getDerivedStateFromError(error) {
+            return { hasError: true, error };
+          }
+
+          componentDidCatch(error, errorInfo) {
+            console.error('[Perspective Engine] Render error caught:', error, errorInfo);
+          }
+
+          render() {
+            if (this.state.hasError) {
+              return React.createElement('div', {
+                className: 'min-h-screen bg-gray-900 text-gray-100 p-8 flex items-center justify-center'
+              },
+                React.createElement('div', { className: 'max-w-2xl text-center' },
+                  React.createElement('h1', { className: 'text-4xl font-bold mb-4' }, '⚠️ Rendering Error'),
+                  React.createElement('p', { className: 'text-gray-400 mb-6' },
+                    'The visualization encountered an error. This sometimes happens on mobile devices when loading complex animations.'
+                  ),
+                  React.createElement('p', { className: 'text-sm text-gray-500 mb-6' },
+                    'Error: ' + (this.state.error?.message || 'Unknown error')
+                  ),
+                  React.createElement('button', {
+                    onClick: () => window.location.reload(),
+                    className: 'px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg'
+                  }, 'Reload Page')
+                )
+              );
+            }
+
+            return this.props.children;
+          }
+        }
+
         const PerspectiveEngine = () => {
           const [currentAge, setCurrentAge] = useState(30);
           const [goalAge, setGoalAge] = useState(85);
@@ -1093,9 +1133,14 @@
 
           // Debug: Log modal state changes
           useEffect(() => {
-            console.log('[Perspective Engine] showWorldviewSelector changed to:', showWorldviewSelector);
-            console.log('[Perspective Engine] showAfterlife:', showAfterlife);
-            console.log('[Perspective Engine] selectedWorldview:', selectedWorldview);
+            console.log('[Perspective Engine] State change detected:');
+            console.log('  - showWorldviewSelector:', showWorldviewSelector);
+            console.log('  - showAfterlife:', showAfterlife);
+            console.log('  - selectedWorldview:', selectedWorldview);
+            if (selectedWorldview) {
+              console.log('  - worldview data exists:', !!worldviews[selectedWorldview]);
+              console.log('  - module exists:', !!window.AfterlifeModules?.[selectedWorldview]);
+            }
           }, [showWorldviewSelector, showAfterlife, selectedWorldview]);
 
           // Afterlife feature handlers
@@ -1128,29 +1173,38 @@
           };
 
           const handleWorldviewSelect = (worldviewKey) => {
+            console.log('[Perspective Engine] ========== WORLDVIEW SELECTION START ==========');
             console.log('[Perspective Engine] Worldview selected:', worldviewKey);
             console.log('[Perspective Engine] Worldview data:', worldviews[worldviewKey]);
             console.log('[Perspective Engine] All available worldviews:', Object.keys(worldviews));
+            console.log('[Perspective Engine] Modules in window.AfterlifeModules:', Object.keys(window.AfterlifeModules || {}));
+            console.log('[Perspective Engine] modulesLoaded state:', modulesLoaded);
 
             // Check if worldview exists
             if (!worldviews[worldviewKey]) {
-              console.error('[Perspective Engine] Worldview not found:', worldviewKey);
+              console.error('[Perspective Engine] ERROR: Worldview not found:', worldviewKey);
               console.error('[Perspective Engine] This likely means modules haven\'t loaded yet');
               alert('Worldview modules are still loading. Please try again in a moment.');
               return;
             }
 
+            console.log('[Perspective Engine] Setting selectedWorldview state...');
             setSelectedWorldview(worldviewKey);
+
+            console.log('[Perspective Engine] Closing worldview selector modal...');
             setShowWorldviewSelector(false);
 
             // Safely set atmosphere with fallback
             const selectedWorldview = worldviews[worldviewKey];
             if (selectedWorldview && selectedWorldview.atmosphere) {
+              console.log('[Perspective Engine] Setting atmosphere:', selectedWorldview.atmosphere);
               setPageAtmosphere(selectedWorldview.atmosphere);
             } else {
               console.warn('[Perspective Engine] No atmosphere found for', worldviewKey);
               setPageAtmosphere('');
             }
+
+            console.log('[Perspective Engine] ========== WORLDVIEW SELECTION COMPLETE ==========');
 
             // Trigger haptic feedback for Christian Heaven ascension
             if (worldviewKey === 'christianity-heaven' && window.HapticFeedback) {
@@ -1612,20 +1666,20 @@
                   </h2>
 
                   {/* Afterlife Sequence Label */}
-                  {selectedWorldview && (
+                  {selectedWorldview && worldviews[selectedWorldview] && (
                     <div className="mb-6 max-w-2xl mx-auto">
                       <div className="bg-gradient-to-br from-gray-700/40 to-gray-800/40 backdrop-blur-sm rounded-xl p-5 border border-gray-600/50">
                         <div className="flex items-start gap-3">
                           <div className="text-2xl">✨</div>
                           <div className="flex-1">
                             <h3 className="text-lg font-medium text-gray-100 mb-2">
-                              {worldviews[selectedWorldview].name}
+                              {worldviews[selectedWorldview]?.name || 'Unknown Worldview'}
                             </h3>
                             <p className="text-sm text-gray-300 font-light leading-relaxed mb-3">
-                              What's happening to the dots: {worldviews[selectedWorldview].description}
+                              What's happening to the dots: {worldviews[selectedWorldview]?.description || 'Loading...'}
                             </p>
                             <a
-                              href={worldviews[selectedWorldview].source}
+                              href={worldviews[selectedWorldview]?.source || '#'}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-1.5 text-xs text-green-400 hover:text-green-300 transition-colors"
@@ -2126,7 +2180,11 @@
         };
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<PerspectiveEngine />);
+        root.render(
+          <ErrorBoundary>
+            <PerspectiveEngine />
+          </ErrorBoundary>
+        );
     </script>
 </body>
 </html>
