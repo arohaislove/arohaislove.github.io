@@ -1077,7 +1077,12 @@
 
           // Use dynamically loaded worldviews from modules
           // This object is built from module metadata by the module loader
-          const worldviews = window.AfterlifeWorldviews || {};
+          // Re-compute whenever modules load to ensure we have the latest data
+          const worldviews = React.useMemo(() => {
+            const wv = window.AfterlifeWorldviews || {};
+            console.log('[Perspective Engine] Worldviews recomputed. Count:', Object.keys(wv).length);
+            return wv;
+          }, [modulesLoaded]);
 
           useEffect(() => {
             const interval = setInterval(() => {
@@ -1099,6 +1104,13 @@
             console.log('[Perspective Engine] Modules loaded:', Object.keys(window.AfterlifeModules || {}).length);
             console.log('[Perspective Engine] Worldviews available:', Object.keys(window.AfterlifeWorldviews || {}).length);
 
+            // Guard: check if modules are loaded
+            if (!modulesLoaded || Object.keys(worldviews).length === 0) {
+              console.error('[Perspective Engine] Cannot show afterlife - modules not loaded yet');
+              alert('Loading afterlife perspectives... Please try again in a moment.');
+              return;
+            }
+
             setShowAfterlife(true);
             setIsDeathSequence(true);
 
@@ -1118,6 +1130,15 @@
           const handleWorldviewSelect = (worldviewKey) => {
             console.log('[Perspective Engine] Worldview selected:', worldviewKey);
             console.log('[Perspective Engine] Worldview data:', worldviews[worldviewKey]);
+            console.log('[Perspective Engine] All available worldviews:', Object.keys(worldviews));
+
+            // Check if worldview exists
+            if (!worldviews[worldviewKey]) {
+              console.error('[Perspective Engine] Worldview not found:', worldviewKey);
+              console.error('[Perspective Engine] This likely means modules haven\'t loaded yet');
+              alert('Worldview modules are still loading. Please try again in a moment.');
+              return;
+            }
 
             setSelectedWorldview(worldviewKey);
             setShowWorldviewSelector(false);
@@ -1657,10 +1678,15 @@
                     <div className="flex justify-center mt-8">
                       <button
                         onClick={handleWhatComesAfter}
-                        className="px-6 py-3 bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-gray-100 rounded-lg border border-gray-600/50 hover:border-gray-500/70 transition-all duration-300 font-light tracking-wide text-sm"
+                        disabled={!modulesLoaded}
+                        className={`px-6 py-3 rounded-lg border transition-all duration-300 font-light tracking-wide text-sm ${
+                          modulesLoaded
+                            ? 'bg-gray-700/50 hover:bg-gray-600/50 text-gray-300 hover:text-gray-100 border-gray-600/50 hover:border-gray-500/70'
+                            : 'bg-gray-800/30 text-gray-500 border-gray-700/30 cursor-not-allowed'
+                        }`}
                         data-track="What Comes After Button"
                       >
-                        What Comes After
+                        {modulesLoaded ? 'What Comes After' : 'Loading perspectives...'}
                       </button>
                     </div>
                   )}
