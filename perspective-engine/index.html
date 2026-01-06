@@ -2209,6 +2209,29 @@
                     </p>
                   </div>
                 </div>
+
+                {/* Materialism Clickable Overlay - Only shown when materialism perspective is active */}
+                {selectedWorldview === 'materialism' && showAfterlife && (
+                  <>
+                    <div
+                      onClick={handleReset}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') handleReset();
+                      }}
+                      tabIndex={0}
+                      style={{
+                        position: 'fixed',
+                        inset: 0,
+                        zIndex: 45,
+                        cursor: 'pointer'
+                      }}
+                      aria-label="Press any key or tap to return"
+                    />
+                    <div className="materialism-exit-hint">
+                      Tap anywhere to return
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           );
