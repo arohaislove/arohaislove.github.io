@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Turing Mirror - Consciousness Testing Dashboard</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+        }
+
+        /* Gauge visualization */
+        .gauge {
+            position: relative;
+            width: 200px;
+            height: 100px;
+            overflow: hidden;
+        }
+
+        .gauge-bg {
+            width: 200px;
+            height: 100px;
+            border-radius: 100px 100px 0 0;
+            background: linear-gradient(90deg,
+                #ef4444 0%,
+                #f59e0b 25%,
+                #3b82f6 50%,
+                #10b981 75%,
+                #10b981 100%);
+            opacity: 0.2;
+        }
+
+        .gauge-needle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            height: 90px;
+            background: white;
+            transform-origin: bottom;
+            transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Radar chart */
+        .radar-chart {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        /* Pulsing animation for active test */
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+            }
+        }
+
+        .testing-active {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        /* Network visualization */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .float-node {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="module">
+        /**
+         * The Turing Mirror - Framework Loader
+         * Dynamically imports and initializes all consciousness testing frameworks
+         */
+
+        import * as frameworks from './frameworks/index.js';
+
+        // Global storage for loaded frameworks
+        window.ConsciousnessFrameworks = {};
+        window.frameworksReady = false;
+
+        async function loadFrameworks() {
+            console.log('[Turing Mirror] Loading consciousness testing frameworks...');
+            console.log('[Turing Mirror] Found frameworks:', Object.keys(frameworks));
+
+            for (const [key, module] of Object.entries(frameworks)) {
+                console.log(`[Turing Mirror] Loading framework: ${key}`);
+
+                if (module && module.metadata) {
+                    window.ConsciousnessFrameworks[module.metadata.id] = module;
+
+                    // Initialize framework if it has init method
+                    if (module.init) {
+                        await module.init();
+                    }
+
+                    console.log(`[Turing Mirror] ✓ Loaded: ${module.metadata.name}`);
+                } else {
+                    console.error(`[Turing Mirror] ✗ Invalid framework module:`, key, module);
+                }
+            }
+
+            window.frameworksReady = true;
+            console.log('[Turing Mirror] All frameworks loaded:', Object.keys(window.ConsciousnessFrameworks));
+
+            // Trigger React re-render
+            window.dispatchEvent(new Event('frameworksLoaded'));
+        }
+
+        // Load frameworks on startup
+        loadFrameworks();
+    </script>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Subject type presets
+        const SUBJECT_PRESETS = {
+          human: {
+            type: 'human',
+            name: 'Human (You)',
+            data: {},
+            icon: '👤'
+          },
+          ai: {
+            type: 'ai',
+            name: 'AI System',
+            data: {},
+            icon: '🤖'
+          },
+          cat: {
+            type: 'animal',
+            name: 'Cat (Mammal)',
+            data: { complexity: 'mammal' },
+            icon: '🐱'
+          },
+          bird: {
+            type: 'animal',
+            name: 'Crow (Bird)',
+            data: { complexity: 'bird' },
+            icon: '🐦'
+          },
+          insect: {
+            type: 'animal',
+            name: 'Bee (Insect)',
+            data: { complexity: 'insect' },
+            icon: '🐝'
+          },
+          thermostat: {
+            type: 'system',
+            name: 'Thermostat',
+            data: {},
+            icon: '🌡️'
+          }
+        };
+
+        // Gauge Component
+        function GaugeVisualization({ score }) {
+          const rotation = (score / 100) * 180 - 90; // -90deg to 90deg
+
+          return (
+            <div className="gauge mx-auto">
+              <div className="gauge-bg"></div>
+              <div
+                className="gauge-needle"
+                style={{ transform: `rotate(${rotation}deg)` }}
+              ></div>
+              <div className="absolute bottom-0 left-0 right-0 text-center text-4xl font-bold text-white">
+                {score}
+              </div>
+            </div>
+          );
+        }
+
+        // Radar Chart Component (simplified)
+        function RadarChart({ metrics }) {
+          const size = 200;
+          const center = size / 2;
+          const radius = size / 2 - 20;
+          const angleStep = (2 * Math.PI) / metrics.length;
+
+          // Calculate points
+          const points = metrics.map((metric, i) => {
+            const angle = i * angleStep - Math.PI / 2;
+            const value = metric.value / 100;
+            const x = center + radius * value * Math.cos(angle);
+            const y = center + radius * value * Math.sin(angle);
+            return { x, y, ...metric };
+          });
+
+          const pathData = points.map((p, i) =>
+            `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`
+          ).join(' ') + ' Z';
+
+          // Grid lines
+          const gridLevels = [0.2, 0.4, 0.6, 0.8, 1.0];
+          const gridPaths = gridLevels.map(level => {
+            const gridPoints = metrics.map((metric, i) => {
+              const angle = i * angleStep - Math.PI / 2;
+              const x = center + radius * level * Math.cos(angle);
+              const y = center + radius * level * Math.sin(angle);
+              return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ') + ' Z';
+            return gridPoints;
+          });
+
+          return (
+            <svg width={size} height={size} className="mx-auto">
+              {/* Grid */}
+              {gridPaths.map((path, i) => (
+                <path
+                  key={i}
+                  d={path}
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.1)"
+                  strokeWidth="1"
+                />
+              ))}
+
+              {/* Axis lines */}
+              {points.map((point, i) => (
+                <line
+                  key={i}
+                  x1={center}
+                  y1={center}
+                  x2={center + radius * Math.cos(i * angleStep - Math.PI / 2)}
+                  y2={center + radius * Math.sin(i * angleStep - Math.PI / 2)}
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth="1"
+                />
+              ))}
+
+              {/* Data polygon */}
+              <path
+                d={pathData}
+                fill="rgba(59, 130, 246, 0.3)"
+                stroke="rgba(59, 130, 246, 0.8)"
+                strokeWidth="2"
+              />
+
+              {/* Labels */}
+              {points.map((point, i) => {
+                const angle = i * angleStep - Math.PI / 2;
+                const labelRadius = radius + 30;
+                const labelX = center + labelRadius * Math.cos(angle);
+                const labelY = center + labelRadius * Math.sin(angle);
+                return (
+                  <text
+                    key={i}
+                    x={labelX}
+                    y={labelY}
+                    textAnchor="middle"
+                    fill="white"
+                    fontSize="12"
+                    className="font-light"
+                  >
+                    {point.name}
+                  </text>
+                );
+              })}
+            </svg>
+          );
+        }
+
+        // Main App Component
+        function TuringMirror() {
+          const [frameworksLoaded, setFrameworksLoaded] = useState(window.frameworksReady);
+          const [selectedSubject, setSelectedSubject] = useState('human');
+          const [testResults, setTestResults] = useState({});
+          const [testing, setTesting] = useState(false);
+          const [selectedFramework, setSelectedFramework] = useState(null);
+          const [showEducation, setShowEducation] = useState(false);
+
+          // Listen for frameworks loaded event
+          useEffect(() => {
+            const handleFrameworksLoaded = () => {
+              console.log('[Turing Mirror] Frameworks loaded event received');
+              setFrameworksLoaded(true);
+            };
+
+            window.addEventListener('frameworksLoaded', handleFrameworksLoaded);
+            return () => window.removeEventListener('frameworksLoaded', handleFrameworksLoaded);
+          }, []);
+
+          const frameworks = frameworksLoaded ? Object.values(window.ConsciousnessFrameworks) : [];
+          const subject = SUBJECT_PRESETS[selectedSubject];
+
+          const runAllTests = async () => {
+            setTesting(true);
+            setTestResults({});
+
+            const results = {};
+            for (const framework of frameworks) {
+              console.log(`[Turing Mirror] Running test: ${framework.metadata.name}`);
+              const result = await framework.runTest(subject);
+              results[framework.metadata.id] = result;
+              setTestResults({...results}); // Update UI progressively
+              await new Promise(resolve => setTimeout(resolve, 500)); // Delay for effect
+            }
+
+            setTesting(false);
+          };
+
+          const overallScore = Object.keys(testResults).length > 0
+            ? Math.round(Object.values(testResults).reduce((sum, r) => sum + r.score, 0) / Object.values(testResults).length)
+            : 0;
+
+          return (
+            <div className="min-h-screen text-gray-100 p-8">
+              <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header */}
+                <header className="text-center space-y-4 pb-8 border-b border-gray-700">
+                  <h1 className="text-6xl font-extralight tracking-wider text-gray-100">
+                    The Turing Mirror
+                  </h1>
+                  <p className="text-gray-400 text-lg font-light max-w-3xl mx-auto">
+                    A multi-framework consciousness testing dashboard.
+                    Test any system against leading theories of consciousness.
+                  </p>
+                  <p className="text-gray-500 text-sm font-light italic">
+                    "Does it think, or does it just compute?"
+                  </p>
+                  <nav className="pt-4">
+                    <a href="/" className="text-green-400 hover:text-green-300 transition-colors">
+                      ← Back to Projects
+                    </a>
+                  </nav>
+                </header>
+
+                {/* Subject Selection */}
+                <div className="bg-gray-800/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                  <h2 className="text-2xl font-light text-gray-100 mb-6">Select Test Subject</h2>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {Object.entries(SUBJECT_PRESETS).map(([key, preset]) => (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedSubject(key)}
+                        className={`p-6 rounded-xl border-2 transition-all ${
+                          selectedSubject === key
+                            ? 'bg-blue-900/50 border-blue-500'
+                            : 'bg-gray-700/30 border-gray-600/50 hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="text-4xl mb-2">{preset.icon}</div>
+                        <div className="text-sm font-light">{preset.name}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Run Tests Button */}
+                <div className="text-center">
+                  <button
+                    onClick={runAllTests}
+                    disabled={testing || !frameworksLoaded}
+                    className={`px-12 py-4 rounded-xl font-light text-lg transition-all ${
+                      testing
+                        ? 'bg-blue-600 testing-active cursor-not-allowed'
+                        : 'bg-blue-600 hover:bg-blue-500'
+                    }`}
+                  >
+                    {testing ? 'Running Tests...' : `Test ${subject.name}`}
+                  </button>
+                </div>
+
+                {/* Overall Score */}
+                {Object.keys(testResults).length > 0 && (
+                  <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
+                    <h2 className="text-3xl font-light text-center text-gray-100 mb-6">
+                      Overall Consciousness Likelihood
+                    </h2>
+                    <GaugeVisualization score={overallScore} />
+                    <p className="text-center text-gray-400 mt-6 font-light">
+                      {overallScore < 25 && 'Minimal evidence of consciousness'}
+                      {overallScore >= 25 && overallScore < 50 && 'Weak evidence - unclear'}
+                      {overallScore >= 50 && overallScore < 75 && 'Moderate evidence - possibly conscious'}
+                      {overallScore >= 75 && 'Strong evidence - likely conscious'}
+                    </p>
+                    <p className="text-center text-gray-500 text-sm mt-2 font-light italic">
+                      ¯\_(ツ)_/¯ But we can't really be sure
+                    </p>
+                  </div>
+                )}
+
+                {/* Framework Results */}
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-light text-gray-100">Framework Results</h2>
+
+                  {frameworks.map(framework => {
+                    const result = testResults[framework.metadata.id];
+                    const isActive = testing && !result;
+
+                    return (
+                      <div
+                        key={framework.metadata.id}
+                        className={`bg-gray-800/40 backdrop-blur-sm rounded-xl p-6 border ${
+                          isActive
+                            ? 'border-blue-500 testing-active'
+                            : 'border-gray-700/50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h3 className="text-xl font-medium text-gray-100">
+                              {framework.metadata.name}
+                            </h3>
+                            <p className="text-sm text-gray-400 font-light mt-1">
+                              {framework.metadata.description}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              setSelectedFramework(framework);
+                              setShowEducation(true);
+                            }}
+                            className="text-gray-400 hover:text-green-400 transition-colors text-sm"
+                          >
+                            ℹ️ Learn more
+                          </button>
+                        </div>
+
+                        {result && (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-4">
+                              <div className="flex-1 h-4 bg-gray-700/50 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full transition-all duration-1000"
+                                  style={{
+                                    width: `${result.score}%`,
+                                    background: result.score < 25 ? '#ef4444' :
+                                               result.score < 50 ? '#f59e0b' :
+                                               result.score < 75 ? '#3b82f6' : '#10b981'
+                                  }}
+                                />
+                              </div>
+                              <div className="text-2xl font-light w-16 text-right">
+                                {result.score}
+                              </div>
+                            </div>
+
+                            <p className="text-sm text-gray-300 font-light">
+                              {result.interpretation}
+                            </p>
+
+                            <div className="text-xs text-gray-500">
+                              Confidence: {result.confidence}%
+                            </div>
+
+                            {/* Visualization */}
+                            {framework.metadata.id === 'behavioral' && result.details.creativity && (
+                              <div className="mt-6">
+                                <RadarChart
+                                  metrics={framework.getVisualization(result).config.metrics}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {isActive && (
+                          <div className="text-center text-gray-400 font-light py-4">
+                            Testing...
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Education Modal */}
+                {showEducation && selectedFramework && (
+                  <div
+                    className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+                    onClick={() => setShowEducation(false)}
+                  >
+                    <div
+                      className="bg-gray-800 rounded-2xl p-8 max-w-3xl max-h-[90vh] overflow-y-auto border border-gray-700"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <h2 className="text-3xl font-light mb-6">{selectedFramework.metadata.name}</h2>
+
+                      {(() => {
+                        const edu = selectedFramework.getEducation();
+                        return (
+                          <div className="space-y-6 text-gray-300 font-light">
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-100 mb-2">Summary</h3>
+                              <p>{edu.summary}</p>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-100 mb-2">What It Measures</h3>
+                              <p className="whitespace-pre-line">{edu.whatItMeasures}</p>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-medium text-green-400 mb-2">Strengths</h3>
+                              <p className="whitespace-pre-line">{edu.strengths}</p>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-medium text-yellow-400 mb-2">Limitations</h3>
+                              <p className="whitespace-pre-line">{edu.limitations}</p>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-medium text-blue-400 mb-2">Current Debate</h3>
+                              <p>{edu.controversy}</p>
+                            </div>
+
+                            <div className="pt-4">
+                              <a
+                                href={selectedFramework.metadata.source}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-400 hover:text-green-300 underline"
+                              >
+                                Read more →
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })()}
+
+                      <button
+                        onClick={() => setShowEducation(false)}
+                        className="mt-8 px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Footer Note */}
+                <div className="bg-gray-800/20 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30 text-center">
+                  <p className="text-gray-400 font-light text-sm">
+                    <strong>Remember:</strong> These frameworks measure correlates and markers of consciousness,
+                    not consciousness itself. The "hard problem" remains unsolved. We're all just making educated guesses.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<TuringMirror />);
+    </script>
+</body>
+</html>
