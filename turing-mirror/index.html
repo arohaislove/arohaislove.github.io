@@ -90,10 +90,16 @@
          */
 
         import * as frameworks from './frameworks/index.js';
+        import { CONSCIOUSNESS_QUESTIONS, calculateConsciousnessScore, formatCategoryName } from './consciousness-questionnaire.js';
 
         // Global storage for loaded frameworks
         window.ConsciousnessFrameworks = {};
         window.frameworksReady = false;
+
+        // Export questionnaire functions globally for React
+        window.CONSCIOUSNESS_QUESTIONS = CONSCIOUSNESS_QUESTIONS;
+        window.calculateConsciousnessScore = calculateConsciousnessScore;
+        window.formatCategoryName = formatCategoryName;
 
         async function loadFrameworks() {
             console.log('[Turing Mirror] Loading consciousness testing frameworks...');
@@ -287,6 +293,12 @@
           const [selectedFramework, setSelectedFramework] = useState(null);
           const [showEducation, setShowEducation] = useState(false);
 
+          // Interactive questionnaire state
+          const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+          const [questionnaireResponses, setQuestionnaireResponses] = useState([]);
+          const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+          const [questionnaireComplete, setQuestionnaireComplete] = useState(false);
+
           // Listen for frameworks loaded event
           useEffect(() => {
             const handleFrameworksLoaded = () => {
@@ -315,6 +327,56 @@
             }
 
             setTesting(false);
+          };
+
+          // Interactive Questionnaire Handlers
+          const startInteractiveAssessment = () => {
+            setShowQuestionnaire(true);
+            setQuestionnaireResponses([]);
+            setCurrentQuestionIndex(0);
+            setQuestionnaireComplete(false);
+            setTestResults({});
+          };
+
+          const handleQuestionnaireAnswer = (question, answer) => {
+            const newResponse = {
+              questionId: question.id,
+              question: question.question,
+              answer: answer.text,
+              value: answer.value,
+              category: question.category
+            };
+
+            const newResponses = [...questionnaireResponses, newResponse];
+            setQuestionnaireResponses(newResponses);
+
+            // Move to next question or complete
+            if (currentQuestionIndex < window.CONSCIOUSNESS_QUESTIONS.length - 1) {
+              setCurrentQuestionIndex(currentQuestionIndex + 1);
+            } else {
+              // Calculate results
+              const result = window.calculateConsciousnessScore(newResponses);
+
+              // Create a custom test result
+              setTestResults({
+                interactive_assessment: {
+                  score: result.score,
+                  interpretation: result.interpretation,
+                  details: result,
+                  confidence: result.confidence
+                }
+              });
+
+              setQuestionnaireComplete(true);
+            }
+          };
+
+          const resetQuestionnaire = () => {
+            setShowQuestionnaire(false);
+            setQuestionnaireResponses([]);
+            setCurrentQuestionIndex(0);
+            setQuestionnaireComplete(false);
+            setTestResults({});
           };
 
           const overallScore = Object.keys(testResults).length > 0
@@ -364,23 +426,198 @@
                   </div>
                 </div>
 
-                {/* Run Tests Button */}
-                <div className="text-center">
-                  <button
-                    onClick={runAllTests}
-                    disabled={testing || !frameworksLoaded}
-                    className={`px-12 py-4 rounded-xl font-light text-lg transition-all ${
-                      testing
-                        ? 'bg-blue-600 testing-active cursor-not-allowed'
-                        : 'bg-blue-600 hover:bg-blue-500'
-                    }`}
-                  >
-                    {testing ? 'Running Tests...' : `Test ${subject.name}`}
-                  </button>
-                </div>
+                {/* Run Tests Button / Interactive Assessment */}
+                {!showQuestionnaire ? (
+                  <div className="text-center space-y-4">
+                    {selectedSubject === 'human' && (
+                      <div className="bg-gradient-to-r from-green-900/40 to-blue-900/40 backdrop-blur-sm rounded-2xl p-6 border border-green-700/50 max-w-3xl mx-auto">
+                        <h3 className="text-xl font-light text-green-400 mb-3">
+                          🧠 Interactive Consciousness Assessment Available
+                        </h3>
+                        <p className="text-gray-300 text-sm font-light mb-4">
+                          Instead of pre-programmed assumptions, answer questions about your actual experiences.
+                          We'll evaluate consciousness based on your responses about qualia, self-awareness, emotions, and more.
+                        </p>
+                        <button
+                          onClick={startInteractiveAssessment}
+                          disabled={!frameworksLoaded}
+                          className="px-8 py-3 bg-green-600 hover:bg-green-500 rounded-xl font-light transition-all"
+                        >
+                          Start Interactive Assessment
+                        </button>
+                        <p className="text-gray-500 text-xs mt-3 font-light italic">
+                          Or use the standard test below (pre-programmed human responses)
+                        </p>
+                      </div>
+                    )}
 
-                {/* Overall Score */}
-                {Object.keys(testResults).length > 0 && (
+                    <button
+                      onClick={runAllTests}
+                      disabled={testing || !frameworksLoaded}
+                      className={`px-12 py-4 rounded-xl font-light text-lg transition-all ${
+                        testing
+                          ? 'bg-blue-600 testing-active cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-500'
+                      }`}
+                    >
+                      {testing ? 'Running Tests...' : `${selectedSubject === 'human' ? 'Standard Test' : 'Test'} ${subject.name}`}
+                    </button>
+                  </div>
+                ) : null}
+
+                {/* Interactive Questionnaire */}
+                {showQuestionnaire && !questionnaireComplete && (
+                  <div className="bg-gradient-to-br from-green-900/40 to-blue-900/40 backdrop-blur-sm rounded-2xl p-8 border border-green-700/50">
+                    <div className="max-w-3xl mx-auto">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-light text-green-400">
+                          Interactive Consciousness Assessment
+                        </h2>
+                        <button
+                          onClick={resetQuestionnaire}
+                          className="text-gray-400 hover:text-red-400 transition-colors text-sm"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      <div className="mb-8">
+                        <div className="flex justify-between text-sm text-gray-400 mb-2">
+                          <span>Question {currentQuestionIndex + 1} of {window.CONSCIOUSNESS_QUESTIONS.length}</span>
+                          <span>{window.formatCategoryName(window.CONSCIOUSNESS_QUESTIONS[currentQuestionIndex].category)}</span>
+                        </div>
+                        <div className="w-full bg-gray-700/50 rounded-full h-2">
+                          <div
+                            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${((currentQuestionIndex + 1) / window.CONSCIOUSNESS_QUESTIONS.length) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {(() => {
+                        const question = window.CONSCIOUSNESS_QUESTIONS[currentQuestionIndex];
+                        return (
+                          <div className="space-y-6">
+                            <div className="bg-gray-800/60 rounded-xl p-6">
+                              <h3 className="text-xl font-light text-gray-100 mb-2">
+                                {question.question}
+                              </h3>
+                              <p className="text-xs text-gray-500 italic">
+                                {question.explanation}
+                              </p>
+                            </div>
+
+                            <div className="space-y-3">
+                              {question.options.map((option, idx) => (
+                                <button
+                                  key={idx}
+                                  onClick={() => handleQuestionnaireAnswer(question, option)}
+                                  className="w-full text-left p-4 bg-gray-800/40 hover:bg-gray-700/60 border border-gray-700/50 hover:border-green-500/50 rounded-xl transition-all"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <div className="w-6 h-6 rounded-full border-2 border-gray-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                      <div className="w-3 h-3 rounded-full bg-green-500 opacity-0 group-hover:opacity-100" />
+                                    </div>
+                                    <span className="text-gray-200 font-light">
+                                      {option.text}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Questionnaire Results */}
+                {questionnaireComplete && testResults.interactive_assessment && (
+                  <div className="space-y-6">
+                    <div className="bg-gradient-to-br from-green-900/40 to-blue-900/40 backdrop-blur-sm rounded-2xl p-8 border border-green-700/50">
+                      <h2 className="text-3xl font-light text-center text-green-400 mb-6">
+                        Interactive Assessment Complete
+                      </h2>
+
+                      <div className="max-w-3xl mx-auto space-y-6">
+                        <div className="text-center">
+                          <div className="text-6xl font-extralight text-gray-100 mb-2">
+                            {testResults.interactive_assessment.score}
+                          </div>
+                          <div className="text-gray-400 font-light">
+                            Consciousness Likelihood Score
+                          </div>
+                        </div>
+
+                        <div className="bg-gray-800/60 rounded-xl p-6">
+                          <h3 className="text-lg font-medium text-gray-100 mb-2">Interpretation</h3>
+                          <p className="text-gray-300 font-light">
+                            {testResults.interactive_assessment.interpretation}
+                          </p>
+                        </div>
+
+                        <div className="bg-gray-800/60 rounded-xl p-6">
+                          <h3 className="text-lg font-medium text-gray-100 mb-4">Category Breakdown</h3>
+                          <div className="space-y-3">
+                            {Object.entries(testResults.interactive_assessment.details.categoryScores).map(([category, score]) => (
+                              <div key={category}>
+                                <div className="flex justify-between text-sm mb-1">
+                                  <span className="text-gray-300 font-light">{window.formatCategoryName(category)}</span>
+                                  <span className="text-gray-400">{Math.round(score)}</span>
+                                </div>
+                                <div className="w-full h-2 bg-gray-700/50 rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full transition-all duration-1000"
+                                    style={{
+                                      width: `${score}%`,
+                                      background: score < 25 ? '#ef4444' :
+                                                 score < 50 ? '#f59e0b' :
+                                                 score < 75 ? '#3b82f6' : '#10b981'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-gray-800/40 rounded-xl p-4">
+                            <div className="text-xs text-gray-500 mb-1">Strongest Domain</div>
+                            <div className="text-green-400 font-light">
+                              {window.formatCategoryName(testResults.interactive_assessment.details.strongestDomain.category)}
+                            </div>
+                            <div className="text-2xl font-light text-gray-100">
+                              {testResults.interactive_assessment.details.strongestDomain.score}
+                            </div>
+                          </div>
+                          <div className="bg-gray-800/40 rounded-xl p-4">
+                            <div className="text-xs text-gray-500 mb-1">Weakest Domain</div>
+                            <div className="text-yellow-400 font-light">
+                              {window.formatCategoryName(testResults.interactive_assessment.details.weakestDomain.category)}
+                            </div>
+                            <div className="text-2xl font-light text-gray-100">
+                              {testResults.interactive_assessment.details.weakestDomain.score}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-center pt-4">
+                          <button
+                            onClick={resetQuestionnaire}
+                            className="px-8 py-3 bg-green-600 hover:bg-green-500 rounded-xl font-light transition-all"
+                          >
+                            Take Assessment Again
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Overall Score - only show for standard tests */}
+                {Object.keys(testResults).length > 0 && !testResults.interactive_assessment && (
                   <div className="bg-gradient-to-br from-gray-800/60 to-gray-900/40 backdrop-blur-sm rounded-2xl p-8 border border-gray-700/50">
                     <h2 className="text-3xl font-light text-center text-gray-100 mb-6">
                       Overall Consciousness Likelihood
@@ -398,9 +635,10 @@
                   </div>
                 )}
 
-                {/* Framework Results */}
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-light text-gray-100">Framework Results</h2>
+                {/* Framework Results - only show for standard tests */}
+                {!showQuestionnaire && !questionnaireComplete && (
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-light text-gray-100">Framework Results</h2>
 
                   {frameworks.map(framework => {
                     const result = testResults[framework.metadata.id];
@@ -481,7 +719,8 @@
                       </div>
                     );
                   })}
-                </div>
+                  </div>
+                )}
 
                 {/* Education Modal */}
                 {showEducation && selectedFramework && (
