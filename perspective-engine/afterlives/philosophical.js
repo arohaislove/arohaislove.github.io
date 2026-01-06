@@ -9,6 +9,7 @@
  * 5. Simulation Theory - Reality glitching as the simulation ends
  * 6. Atomic Dispersal - Physical matter drifting apart and transforming
  * 7. Heat Death - Gradual cooling and fading into entropy
+ * 8. Materialism - Death is the end; consciousness ceases, nothing remains
  *
  * Used by: Perspective Engine
  */
@@ -516,6 +517,106 @@ const HeatDeath = {
   reset() {}
 };
 
+const Materialism = {
+  metadata: {
+    id: 'materialism',
+    name: 'Materialism',
+    description: 'Death is the end — consciousness ceases, nothing remains.',
+    source: 'https://plato.stanford.edu/entries/physicalism/',
+    category: 'philosophical',
+    tradition: 'Materialism / Physicalism'
+  },
+
+  getStyles() {
+    return `
+      /* Materialism - Fade to Nothing */
+      @keyframes fade-to-nothing {
+        0% {
+          opacity: 1;
+          filter: blur(0px) brightness(1);
+          box-shadow: 0 0 5px rgba(75, 85, 99, 0.3);
+        }
+        40% {
+          opacity: 0.6;
+          filter: blur(1px) brightness(0.7);
+          box-shadow: 0 0 3px rgba(75, 85, 99, 0.2);
+        }
+        70% {
+          opacity: 0.3;
+          filter: blur(2px) brightness(0.4);
+          box-shadow: 0 0 1px rgba(75, 85, 99, 0.1);
+        }
+        100% {
+          opacity: 0;
+          filter: blur(3px) brightness(0);
+          box-shadow: none;
+        }
+      }
+
+      /* Materialism Atmosphere - Full Page Fade to Black */
+      .materialism-void {
+        position: fixed;
+        inset: 0;
+        background-color: black;
+        opacity: 0;
+        z-index: 40;
+        pointer-events: none;
+        animation: materialism-fade-in 3s ease-out 2s forwards;
+      }
+
+      @keyframes materialism-fade-in {
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* Exit hint that appears after black screen holds */
+      .materialism-exit-hint {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        color: rgb(107 114 128 / 0.2);
+        font-size: 0.875rem;
+        font-weight: 300;
+        z-index: 50;
+        pointer-events: none;
+        opacity: 0;
+        animation: materialism-hint-fade-in 1s ease-out 6s forwards;
+      }
+
+      @keyframes materialism-hint-fade-in {
+        to {
+          opacity: 1;
+        }
+      }
+    `;
+  },
+
+  getAnimationClass(dot, userData, isDeathSequence) {
+    if (isDeathSequence) {
+      return 'animate-[die_2s_ease-out_forwards]';
+    }
+    // After death sequence, dots slowly fade to complete darkness
+    return 'animate-[fade-to-nothing_2s_ease-out_forwards]';
+  },
+
+  getAnimationStyle(dot, userData) {
+    return {};
+  },
+
+  getBorderClass() {
+    return 'border-gray-500';
+  },
+
+  getAtmosphereClass() {
+    return 'materialism-void';
+  },
+
+  init() {},
+  reset() {}
+};
+
 // Export all philosophical perspectives
 export default {
   ancestor: AncestorTraditions,
@@ -525,6 +626,7 @@ export default {
   simulation: SimulationTheory,
   atomic: AtomicDispersal,
   heatdeath: HeatDeath,
+  materialism: Materialism,
 
   // Default to the first one
   ...AncestorTraditions,
@@ -535,6 +637,6 @@ export default {
     name: 'Philosophical Perspectives',
     description: 'Various philosophical and scientific views on death',
     category: 'philosophical',
-    variants: ['ancestor', 'idealism', 'panpsychism', 'illusionism', 'simulation', 'atomic', 'heatdeath']
+    variants: ['ancestor', 'idealism', 'panpsychism', 'illusionism', 'simulation', 'atomic', 'heatdeath', 'materialism']
   }
 };
