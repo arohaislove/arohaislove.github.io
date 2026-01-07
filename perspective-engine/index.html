@@ -35,8 +35,8 @@
                 opacity: 1;
             }
             50% {
-                transform: scale(1.1);
-                opacity: 0.9;
+                transform: scale(1.15);
+                opacity: 0.85;
             }
         }
 
@@ -1435,7 +1435,7 @@
 
               // NOW dot specific styling
               const nowDotClass = isCurrent && !showAfterlife ? 'pulse-now' : '';
-              const nowDotScale = isCurrent && !showAfterlife ? 1.5 : 1;
+              const nowDotScale = isCurrent && !showAfterlife ? 2.0 : 1;
 
               // Final pulse for NOW dot during death sequence
               if (isCurrent && isDeathSequence) {
@@ -1445,12 +1445,25 @@
               // Future dots get a glow effect to represent remaining perceived time
               const glowClass = !isPast && !isCurrent && !showAfterlife ? 'shadow-md' : '';
 
+              // Graduated opacity for future months based on distance from NOW
+              let monthOpacity = 1;
+              if (isFuture && !showAfterlife) {
+                const distanceFromNow = Math.abs(i - currentMonth);
+                if (distanceFromNow <= 6) {
+                  monthOpacity = 1; // Full brightness within 6 months
+                } else if (distanceFromNow <= 24) {
+                  monthOpacity = 0.8; // 80% opacity for 6-24 months
+                } else {
+                  monthOpacity = 0.6; // 60% opacity for 24+ months
+                }
+              }
+
               squares.push(
                 <div
                   key={i}
                   className={`transition-all duration-500 rounded-sm ${glowClass} ${nowDotClass} ${animationClass} ${borderClass} ${
                     isCurrent && !showAfterlife
-                      ? 'bg-green-400 shadow-lg shadow-green-400/50'
+                      ? 'bg-green-200 shadow-lg shadow-green-200/50'
                       : isPast || (showAfterlife && isFuture && !selectedWorldview)
                       ? 'bg-gray-600/60'
                       : `${healthColor} shadow-${healthColor.replace('bg-', '')}/50`
@@ -1458,6 +1471,7 @@
                   style={{
                     width: `${dotSize * 2 * nowDotScale}px`,
                     height: `${dotSize * 2 * nowDotScale}px`,
+                    opacity: monthOpacity,
                     ...animationStyle
                   }}
                   title={`Month ${i + 1} - Age ${Math.floor(i / 12)} - Perceived contribution: ${(dotSize / 8 * 100).toFixed(2)}%`}
