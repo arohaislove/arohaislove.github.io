@@ -738,8 +738,9 @@
          * 5. Store in global window object for React app to use
          */
 
-        // Import all afterlife modules from the registry
-        import * as afterlifeModules from './afterlives/index.js';
+        console.log('[Module Loader] ========== MODULE SCRIPT STARTED ==========');
+        console.log('[Module Loader] Script type=module is executing');
+        console.log('[Module Loader] Timestamp:', new Date().toISOString());
 
         // Global storage for loaded modules
         window.AfterlifeModules = {};
@@ -751,6 +752,11 @@
         async function loadAfterlifeModules() {
             try {
                 console.log('[Afterlife Engine] ========== MODULE LOADING START ==========');
+
+                // Use dynamic import for better error handling
+                console.log('[Afterlife Engine] Dynamically importing ./afterlives/index.js...');
+                const afterlifeModules = await import('./afterlives/index.js');
+                console.log('[Afterlife Engine] Import completed successfully');
                 console.log('[Afterlife Engine] afterlifeModules object:', afterlifeModules);
                 console.log('[Afterlife Engine] afterlifeModules keys:', Object.keys(afterlifeModules));
 
