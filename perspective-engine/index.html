@@ -910,7 +910,7 @@
          */
         window.HapticFeedback = {
             // Settings
-            enabled: false,
+            enabled: true,
             lastVibrationTime: 0,
             minTimeBetweenVibrations: 500, // ms - prevents vibration stacking
 
@@ -953,12 +953,10 @@
 
             /**
              * Load setting from localStorage
+             * Haptics are now always enabled by default
              */
             loadSetting() {
-                if (typeof localStorage !== 'undefined') {
-                    const saved = localStorage.getItem('hapticFeedbackEnabled');
-                    this.enabled = saved === 'true';
-                }
+                this.enabled = true;
             },
 
             /**
@@ -1115,9 +1113,6 @@
           const [showWorldviewSelector, setShowWorldviewSelector] = useState(false);
           const [selectedWorldview, setSelectedWorldview] = useState(null);
           const [pageAtmosphere, setPageAtmosphere] = useState('');
-
-          // Haptic feedback state (synced with HapticFeedback utility)
-          const [hapticEnabled, setHapticEnabled] = useState(window.HapticFeedback.enabled);
 
           // Ref for scrolling to life grid
           const lifeGridRef = React.useRef(null);
@@ -1286,16 +1281,6 @@
             const age = Number(value);
             if (age > currentAge) {
               setGoalAge(age);
-            }
-          };
-
-          const handleHapticToggle = () => {
-            const newValue = !hapticEnabled;
-            setHapticEnabled(newValue);
-            if (newValue) {
-              window.HapticFeedback.enable();
-            } else {
-              window.HapticFeedback.disable();
             }
           };
 
@@ -1562,28 +1547,6 @@
                         <span>120</span>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Haptic Feedback Toggle */}
-                  <div className="flex justify-center mt-8 pt-6 border-t border-gray-700/30">
-                    <label className="flex items-center gap-3 cursor-pointer group">
-                      <span className="text-sm font-light text-gray-400 group-hover:text-gray-300 transition-colors tracking-wide">
-                        Haptic Feedback
-                      </span>
-                      <div className="relative">
-                        <input
-                          type="checkbox"
-                          checked={hapticEnabled}
-                          onChange={handleHapticToggle}
-                          className="sr-only peer"
-                          data-track="Toggle Haptic Feedback"
-                        />
-                        <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                      </div>
-                      {window.HapticFeedback && !window.HapticFeedback.isSupported() && (
-                        <span className="text-xs text-gray-600 italic">(Not supported on this device)</span>
-                      )}
-                    </label>
                   </div>
                 </div>
 
