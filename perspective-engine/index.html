@@ -28,20 +28,36 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* NOW Dot Pulse Animation */
-        @keyframes pulse-now {
-            0%, 100% {
+        /* NOW Dot Breathing Animation */
+        @keyframes breathe-now {
+            0% {
                 transform: scale(1);
-                opacity: 1;
+                box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
+            }
+            40% {
+                /* Slow inhale */
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(134, 239, 172, 0.7);
             }
             50% {
-                transform: scale(1.15);
-                opacity: 0.85;
+                /* Brief hold at peak */
+                transform: scale(1.05);
+                box-shadow: 0 0 15px rgba(134, 239, 172, 0.7);
+            }
+            90% {
+                /* Slow exhale */
+                transform: scale(1);
+                box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
+            }
+            100% {
+                /* Brief hold at rest */
+                transform: scale(1);
+                box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
             }
         }
 
         .pulse-now {
-            animation: pulse-now 2s ease-in-out infinite;
+            animation: breathe-now 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
 
         /* Death Sequence Animations */
