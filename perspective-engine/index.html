@@ -28,36 +28,41 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* NOW Dot Breathing Animation */
+        /* NOW Dot Breathing Animation - Calm Tech Aesthetic */
         @keyframes breathe-now {
             0% {
                 transform: scale(1);
                 box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
+                opacity: 0.95;
             }
-            40% {
-                /* Slow inhale */
+            35% {
+                /* Slow, deep inhale */
                 transform: scale(1.05);
-                box-shadow: 0 0 15px rgba(134, 239, 172, 0.7);
+                box-shadow: 0 0 16px rgba(134, 239, 172, 0.75);
+                opacity: 1;
             }
-            50% {
-                /* Brief hold at peak */
+            45% {
+                /* Brief hold at peak - full presence */
                 transform: scale(1.05);
-                box-shadow: 0 0 15px rgba(134, 239, 172, 0.7);
+                box-shadow: 0 0 16px rgba(134, 239, 172, 0.75);
+                opacity: 1;
             }
-            90% {
-                /* Slow exhale */
+            85% {
+                /* Slow, complete exhale */
                 transform: scale(1);
                 box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
+                opacity: 0.95;
             }
             100% {
-                /* Brief hold at rest */
+                /* Brief hold at rest - grounded */
                 transform: scale(1);
                 box-shadow: 0 0 8px rgba(134, 239, 172, 0.5);
+                opacity: 0.95;
             }
         }
 
         .pulse-now {
-            animation: breathe-now 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            animation: breathe-now 5.5s cubic-bezier(0.37, 0, 0.63, 1) infinite;
         }
 
         /* Death Sequence Animations */
