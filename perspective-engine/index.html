@@ -1454,7 +1454,7 @@
                 }
               }
 
-              // NOW dot specific styling
+              // NOW dot specific styling - breathe while alive, stop after "What happens next"
               const nowDotClass = isCurrent && !showAfterlife ? 'pulse-now' : '';
               const nowDotScale = isCurrent && !showAfterlife ? 2.0 : 1;
 
@@ -1482,7 +1482,7 @@
               squares.push(
                 <div
                   key={i}
-                  className={`transition-all duration-500 rounded-sm ${glowClass} ${nowDotClass} ${animationClass} ${borderClass} ${
+                  className={`${isCurrent && !showAfterlife ? '' : 'transition-all duration-500'} rounded-sm ${glowClass} ${nowDotClass} ${animationClass} ${borderClass} ${
                     isCurrent && !showAfterlife
                       ? 'bg-green-200'
                       : isPast || (showAfterlife && isFuture && !selectedWorldview)
