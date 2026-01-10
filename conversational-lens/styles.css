@@ -1,0 +1,499 @@
+/* ==========================================
+   CSS Variables & Reset
+   ========================================== */
+
+:root {
+    /* Light mode colors */
+    --bg-primary: #fafafa;
+    --bg-secondary: #ffffff;
+    --text-primary: #2c2c2c;
+    --text-secondary: #6b6b6b;
+    --text-tertiary: #999999;
+    --border-color: #e5e5e5;
+    --accent-color: #5b7c99;
+    --accent-hover: #4a6478;
+    --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.5rem;
+    --font-size-2xl: 2rem;
+
+    /* Transitions */
+    --transition-fast: 200ms ease;
+    --transition-medium: 300ms ease;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #1a1a1a;
+        --bg-secondary: #2c2c2c;
+        --text-primary: #e5e5e5;
+        --text-secondary: #b0b0b0;
+        --text-tertiary: #808080;
+        --border-color: #3a3a3a;
+        --accent-color: #7b9cb8;
+        --accent-hover: #8fadc4;
+        --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ==========================================
+   Base Styles
+   ========================================== */
+
+body {
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================
+   Navigation
+   ========================================== */
+
+.nav {
+    padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.nav-back {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-sm);
+    transition: color var(--transition-fast);
+}
+
+.nav-back:hover {
+    color: var(--accent-color);
+}
+
+/* ==========================================
+   Container & Layout
+   ========================================== */
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg) var(--spacing-xl);
+}
+
+.view {
+    display: none;
+}
+
+.view-active {
+    display: block;
+}
+
+/* ==========================================
+   Header
+   ========================================== */
+
+.header {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+}
+
+.title {
+    font-size: var(--font-size-2xl);
+    font-weight: 400;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.subtitle {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    font-weight: 300;
+}
+
+/* ==========================================
+   Input Section
+   ========================================== */
+
+.input-section {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-subtle);
+}
+
+.input-label {
+    display: block;
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+}
+
+.input-hint {
+    display: block;
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    font-weight: 400;
+    margin-top: var(--spacing-xs);
+}
+
+.conversation-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    resize: vertical;
+    transition: border-color var(--transition-fast);
+    min-height: 200px;
+}
+
+.conversation-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.conversation-input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* ==========================================
+   Buttons
+   ========================================== */
+
+.analyze-btn {
+    width: 100%;
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    color: white;
+    background: var(--accent-color);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    position: relative;
+}
+
+.analyze-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+.analyze-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.analyze-btn .btn-loading {
+    display: none;
+}
+
+.analyze-btn.loading .btn-text {
+    display: none;
+}
+
+.analyze-btn.loading .btn-loading {
+    display: inline;
+}
+
+.back-btn,
+.expand-all-btn {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.back-btn:hover,
+.expand-all-btn:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.btn-secondary {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--accent-color);
+    background: transparent;
+    border: 1px solid var(--accent-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-secondary:hover {
+    background: var(--accent-color);
+    color: white;
+}
+
+/* ==========================================
+   Results View
+   ========================================== */
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-sm);
+}
+
+.conversation-display {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+/* ==========================================
+   Utterance Cards
+   ========================================== */
+
+.utterance {
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    padding: var(--spacing-md);
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-medium);
+    box-shadow: var(--shadow-subtle);
+}
+
+.utterance:hover {
+    box-shadow: var(--shadow-medium);
+    transform: translateX(2px);
+}
+
+.utterance.expanded {
+    box-shadow: var(--shadow-medium);
+}
+
+.utterance-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.utterance-speaker {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.utterance-text {
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+/* ==========================================
+   Lens Panel
+   ========================================== */
+
+.lens-panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transition-medium);
+}
+
+.utterance.expanded .lens-panel {
+    max-height: 1000px;
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-color);
+}
+
+.lens-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (min-width: 600px) {
+    .lens-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.lens {
+    padding: var(--spacing-sm);
+}
+
+.lens-title {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.lens-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.lens-item {
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+}
+
+.lens-label {
+    color: var(--text-tertiary);
+    margin-right: var(--spacing-xs);
+}
+
+.lens-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Intensity visualization */
+.intensity-dots {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: var(--spacing-xs);
+}
+
+.intensity-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border-color);
+}
+
+.intensity-dot.filled {
+    background: var(--accent-color);
+}
+
+/* ==========================================
+   Error View
+   ========================================== */
+
+.error-view {
+    display: none;
+    text-align: center;
+    padding: var(--spacing-xl);
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    box-shadow: var(--shadow-subtle);
+}
+
+.error-view.active {
+    display: block;
+}
+
+.error-message {
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    line-height: 1.6;
+}
+
+/* ==========================================
+   Mobile Responsive
+   ========================================== */
+
+@media (max-width: 600px) {
+    .container {
+        padding: 0 var(--spacing-md) var(--spacing-lg);
+    }
+
+    .nav {
+        padding: var(--spacing-md);
+    }
+
+    .title {
+        font-size: var(--font-size-xl);
+    }
+
+    .input-section {
+        padding: var(--spacing-md);
+    }
+
+    .results-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .back-btn,
+    .expand-all-btn {
+        width: 100%;
+    }
+}
+
+/* ==========================================
+   Loading State
+   ========================================== */
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading-indicator {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ==========================================
+   Accessibility
+   ========================================== */
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Focus states for keyboard navigation */
+button:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
