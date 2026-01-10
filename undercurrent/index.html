@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undercurrent - Messaging with Depth</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background: #1a1a1a;
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .lens-toggle {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .lens-toggle:hover {
+            background: #333;
+        }
+
+        .lens-toggle.active {
+            background: #4a90e2;
+            border-color: #4a90e2;
+        }
+
+        /* Landing page */
+        .landing {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .landing h2 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .landing p {
+            color: #999;
+            margin-bottom: 2rem;
+            max-width: 320px;
+        }
+
+        .landing-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        button {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button.primary {
+            background: #4a90e2;
+            border-color: #4a90e2;
+        }
+
+        button.primary:hover {
+            background: #3a7bc8;
+        }
+
+        input {
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Chat interface */
+        .chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .message:hover {
+            background: #222;
+        }
+
+        .message.expanded {
+            background: #222;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .message-content {
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .message-indicator {
+            height: 3px;
+            border-radius: 3px;
+            margin-bottom: 0.5rem;
+            transition: opacity 0.3s;
+            opacity: 0;
+        }
+
+        .lens-active .message-indicator {
+            opacity: 1;
+        }
+
+        .message-indicator.parent {
+            background: linear-gradient(90deg, #e74c3c, #e67e22);
+        }
+
+        .message-indicator.adult {
+            background: #95a5a6;
+        }
+
+        .message-indicator.child {
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+        }
+
+        .analysis-panel {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+            display: none;
+        }
+
+        .message.expanded .analysis-panel {
+            display: block;
+        }
+
+        .analysis-section {
+            margin-bottom: 1rem;
+        }
+
+        .analysis-section h4 {
+            font-size: 0.85rem;
+            color: #4a90e2;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .analysis-section p {
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .analysis-subtext {
+            font-style: italic;
+            color: #999;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        /* Input area */
+        .input-area {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-area input {
+            flex: 1;
+        }
+
+        .input-area button {
+            padding: 0.75rem 1.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-content h3 {
+            margin-bottom: 1rem;
+        }
+
+        .modal-content input {
+            margin-bottom: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .modal-actions button {
+            flex: 1;
+        }
+
+        /* Loading state */
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+
+        /* Back link */
+        nav {
+            padding: 1rem;
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+        }
+
+        nav a {
+            color: #4a90e2;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <div class="container">
+        <!-- Landing Page -->
+        <div id="landing" class="landing">
+            <h2>Undercurrent</h2>
+            <p>A messaging app that reveals the psychological dynamics beneath your conversations</p>
+            <div class="landing-actions">
+                <button class="primary" onclick="app.createConversation()">Start New Conversation</button>
+                <input type="text" id="joinCode" placeholder="Enter conversation code">
+                <button onclick="app.joinConversation()">Join Conversation</button>
+            </div>
+        </div>
+
+        <!-- Chat Interface -->
+        <div id="chat" class="chat hidden">
+            <header>
+                <h1 id="chatTitle">Undercurrent</h1>
+                <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
+                    Enable Lens
+                </button>
+            </header>
+
+            <div class="messages" id="messages">
+                <!-- Messages will be inserted here -->
+            </div>
+
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="app.handleKeyPress(event)">
+                <button class="primary" onclick="app.sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Name Modal -->
+    <div id="nameModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>What's your name?</h3>
+            <input type="text" id="nameInput" placeholder="Enter your display name">
+            <div class="modal-actions">
+                <button class="primary" onclick="app.setName()">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://undercurrent-api.zammel.workers.dev';
+
+        const app = {
+            state: {
+                conversationId: null,
+                userName: null,
+                lensActive: false,
+                messages: [],
+                pollingInterval: null
+            },
+
+            init() {
+                // Check if returning to an existing conversation
+                const urlParams = new URLSearchParams(window.location.search);
+                const conversationId = urlParams.get('c');
+
+                if (conversationId) {
+                    this.loadConversation(conversationId);
+                }
+
+                // Get stored username
+                this.state.userName = localStorage.getItem('undercurrent_username');
+            },
+
+            async createConversation() {
+                try {
+                    const response = await fetch(`${API_URL}/conversation`, {
+                        method: 'POST'
+                    });
+
+                    if (!response.ok) throw new Error('Failed to create conversation');
+
+                    const data = await response.json();
+                    this.loadConversation(data.id);
+                } catch (error) {
+                    alert('Error creating conversation: ' + error.message);
+                }
+            },
+
+            joinConversation() {
+                const code = document.getElementById('joinCode').value.trim();
+                if (code) {
+                    this.loadConversation(code);
+                }
+            },
+
+            async loadConversation(conversationId) {
+                // Check if conversation exists
+                try {
+                    const response = await fetch(`${API_URL}/conversation/${conversationId}`);
+                    if (!response.ok) throw new Error('Conversation not found');
+
+                    this.state.conversationId = conversationId;
+
+                    // Update URL
+                    const url = new URL(window.location);
+                    url.searchParams.set('c', conversationId);
+                    window.history.pushState({}, '', url);
+
+                    // Prompt for name if not set
+                    if (!this.state.userName) {
+                        document.getElementById('nameModal').classList.remove('hidden');
+                    } else {
+                        this.showChat();
+                    }
+                } catch (error) {
+                    alert('Error loading conversation: ' + error.message);
+                }
+            },
+
+            setName() {
+                const name = document.getElementById('nameInput').value.trim();
+                if (name) {
+                    this.state.userName = name;
+                    localStorage.setItem('undercurrent_username', name);
+                    document.getElementById('nameModal').classList.add('hidden');
+                    this.showChat();
+                }
+            },
+
+            showChat() {
+                document.getElementById('landing').classList.add('hidden');
+                document.getElementById('chat').classList.remove('hidden');
+
+                // Load messages
+                this.loadMessages();
+
+                // Start polling
+                this.startPolling();
+
+                // Focus input
+                document.getElementById('messageInput').focus();
+            },
+
+            async loadMessages() {
+                try {
+                    const response = await fetch(
+                        `${API_URL}/conversation/${this.state.conversationId}/messages`
+                    );
+
+                    if (!response.ok) throw new Error('Failed to load messages');
+
+                    const messages = await response.json();
+                    this.state.messages = messages;
+                    this.renderMessages();
+                } catch (error) {
+                    console.error('Error loading messages:', error);
+                }
+            },
+
+            async sendMessage() {
+                const input = document.getElementById('messageInput');
+                const content = input.value.trim();
+
+                if (!content) return;
+
+                // Clear input
+                input.value = '';
+
+                try {
+                    const response = await fetch(
+                        `${API_URL}/conversation/${this.state.conversationId}/messages`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                sender: this.state.userName,
+                                content
+                            })
+                        }
+                    );
+
+                    if (!response.ok) throw new Error('Failed to send message');
+
+                    // Reload messages
+                    await this.loadMessages();
+
+                    // Scroll to bottom
+                    this.scrollToBottom();
+                } catch (error) {
+                    alert('Error sending message: ' + error.message);
+                }
+            },
+
+            handleKeyPress(event) {
+                if (event.key === 'Enter') {
+                    this.sendMessage();
+                }
+            },
+
+            renderMessages() {
+                const container = document.getElementById('messages');
+                container.innerHTML = '';
+
+                this.state.messages.forEach(msg => {
+                    const messageEl = this.createMessageElement(msg);
+                    container.appendChild(messageEl);
+                });
+
+                this.scrollToBottom();
+            },
+
+            createMessageElement(msg) {
+                const div = document.createElement('div');
+                div.className = 'message';
+                div.onclick = () => this.toggleMessageExpanded(msg.id);
+
+                // Determine ego state for color coding
+                const egoState = msg.analysis?.transactional_analysis?.ego_state?.toLowerCase() || 'adult';
+                const indicatorClass = `message-indicator ${egoState}`;
+
+                // Format timestamp
+                const time = new Date(msg.created_at * 1000).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                div.innerHTML = `
+                    <div class="${indicatorClass}"></div>
+                    <div class="message-header">
+                        <span class="message-sender">${this.escapeHtml(msg.sender)}</span>
+                        <span class="message-time">${time}</span>
+                    </div>
+                    <div class="message-content">${this.escapeHtml(msg.content)}</div>
+                    ${msg.analysis ? this.renderAnalysis(msg.analysis) : ''}
+                `;
+
+                return div;
+            },
+
+            renderAnalysis(analysis) {
+                return `
+                    <div class="analysis-panel">
+                        <div class="analysis-section">
+                            <h4>Transactional Analysis</h4>
+                            <p><strong>Ego State:</strong> ${analysis.transactional_analysis.ego_subtype}</p>
+                            <p><strong>Inviting:</strong> ${analysis.transactional_analysis.invited_response} response</p>
+                            <p><strong>Transaction:</strong> ${analysis.transactional_analysis.transaction_type}</p>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h4>Speech Act</h4>
+                            <p><strong>Type:</strong> ${analysis.speech_act.primary}</p>
+                            <p><strong>Function:</strong> ${analysis.speech_act.specific}</p>
+                        </div>
+
+                        <div class="analysis-section">
+                            <h4>Discourse</h4>
+                            <p><strong>Control:</strong> ${analysis.discourse.topic_control}</p>
+                            ${analysis.discourse.markers.length > 0 ?
+                                `<p><strong>Markers:</strong> ${analysis.discourse.markers.join(', ')}</p>` : ''}
+                        </div>
+
+                        <div class="analysis-section">
+                            <h4>Power Dynamics</h4>
+                            <p><strong>Move:</strong> ${analysis.power_dynamics.move}</p>
+                            ${analysis.power_dynamics.indicators.length > 0 ?
+                                `<p><strong>Indicators:</strong> ${analysis.power_dynamics.indicators.join(', ')}</p>` : ''}
+                        </div>
+
+                        <div class="analysis-subtext">
+                            "${analysis.subtext}"
+                        </div>
+                    </div>
+                `;
+            },
+
+            toggleMessageExpanded(messageId) {
+                const messageEl = event.currentTarget;
+                messageEl.classList.toggle('expanded');
+            },
+
+            toggleLens() {
+                this.state.lensActive = !this.state.lensActive;
+                const toggle = document.getElementById('lensToggle');
+                const chat = document.getElementById('chat');
+
+                if (this.state.lensActive) {
+                    toggle.textContent = 'Disable Lens';
+                    toggle.classList.add('active');
+                    chat.classList.add('lens-active');
+                } else {
+                    toggle.textContent = 'Enable Lens';
+                    toggle.classList.remove('active');
+                    chat.classList.remove('lens-active');
+                }
+            },
+
+            startPolling() {
+                // Poll for new messages every 4 seconds
+                this.state.pollingInterval = setInterval(() => {
+                    this.loadMessages();
+                }, 4000);
+            },
+
+            stopPolling() {
+                if (this.state.pollingInterval) {
+                    clearInterval(this.state.pollingInterval);
+                }
+            },
+
+            scrollToBottom() {
+                const container = document.getElementById('messages');
+                container.scrollTop = container.scrollHeight;
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        };
+
+        // Initialize app
+        app.init();
+    </script>
+</body>
+</html>
