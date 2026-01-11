@@ -6,7 +6,7 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "undercurrent"
-database_id = "placeholder-will-be-created-during-setup"
+database_id = "5a701394-3706-46ee-8db7-e73c79c51437"
 
 # Environment variables
 # ANTHROPIC_API_KEY will be automatically injected by GitHub Actions
