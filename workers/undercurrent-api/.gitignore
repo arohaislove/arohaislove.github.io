@@ -1,0 +1,13 @@
+# Wrangler build artifacts
+.wrangler/
+.dev.vars
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
