@@ -35,9 +35,13 @@
             background: #1a1a1a;
             padding: 1rem;
             border-bottom: 1px solid #333;
+        }
+
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0.5rem;
         }
 
         header h1 {
@@ -63,6 +67,43 @@
         .lens-toggle.active {
             background: #4a90e2;
             border-color: #4a90e2;
+        }
+
+        /* Share section */
+        .share-section {
+            background: #222;
+            padding: 0.75rem;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .share-section input {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #999;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: monospace;
+        }
+
+        .share-section button {
+            background: #4a90e2;
+            border: 1px solid #4a90e2;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .share-section button:hover {
+            background: #3a7bc8;
         }
 
         /* Landing page */
@@ -232,6 +273,18 @@
             display: block;
         }
 
+        .lens-active .analysis-panel {
+            display: block;
+        }
+
+        .tap-hint {
+            font-size: 0.75rem;
+            color: #666;
+            text-align: center;
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
         .analysis-section {
             margin-bottom: 1rem;
         }
@@ -350,9 +403,11 @@
         <div id="landing" class="landing">
             <h2>Undercurrent</h2>
             <p>A messaging app that reveals the psychological dynamics beneath your conversations</p>
+            <p style="font-size: 0.85rem; color: #666; margin-top: -1rem;">💡 Start a conversation, then share the link with one other person. Toggle the "Lens" to see analysis.</p>
             <div class="landing-actions">
                 <button class="primary" onclick="app.createConversation()">Start New Conversation</button>
-                <input type="text" id="joinCode" placeholder="Enter conversation code">
+                <p style="font-size: 0.85rem; color: #666; margin: 0.5rem 0;">or</p>
+                <input type="text" id="joinCode" placeholder="Paste conversation link or code">
                 <button onclick="app.joinConversation()">Join Conversation</button>
             </div>
         </div>
@@ -360,10 +415,16 @@
         <!-- Chat Interface -->
         <div id="chat" class="chat hidden">
             <header>
-                <h1 id="chatTitle">Undercurrent</h1>
-                <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
-                    Enable Lens
-                </button>
+                <div class="header-top">
+                    <h1 id="chatTitle">Undercurrent</h1>
+                    <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
+                        Enable Lens
+                    </button>
+                </div>
+                <div class="share-section">
+                    <input type="text" id="shareUrl" readonly>
+                    <button onclick="app.copyShareLink()">Copy Link</button>
+                </div>
             </header>
 
             <div class="messages" id="messages">
@@ -429,9 +490,22 @@
             },
 
             joinConversation() {
-                const code = document.getElementById('joinCode').value.trim();
-                if (code) {
-                    this.loadConversation(code);
+                let input = document.getElementById('joinCode').value.trim();
+                if (!input) return;
+
+                // Extract conversation ID from full URL or use as-is
+                let conversationId = input;
+                if (input.includes('?c=')) {
+                    const url = new URL(input);
+                    conversationId = url.searchParams.get('c');
+                } else if (input.includes('/')) {
+                    // In case they paste just the query string
+                    const match = input.match(/[?&]c=([^&]+)/);
+                    if (match) conversationId = match[1];
+                }
+
+                if (conversationId) {
+                    this.loadConversation(conversationId);
                 }
             },
 
@@ -473,6 +547,10 @@
                 document.getElementById('landing').classList.add('hidden');
                 document.getElementById('chat').classList.remove('hidden');
 
+                // Populate share URL
+                const shareUrl = `${window.location.origin}${window.location.pathname}?c=${this.state.conversationId}`;
+                document.getElementById('shareUrl').value = shareUrl;
+
                 // Load messages
                 this.loadMessages();
 
@@ -481,6 +559,24 @@
 
                 // Focus input
                 document.getElementById('messageInput').focus();
+            },
+
+            copyShareLink() {
+                const input = document.getElementById('shareUrl');
+                input.select();
+                input.setSelectionRange(0, 99999); // For mobile
+
+                navigator.clipboard.writeText(input.value).then(() => {
+                    // Visual feedback
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copied!';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 2000);
+                }).catch(err => {
+                    alert('Failed to copy link. Please copy it manually.');
+                });
             },
 
             async loadMessages() {
