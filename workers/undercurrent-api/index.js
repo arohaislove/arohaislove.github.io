@@ -221,7 +221,11 @@ async function analyzeMessage(env, message, conversationHistory, sender) {
 
   const prompt = `${contextMessages}Current message from ${sender}: "${message}"
 
-Analyze this message within the conversation context using multiple frameworks. Return ONLY valid JSON with this exact structure:
+Analyze this message within the conversation context using multiple frameworks.
+
+IMPORTANT: Return raw JSON only. Do not wrap in markdown code fences. Do not use \`\`\`json. Return pure JSON directly.
+
+Return ONLY valid JSON with this exact structure:
 
 {
   "transactional_analysis": {
@@ -295,7 +299,10 @@ Analyze this message within the conversation context using multiple frameworks. 
     }
 
     const data = await response.json();
-    const analysisText = data.content[0].text;
+    let analysisText = data.content[0].text;
+
+    // Strip markdown code fences if present (Claude sometimes wraps JSON in ```json ... ```)
+    analysisText = analysisText.replace(/^```json\s*\n?/i, '').replace(/\n?```\s*$/g, '').trim();
 
     // Parse the JSON response
     const parsed = JSON.parse(analysisText);
