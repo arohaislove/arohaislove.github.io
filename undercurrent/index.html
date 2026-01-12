@@ -289,6 +289,65 @@
         .message-sender {
             font-weight: 600;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Small colored dot indicator */
+        .message-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            opacity: 0;
+            transition: opacity 0.3s;
+            flex-shrink: 0;
+        }
+
+        .lens-active .message-dot {
+            opacity: 1;
+        }
+
+        /* Dot colors for conversational functions */
+        .message-dot.question {
+            background: var(--lens-question);
+        }
+
+        .message-dot.statement {
+            background: var(--lens-statement);
+        }
+
+        .message-dot.emotional {
+            background: var(--lens-emotional);
+        }
+
+        .message-dot.request {
+            background: var(--lens-request);
+        }
+
+        .message-dot.reflection {
+            background: var(--lens-reflection);
+        }
+
+        .message-dot.agreement {
+            background: var(--lens-agreement);
+        }
+
+        .message-dot.disagreement {
+            background: var(--lens-disagreement);
+        }
+
+        /* Dot colors for ego states */
+        .message-dot.parent {
+            background: linear-gradient(135deg, #e74c3c, #e67e22);
+        }
+
+        .message-dot.adult {
+            background: #95a5a6;
+        }
+
+        .message-dot.child {
+            background: linear-gradient(135deg, #3498db, #9b59b6);
         }
 
         .message-time {
@@ -1105,15 +1164,17 @@
                 div.onclick = () => this.toggleMessageExpanded(msg.id);
 
                 // Determine indicator class based on lens mode
-                let indicatorClass;
+                let indicatorClass, dotClass;
                 if (this.state.lensMode === 'function') {
                     // Use conversational function classification
                     const functionType = this.state.conversationalFunctions[msg.id] || 'statement';
                     indicatorClass = `message-indicator ${functionType}`;
+                    dotClass = `message-dot ${functionType}`;
                 } else {
                     // Use ego state classification
                     const egoState = msg.analysis?.transactional_analysis?.ego_state?.toLowerCase() || 'adult';
                     indicatorClass = `message-indicator ${egoState}`;
+                    dotClass = `message-dot ${egoState}`;
                 }
 
                 // Format timestamp
@@ -1125,7 +1186,10 @@
                 div.innerHTML = `
                     <div class="${indicatorClass}"></div>
                     <div class="message-header">
-                        <span class="message-sender">${this.escapeHtml(msg.sender)}</span>
+                        <span class="message-sender">
+                            <div class="${dotClass}"></div>
+                            ${this.escapeHtml(msg.sender)}
+                        </span>
                         <span class="message-time">${time}</span>
                     </div>
                     <div class="message-content">${this.escapeHtml(msg.content)}</div>
