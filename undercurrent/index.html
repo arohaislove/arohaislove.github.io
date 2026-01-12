@@ -11,6 +11,17 @@
             box-sizing: border-box;
         }
 
+        :root {
+            /* Conversational Function Colors */
+            --lens-question: #4a90e2;
+            --lens-statement: #7a7a7a;
+            --lens-emotional: #e8a858;
+            --lens-request: #5cb3b3;
+            --lens-reflection: #9b6bb3;
+            --lens-agreement: #6cb36c;
+            --lens-disagreement: #d97575;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: #0a0a0a;
@@ -67,6 +78,58 @@
         .lens-toggle.active {
             background: #4a90e2;
             border-color: #4a90e2;
+        }
+
+        /* Lens Mode Selector */
+        .lens-mode-selector {
+            display: none;
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: #222;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+
+        .lens-active .lens-mode-selector {
+            display: block;
+        }
+
+        .lens-mode-selector label {
+            display: block;
+            margin-bottom: 0.25rem;
+            color: #999;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .lens-mode-options {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .lens-mode-option {
+            flex: 1;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #999;
+            padding: 0.4rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .lens-mode-option:hover {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .lens-mode-option.active {
+            background: #4a90e2;
+            border-color: #4a90e2;
+            color: white;
         }
 
         /* Share section */
@@ -250,6 +313,7 @@
             opacity: 1;
         }
 
+        /* Ego State Colors (existing) */
         .message-indicator.parent {
             background: linear-gradient(90deg, #e74c3c, #e67e22);
         }
@@ -260,6 +324,35 @@
 
         .message-indicator.child {
             background: linear-gradient(90deg, #3498db, #9b59b6);
+        }
+
+        /* Conversational Function Colors (new) */
+        .message-indicator.question {
+            background: var(--lens-question);
+        }
+
+        .message-indicator.statement {
+            background: var(--lens-statement);
+        }
+
+        .message-indicator.emotional {
+            background: var(--lens-emotional);
+        }
+
+        .message-indicator.request {
+            background: var(--lens-request);
+        }
+
+        .message-indicator.reflection {
+            background: var(--lens-reflection);
+        }
+
+        .message-indicator.agreement {
+            background: var(--lens-agreement);
+        }
+
+        .message-indicator.disagreement {
+            background: var(--lens-disagreement);
         }
 
         .analysis-panel {
@@ -623,6 +716,17 @@
                         </button>
                     </div>
                 </div>
+                <div class="lens-mode-selector">
+                    <label>Lens Mode</label>
+                    <div class="lens-mode-options">
+                        <button class="lens-mode-option active" onclick="app.setLensMode('ego')">
+                            Ego States
+                        </button>
+                        <button class="lens-mode-option" onclick="app.setLensMode('function')">
+                            Conversational
+                        </button>
+                    </div>
+                </div>
                 <div class="share-section">
                     <input type="text" id="shareUrl" readonly onclick="this.select()">
                     <button onclick="app.shareConversation()">Share</button>
@@ -683,7 +787,9 @@
                 conversationId: null,
                 userName: null,
                 lensActive: false,
+                lensMode: 'ego', // 'ego' or 'function'
                 messages: [],
+                conversationalFunctions: {}, // Cache: { messageId: 'question' | 'statement' | etc }
                 pollingInterval: null,
                 knownParticipants: new Set(),
                 firstLoad: true,
@@ -867,6 +973,16 @@
                     this.state.messages = messages;
                     this.renderMessages();
 
+                    // If in conversational function mode with lens active, classify new messages
+                    if (this.state.lensMode === 'function' && this.state.lensActive) {
+                        const hasUnclassified = messages.some(
+                            msg => !this.state.conversationalFunctions[msg.id]
+                        );
+                        if (hasUnclassified) {
+                            this.classifyMessages();
+                        }
+                    }
+
                     // Update patterns if visible
                     if (this.state.patternsVisible) {
                         this.renderPatterns();
@@ -988,9 +1104,17 @@
                 div.className = 'message';
                 div.onclick = () => this.toggleMessageExpanded(msg.id);
 
-                // Determine ego state for color coding
-                const egoState = msg.analysis?.transactional_analysis?.ego_state?.toLowerCase() || 'adult';
-                const indicatorClass = `message-indicator ${egoState}`;
+                // Determine indicator class based on lens mode
+                let indicatorClass;
+                if (this.state.lensMode === 'function') {
+                    // Use conversational function classification
+                    const functionType = this.state.conversationalFunctions[msg.id] || 'statement';
+                    indicatorClass = `message-indicator ${functionType}`;
+                } else {
+                    // Use ego state classification
+                    const egoState = msg.analysis?.transactional_analysis?.ego_state?.toLowerCase() || 'adult';
+                    indicatorClass = `message-indicator ${egoState}`;
+                }
 
                 // Format timestamp
                 const time = new Date(msg.created_at * 1000).toLocaleTimeString([], {
@@ -1006,9 +1130,34 @@
                     </div>
                     <div class="message-content">${this.escapeHtml(msg.content)}</div>
                     ${msg.analysis ? this.renderAnalysis(msg.analysis) : ''}
+                    ${this.state.lensMode === 'function' ? this.renderConversationalFunction(msg) : ''}
                 `;
 
                 return div;
+            },
+
+            renderConversationalFunction(msg) {
+                const functionType = this.state.conversationalFunctions[msg.id];
+                if (!functionType) return '';
+
+                const labels = {
+                    question: 'Question',
+                    statement: 'Statement / Information',
+                    emotional: 'Emotional Expression',
+                    request: 'Request / Directive',
+                    reflection: 'Reflection / Analysis',
+                    agreement: 'Agreement / Validation',
+                    disagreement: 'Disagreement / Pushback'
+                };
+
+                return `
+                    <div class="analysis-panel">
+                        <div class="analysis-section">
+                            <h4>Conversational Function</h4>
+                            <p><strong>Type:</strong> ${labels[functionType] || functionType}</p>
+                        </div>
+                    </div>
+                `;
             },
 
             renderAnalysis(analysis) {
@@ -1127,10 +1276,146 @@
                     toggle.textContent = 'Disable Lens';
                     toggle.classList.add('active');
                     chat.classList.add('lens-active');
+
+                    // If switching to conversational function mode, classify messages
+                    if (this.state.lensMode === 'function') {
+                        this.classifyMessages();
+                    }
                 } else {
                     toggle.textContent = 'Enable Lens';
                     toggle.classList.remove('active');
                     chat.classList.remove('lens-active');
+                }
+            },
+
+            setLensMode(mode) {
+                this.state.lensMode = mode;
+
+                // Update UI
+                document.querySelectorAll('.lens-mode-option').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                event.target.classList.add('active');
+
+                // If switching to conversational function mode and lens is active, classify
+                if (mode === 'function' && this.state.lensActive) {
+                    this.classifyMessages();
+                } else {
+                    // Just re-render with current data
+                    this.renderMessages();
+                }
+            },
+
+            async classifyMessages() {
+                // Get messages that haven't been classified yet
+                const unclassifiedMessages = this.state.messages.filter(
+                    msg => !this.state.conversationalFunctions[msg.id]
+                );
+
+                if (unclassifiedMessages.length === 0) {
+                    this.renderMessages();
+                    return;
+                }
+
+                // Show loading indicator
+                const container = document.getElementById('messages');
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'loading';
+                loadingDiv.textContent = 'Classifying messages...';
+                loadingDiv.id = 'classifyLoading';
+                container.appendChild(loadingDiv);
+
+                try {
+                    // Classify messages in batch using Claude API
+                    const response = await fetch('https://cors-proxy.zammel.workers.dev', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-3-5-sonnet-20241022',
+                            max_tokens: 2000,
+                            messages: [{
+                                role: 'user',
+                                content: this.buildClassificationPrompt(unclassifiedMessages)
+                            }]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Classification failed');
+                    }
+
+                    const data = await response.json();
+                    const classifications = this.parseClassifications(data.content[0].text);
+
+                    // Store classifications in cache
+                    Object.assign(this.state.conversationalFunctions, classifications);
+
+                    // Re-render messages with new classifications
+                    this.renderMessages();
+                } catch (error) {
+                    console.error('Error classifying messages:', error);
+                    alert('Failed to classify messages. Please try again.');
+                } finally {
+                    // Remove loading indicator
+                    const loading = document.getElementById('classifyLoading');
+                    if (loading) loading.remove();
+                }
+            },
+
+            buildClassificationPrompt(messages) {
+                const categories = `
+1. question - Inquiries, requests for information (e.g., "What do you think?", "How does this work?")
+2. statement - Factual information, neutral observations (e.g., "The meeting is at 3pm", "I finished the report")
+3. emotional - Emotional expressions, feelings (e.g., "I'm so frustrated", "That's wonderful!")
+4. request - Requests, directives, calls to action (e.g., "Please send the file", "Let's meet tomorrow")
+5. reflection - Looking back, analyzing, considering patterns (e.g., "Looking back...", "The pattern here seems...")
+6. agreement - Validation, confirmation, agreement (e.g., "Yes, exactly", "That makes sense")
+7. disagreement - Pushback, disagreement, alternative views (e.g., "I'm not sure about that", "But consider...")`;
+
+                const messageList = messages.map((msg, idx) =>
+                    `${idx + 1}. "${msg.content}"`
+                ).join('\n');
+
+                return `You are classifying messages by their conversational function. Here are the categories:
+
+${categories}
+
+Classify each of the following messages into ONE category. Return ONLY a JSON object where keys are message numbers (1, 2, 3...) and values are category names (question, statement, emotional, request, reflection, agreement, disagreement).
+
+Messages:
+${messageList}
+
+Return ONLY the JSON object, no explanation:`;
+            },
+
+            parseClassifications(responseText) {
+                try {
+                    // Extract JSON from response (it might have markdown formatting)
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) throw new Error('No JSON found');
+
+                    const parsed = JSON.parse(jsonMatch[0]);
+
+                    // Convert from {1: 'question', 2: 'statement'} to {messageId: 'question', ...}
+                    const classifications = {};
+                    const unclassifiedMessages = this.state.messages.filter(
+                        msg => !this.state.conversationalFunctions[msg.id]
+                    );
+
+                    Object.keys(parsed).forEach(key => {
+                        const idx = parseInt(key) - 1;
+                        if (idx >= 0 && idx < unclassifiedMessages.length) {
+                            const messageId = unclassifiedMessages[idx].id;
+                            classifications[messageId] = parsed[key];
+                        }
+                    });
+
+                    return classifications;
+                } catch (error) {
+                    console.error('Error parsing classifications:', error);
+                    return {};
                 }
             },
 
