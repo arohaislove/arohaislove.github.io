@@ -40,6 +40,11 @@ export default {
         }
       }
 
+      const analyzeMatch = path.match(/^\/conversation\/([^/]+)\/analyze$/);
+      if (analyzeMatch && request.method === 'POST') {
+        return await analyzeOnly(env, analyzeMatch[1], request);
+      }
+
       return jsonResponse({ error: 'Not found' }, 404);
     } catch (error) {
       console.error('Error:', error);
@@ -96,6 +101,43 @@ async function getMessages(env, conversationId) {
   }));
 
   return jsonResponse(parsed);
+}
+
+/**
+ * Analyze a draft message without sending (preview mode)
+ */
+async function analyzeOnly(env, conversationId, request) {
+  const body = await request.json();
+  const { sender, content } = body;
+
+  if (!sender || !content) {
+    return jsonResponse({
+      error: 'Missing required fields: sender, content'
+    }, 400);
+  }
+
+  // Check conversation exists
+  const conversation = await env.DB.prepare(
+    'SELECT * FROM conversations WHERE id = ?'
+  ).bind(conversationId).first();
+
+  if (!conversation) {
+    return jsonResponse({ error: 'Conversation not found' }, 404);
+  }
+
+  // Get conversation history for context
+  const history = await env.DB.prepare(
+    'SELECT sender, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 20'
+  ).bind(conversationId).all();
+
+  // Analyze the message (but don't store it)
+  const analysis = await analyzeMessage(env, content, history.results, sender);
+
+  return jsonResponse({
+    analysis,
+    content,
+    sender
+  });
 }
 
 /**

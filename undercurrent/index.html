@@ -328,6 +328,15 @@
             padding: 0.75rem 1.5rem;
         }
 
+        .input-area .analyze-btn {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+
+        .input-area .analyze-btn:hover {
+            background: #333;
+        }
+
         /* Modal */
         .modal {
             position: fixed;
@@ -419,6 +428,91 @@
                 transform: translateX(-50%) translateY(0);
             }
         }
+
+        /* Preview modal */
+        .preview-modal .modal-content {
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .preview-message {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .preview-message strong {
+            color: #4a90e2;
+        }
+
+        .preview-analysis {
+            margin-top: 1rem;
+        }
+
+        /* Patterns view */
+        .patterns-view {
+            background: #1a1a1a;
+            border-top: 1px solid #333;
+            padding: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .patterns-view.hidden {
+            display: none;
+        }
+
+        .pattern-card {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .pattern-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+            color: #4a90e2;
+        }
+
+        .pattern-stat {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .pattern-stat-label {
+            color: #999;
+        }
+
+        .pattern-stat-value {
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+
+        .patterns-toggle {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+        }
+
+        .patterns-toggle:hover {
+            background: #333;
+        }
+
+        .patterns-toggle.active {
+            background: #4a90e2;
+            border-color: #4a90e2;
+        }
     </style>
 </head>
 <body>
@@ -445,9 +539,14 @@
             <header>
                 <div class="header-top">
                     <h1 id="chatTitle">Undercurrent</h1>
-                    <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
-                        Enable Lens
-                    </button>
+                    <div>
+                        <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
+                            Enable Lens
+                        </button>
+                        <button class="patterns-toggle" id="patternsToggle" onclick="app.togglePatterns()">
+                            Patterns
+                        </button>
+                    </div>
                 </div>
                 <div class="share-section">
                     <input type="text" id="shareUrl" readonly onclick="this.select()">
@@ -455,13 +554,37 @@
                 </div>
             </header>
 
+            <!-- Patterns View -->
+            <div class="patterns-view hidden" id="patternsView">
+                <!-- Patterns will be inserted here -->
+            </div>
+
             <div class="messages" id="messages">
                 <!-- Messages will be inserted here -->
             </div>
 
             <div class="input-area">
                 <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="app.handleKeyPress(event)">
+                <button class="analyze-btn" onclick="app.previewMessage()">Analyze</button>
                 <button class="primary" onclick="app.sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal preview-modal hidden">
+        <div class="modal-content">
+            <h3>Message Preview</h3>
+            <div class="preview-message">
+                <strong>Your message:</strong>
+                <p id="previewContent"></p>
+            </div>
+            <div class="preview-analysis" id="previewAnalysis">
+                <!-- Analysis will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button onclick="app.closePreview()">Edit</button>
+                <button class="primary" onclick="app.sendFromPreview()">Send Anyway</button>
             </div>
         </div>
     </div>
@@ -488,7 +611,9 @@
                 messages: [],
                 pollingInterval: null,
                 knownParticipants: new Set(),
-                firstLoad: true
+                firstLoad: true,
+                patternsVisible: false,
+                draftMessage: null
             },
 
             init() {
@@ -660,6 +785,11 @@
 
                     this.state.messages = messages;
                     this.renderMessages();
+
+                    // Update patterns if visible
+                    if (this.state.patternsVisible) {
+                        this.renderPatterns();
+                    }
                 } catch (error) {
                     console.error('Error loading messages:', error);
                 }
@@ -863,6 +993,155 @@
                     toggle.classList.remove('active');
                     chat.classList.remove('lens-active');
                 }
+            },
+
+            async previewMessage() {
+                const input = document.getElementById('messageInput');
+                const content = input.value.trim();
+
+                if (!content) return;
+
+                this.state.draftMessage = content;
+
+                try {
+                    const response = await fetch(
+                        `${API_URL}/conversation/${this.state.conversationId}/analyze`,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                sender: this.state.userName,
+                                content
+                            })
+                        }
+                    );
+
+                    if (!response.ok) throw new Error('Failed to analyze message');
+
+                    const data = await response.json();
+
+                    // Show preview modal
+                    document.getElementById('previewContent').textContent = content;
+                    document.getElementById('previewAnalysis').innerHTML =
+                        this.renderAnalysis(data.analysis);
+                    document.getElementById('previewModal').classList.remove('hidden');
+                } catch (error) {
+                    alert('Error analyzing message: ' + error.message);
+                }
+            },
+
+            closePreview() {
+                document.getElementById('previewModal').classList.add('hidden');
+                this.state.draftMessage = null;
+                document.getElementById('messageInput').focus();
+            },
+
+            async sendFromPreview() {
+                document.getElementById('previewModal').classList.add('hidden');
+                await this.sendMessage();
+            },
+
+            togglePatterns() {
+                this.state.patternsVisible = !this.state.patternsVisible;
+                const toggle = document.getElementById('patternsToggle');
+                const view = document.getElementById('patternsView');
+
+                if (this.state.patternsVisible) {
+                    toggle.classList.add('active');
+                    view.classList.remove('hidden');
+                    this.renderPatterns();
+                } else {
+                    toggle.classList.remove('active');
+                    view.classList.add('hidden');
+                }
+            },
+
+            renderPatterns() {
+                const patterns = this.calculatePatterns();
+                const container = document.getElementById('patternsView');
+
+                if (patterns.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666;">Not enough messages to show patterns yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = patterns.map(p => `
+                    <div class="pattern-card">
+                        <h3>${this.escapeHtml(p.participant)}</h3>
+                        <div class="pattern-stat">
+                            <span class="pattern-stat-label">Most common ego state:</span>
+                            <span class="pattern-stat-value">${p.commonEgoState}</span>
+                        </div>
+                        <div class="pattern-stat">
+                            <span class="pattern-stat-label">Average tone:</span>
+                            <span class="pattern-stat-value">${p.avgTone}</span>
+                        </div>
+                        <div class="pattern-stat">
+                            <span class="pattern-stat-label">Formality level:</span>
+                            <span class="pattern-stat-value">${p.avgFormality}</span>
+                        </div>
+                        <div class="pattern-stat">
+                            <span class="pattern-stat-label">Power dynamic tendency:</span>
+                            <span class="pattern-stat-value">${p.powerTendency}</span>
+                        </div>
+                        <div class="pattern-stat">
+                            <span class="pattern-stat-label">Messages sent:</span>
+                            <span class="pattern-stat-value">${p.messageCount}</span>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            calculatePatterns() {
+                const participantStats = {};
+
+                this.state.messages.forEach(msg => {
+                    if (!msg.analysis) return;
+
+                    if (!participantStats[msg.sender]) {
+                        participantStats[msg.sender] = {
+                            egoStates: [],
+                            tones: [],
+                            formality: [],
+                            powerMoves: [],
+                            messageCount: 0
+                        };
+                    }
+
+                    const stats = participantStats[msg.sender];
+                    stats.messageCount++;
+                    stats.egoStates.push(msg.analysis.transactional_analysis.ego_subtype);
+                    if (msg.analysis.tone) {
+                        stats.tones.push(msg.analysis.tone.overall);
+                        stats.formality.push(msg.analysis.formality.level);
+                    }
+                    stats.powerMoves.push(msg.analysis.power_dynamics.move);
+                });
+
+                return Object.keys(participantStats).map(participant => {
+                    const stats = participantStats[participant];
+                    return {
+                        participant,
+                        messageCount: stats.messageCount,
+                        commonEgoState: this.getMostCommon(stats.egoStates),
+                        avgTone: this.getMostCommon(stats.tones) || 'N/A',
+                        avgFormality: this.getMostCommon(stats.formality) || 'N/A',
+                        powerTendency: this.getMostCommon(stats.powerMoves)
+                    };
+                });
+            },
+
+            getMostCommon(arr) {
+                if (arr.length === 0) return 'N/A';
+                const counts = {};
+                arr.forEach(item => {
+                    counts[item] = (counts[item] || 0) + 1;
+                });
+                return Object.keys(counts).reduce((a, b) =>
+                    counts[a] > counts[b] ? a : b
+                );
             },
 
             startPolling() {
