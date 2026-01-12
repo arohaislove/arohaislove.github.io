@@ -813,6 +813,16 @@
                             <p><strong>Function:</strong> ${analysis.speech_act.specific}</p>
                         </div>
 
+                        ${analysis.tone ? `
+                        <div class="analysis-section">
+                            <h4>Tone & Formality</h4>
+                            <p><strong>Tone:</strong> ${analysis.tone.overall} (${analysis.tone.warmth})</p>
+                            <p><strong>Formality:</strong> ${analysis.formality.level}</p>
+                            ${analysis.formality.markers.length > 0 ?
+                                `<p><strong>Markers:</strong> ${analysis.formality.markers.join(', ')}</p>` : ''}
+                        </div>
+                        ` : ''}
+
                         <div class="analysis-section">
                             <h4>Discourse</h4>
                             <p><strong>Control:</strong> ${analysis.discourse.topic_control}</p>
