@@ -254,7 +254,7 @@ Analyze this message within the conversation context using multiple frameworks. 
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-5-sonnet-latest',
         max_tokens: 1024,
         messages: [{
           role: 'user',
