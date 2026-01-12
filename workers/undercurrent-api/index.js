@@ -196,10 +196,18 @@ async function sendMessage(env, conversationId, request) {
  * Analyze a message using Claude API
  */
 async function analyzeMessage(env, message, conversationHistory, sender) {
+  const apiUrl = 'https://api.anthropic.com/v1/messages';
+  const model = 'claude-sonnet-4-20250514';
+
   // Check if API key exists
   if (!env.ANTHROPIC_API_KEY) {
     console.error('ANTHROPIC_API_KEY is not configured');
-    return getFallbackAnalysis();
+    return getFallbackAnalysis({
+      status: 500,
+      message: 'API key not configured',
+      url: apiUrl,
+      model: model
+    });
   }
 
   // Build conversation context
@@ -246,7 +254,7 @@ Analyze this message within the conversation context using multiple frameworks. 
 }`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -254,7 +262,7 @@ Analyze this message within the conversation context using multiple frameworks. 
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-latest',
+        model: model,
         max_tokens: 1024,
         messages: [{
           role: 'user',
@@ -266,7 +274,24 @@ Analyze this message within the conversation context using multiple frameworks. 
     if (!response.ok) {
       const errorBody = await response.text();
       console.error(`Claude API error: ${response.status}`, errorBody);
-      throw new Error(`Claude API error: ${response.status}`);
+
+      // Try to parse error body for more details
+      let errorMessage = `HTTP ${response.status}`;
+      try {
+        const errorJson = JSON.parse(errorBody);
+        if (errorJson.error && errorJson.error.message) {
+          errorMessage = errorJson.error.message;
+        }
+      } catch (e) {
+        errorMessage = errorBody.substring(0, 200);
+      }
+
+      return getFallbackAnalysis({
+        status: response.status,
+        message: errorMessage,
+        url: apiUrl,
+        model: model
+      });
     }
 
     const data = await response.json();
@@ -277,14 +302,19 @@ Analyze this message within the conversation context using multiple frameworks. 
     return parsed;
   } catch (error) {
     console.error('Analysis error:', error.message, error.stack);
-    return getFallbackAnalysis();
+    return getFallbackAnalysis({
+      status: 0,
+      message: error.message,
+      url: apiUrl,
+      model: model
+    });
   }
 }
 
 /**
  * Get fallback analysis when API fails
  */
-function getFallbackAnalysis() {
+function getFallbackAnalysis(errorDetails = null) {
   return {
     transactional_analysis: {
       ego_state: "Adult",
@@ -312,7 +342,8 @@ function getFallbackAnalysis() {
       level: "neutral",
       markers: []
     },
-    subtext: "Analysis unavailable - API error"
+    subtext: "Analysis unavailable - API error",
+    error: errorDetails
   };
 }
 

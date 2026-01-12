@@ -513,6 +513,81 @@
             background: #4a90e2;
             border-color: #4a90e2;
         }
+
+        /* Error Display */
+        .error-box {
+            background: #2a1a1a;
+            border: 1px solid #e74c3c;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .error-header:hover {
+            opacity: 0.8;
+        }
+
+        .error-title {
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .error-toggle {
+            color: #4a90e2;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .error-details {
+            display: none;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #3a2a2a;
+        }
+
+        .error-details.visible {
+            display: block;
+        }
+
+        .error-item {
+            margin-bottom: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .error-item-label {
+            color: #999;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .error-item-value {
+            color: #e0e0e0;
+            font-family: monospace;
+            background: #1a1a1a;
+            padding: 0.5rem;
+            border-radius: 4px;
+            word-break: break-all;
+            border: 1px solid #333;
+        }
+
+        .error-item-value.code {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
     </style>
 </head>
 <body>
@@ -635,12 +710,15 @@
                         method: 'POST'
                     });
 
-                    if (!response.ok) throw new Error('Failed to create conversation');
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Failed to create conversation (HTTP ${response.status}): ${errorData}`);
+                    }
 
                     const data = await response.json();
                     this.loadConversation(data.id);
                 } catch (error) {
-                    alert('Error creating conversation: ' + error.message);
+                    alert('Error creating conversation:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
                 }
             },
 
@@ -668,7 +746,10 @@
                 // Check if conversation exists
                 try {
                     const response = await fetch(`${API_URL}/conversation/${conversationId}`);
-                    if (!response.ok) throw new Error('Conversation not found');
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Conversation not found (HTTP ${response.status}): ${errorData}`);
+                    }
 
                     this.state.conversationId = conversationId;
 
@@ -684,7 +765,7 @@
                         this.showChat();
                     }
                 } catch (error) {
-                    alert('Error loading conversation: ' + error.message);
+                    alert('Error loading conversation:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
                 }
             },
 
@@ -869,7 +950,10 @@
                         }
                     );
 
-                    if (!response.ok) throw new Error('Failed to send message');
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Failed to send message (HTTP ${response.status}): ${errorData}`);
+                    }
 
                     // Reload messages
                     await this.loadMessages();
@@ -877,7 +961,7 @@
                     // Scroll to bottom
                     this.scrollToBottom();
                 } catch (error) {
-                    alert('Error sending message: ' + error.message);
+                    alert('Error sending message:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
                 }
             },
 
@@ -930,6 +1014,8 @@
             renderAnalysis(analysis) {
                 return `
                     <div class="analysis-panel">
+                        ${analysis.error ? this.renderError(analysis.error) : ''}
+
                         <div class="analysis-section">
                             <h4>Transactional Analysis</h4>
                             <p><strong>Ego State:</strong> ${analysis.transactional_analysis.ego_subtype}</p>
@@ -972,6 +1058,59 @@
                         </div>
                     </div>
                 `;
+            },
+
+            renderError(error) {
+                if (!error) return '';
+
+                const errorId = 'error-' + Math.random().toString(36).substring(2, 9);
+
+                return `
+                    <div class="error-box">
+                        <div class="error-header" onclick="app.toggleError('${errorId}')">
+                            <div class="error-title">
+                                ⚠️ Analysis unavailable - API error
+                            </div>
+                            <div class="error-toggle" id="${errorId}-toggle">Show details</div>
+                        </div>
+                        <div class="error-details" id="${errorId}">
+                            ${error.status ? `
+                                <div class="error-item">
+                                    <span class="error-item-label">HTTP Status:</span>
+                                    <div class="error-item-value code">${error.status}</div>
+                                </div>
+                            ` : ''}
+                            ${error.message ? `
+                                <div class="error-item">
+                                    <span class="error-item-label">Error Message:</span>
+                                    <div class="error-item-value">${this.escapeHtml(error.message)}</div>
+                                </div>
+                            ` : ''}
+                            ${error.url ? `
+                                <div class="error-item">
+                                    <span class="error-item-label">API URL:</span>
+                                    <div class="error-item-value">${this.escapeHtml(error.url)}</div>
+                                </div>
+                            ` : ''}
+                            ${error.model ? `
+                                <div class="error-item">
+                                    <span class="error-item-label">Model:</span>
+                                    <div class="error-item-value">${this.escapeHtml(error.model)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            },
+
+            toggleError(errorId) {
+                const details = document.getElementById(errorId);
+                const toggle = document.getElementById(errorId + '-toggle');
+
+                if (details && toggle) {
+                    details.classList.toggle('visible');
+                    toggle.textContent = details.classList.contains('visible') ? 'Hide details' : 'Show details';
+                }
             },
 
             toggleMessageExpanded(messageId) {
@@ -1018,7 +1157,10 @@
                         }
                     );
 
-                    if (!response.ok) throw new Error('Failed to analyze message');
+                    if (!response.ok) {
+                        const errorData = await response.text();
+                        throw new Error(`Failed to analyze message (HTTP ${response.status}): ${errorData}`);
+                    }
 
                     const data = await response.json();
 
@@ -1028,7 +1170,7 @@
                         this.renderAnalysis(data.analysis);
                     document.getElementById('previewModal').classList.remove('hidden');
                 } catch (error) {
-                    alert('Error analyzing message: ' + error.message);
+                    alert('Error analyzing message:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
                 }
             },
 
