@@ -422,8 +422,8 @@
                     </button>
                 </div>
                 <div class="share-section">
-                    <input type="text" id="shareUrl" readonly>
-                    <button onclick="app.copyShareLink()">Copy Link</button>
+                    <input type="text" id="shareUrl" readonly onclick="this.select()">
+                    <button onclick="app.shareConversation()">Share</button>
                 </div>
             </header>
 
@@ -561,22 +561,43 @@
                 document.getElementById('messageInput').focus();
             },
 
-            copyShareLink() {
-                const input = document.getElementById('shareUrl');
-                input.select();
-                input.setSelectionRange(0, 99999); // For mobile
+            async shareConversation() {
+                const shareUrl = document.getElementById('shareUrl').value;
+                const button = event.target;
+                const originalText = button.textContent;
 
-                navigator.clipboard.writeText(input.value).then(() => {
-                    // Visual feedback
-                    const button = event.target;
-                    const originalText = button.textContent;
+                // Try Web Share API first (native share sheet on mobile)
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Join my Undercurrent conversation',
+                            text: 'Chat with me on Undercurrent - messaging with psychological analysis',
+                            url: shareUrl
+                        });
+                        return; // Success, we're done
+                    } catch (err) {
+                        // User cancelled or share failed, fall through to clipboard
+                        if (err.name === 'AbortError') return; // User cancelled, just stop
+                    }
+                }
+
+                // Fallback to clipboard copy
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
                     button.textContent = 'Copied!';
                     setTimeout(() => {
                         button.textContent = originalText;
                     }, 2000);
-                }).catch(err => {
-                    alert('Failed to copy link. Please copy it manually.');
-                });
+                } catch (err) {
+                    // Final fallback: select the text so user can manually copy
+                    const input = document.getElementById('shareUrl');
+                    input.select();
+                    input.setSelectionRange(0, 99999);
+                    button.textContent = 'Now tap Copy';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 3000);
+                }
             },
 
             async loadMessages() {
