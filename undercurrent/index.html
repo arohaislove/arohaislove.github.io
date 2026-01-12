@@ -391,6 +391,34 @@
         nav a:hover {
             text-decoration: underline;
         }
+
+        /* Notification toast */
+        .notification-toast {
+            position: fixed;
+            top: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4a90e2;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: slideDown 0.3s ease-out;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
@@ -422,8 +450,8 @@
                     </button>
                 </div>
                 <div class="share-section">
-                    <input type="text" id="shareUrl" readonly>
-                    <button onclick="app.copyShareLink()">Copy Link</button>
+                    <input type="text" id="shareUrl" readonly onclick="this.select()">
+                    <button onclick="app.shareConversation()">Share</button>
                 </div>
             </header>
 
@@ -458,7 +486,9 @@
                 userName: null,
                 lensActive: false,
                 messages: [],
-                pollingInterval: null
+                pollingInterval: null,
+                knownParticipants: new Set(),
+                firstLoad: true
             },
 
             init() {
@@ -543,7 +573,7 @@
                 }
             },
 
-            showChat() {
+            async showChat() {
                 document.getElementById('landing').classList.add('hidden');
                 document.getElementById('chat').classList.remove('hidden');
 
@@ -551,8 +581,12 @@
                 const shareUrl = `${window.location.origin}${window.location.pathname}?c=${this.state.conversationId}`;
                 document.getElementById('shareUrl').value = shareUrl;
 
-                // Load messages
-                this.loadMessages();
+                // Load messages (without notifications on first load)
+                await this.loadMessages();
+
+                // Initialize known participants from existing messages
+                this.state.knownParticipants = new Set(this.state.messages.map(m => m.sender));
+                this.state.firstLoad = false; // Enable notifications for future loads
 
                 // Start polling
                 this.startPolling();
@@ -561,22 +595,43 @@
                 document.getElementById('messageInput').focus();
             },
 
-            copyShareLink() {
-                const input = document.getElementById('shareUrl');
-                input.select();
-                input.setSelectionRange(0, 99999); // For mobile
+            async shareConversation() {
+                const shareUrl = document.getElementById('shareUrl').value;
+                const button = event.target;
+                const originalText = button.textContent;
 
-                navigator.clipboard.writeText(input.value).then(() => {
-                    // Visual feedback
-                    const button = event.target;
-                    const originalText = button.textContent;
+                // Try Web Share API first (native share sheet on mobile)
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Join my Undercurrent conversation',
+                            text: 'Chat with me on Undercurrent - messaging with psychological analysis',
+                            url: shareUrl
+                        });
+                        return; // Success, we're done
+                    } catch (err) {
+                        // User cancelled or share failed, fall through to clipboard
+                        if (err.name === 'AbortError') return; // User cancelled, just stop
+                    }
+                }
+
+                // Fallback to clipboard copy
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
                     button.textContent = 'Copied!';
                     setTimeout(() => {
                         button.textContent = originalText;
                     }, 2000);
-                }).catch(err => {
-                    alert('Failed to copy link. Please copy it manually.');
-                });
+                } catch (err) {
+                    // Final fallback: select the text so user can manually copy
+                    const input = document.getElementById('shareUrl');
+                    input.select();
+                    input.setSelectionRange(0, 99999);
+                    button.textContent = 'Now tap Copy';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                    }, 3000);
+                }
             },
 
             async loadMessages() {
@@ -588,10 +643,75 @@
                     if (!response.ok) throw new Error('Failed to load messages');
 
                     const messages = await response.json();
+
+                    // Check for new participants (but not on first load)
+                    if (!this.state.firstLoad) {
+                        const currentParticipants = new Set(messages.map(m => m.sender));
+                        currentParticipants.forEach(participant => {
+                            if (participant !== this.state.userName &&
+                                !this.state.knownParticipants.has(participant)) {
+                                // New participant detected!
+                                this.showJoinNotification(participant);
+                                this.playNotificationSound();
+                            }
+                        });
+                        this.state.knownParticipants = currentParticipants;
+                    }
+
                     this.state.messages = messages;
                     this.renderMessages();
                 } catch (error) {
                     console.error('Error loading messages:', error);
+                }
+            },
+
+            showJoinNotification(name) {
+                const toast = document.createElement('div');
+                toast.className = 'notification-toast';
+                toast.textContent = `${name} joined the conversation 👋`;
+                document.body.appendChild(toast);
+
+                // Remove after 3 seconds
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            },
+
+            playNotificationSound() {
+                try {
+                    // Create a simple pleasant notification sound using Web Audio API
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    // Pleasant two-tone chime
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+
+                    // Second tone
+                    const oscillator2 = audioContext.createOscillator();
+                    const gainNode2 = audioContext.createGain();
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioContext.destination);
+
+                    oscillator2.frequency.value = 1000;
+                    oscillator2.type = 'sine';
+                    gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime + 0.15);
+                    gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.45);
+
+                    oscillator2.start(audioContext.currentTime + 0.15);
+                    oscillator2.stop(audioContext.currentTime + 0.45);
+                } catch (error) {
+                    console.log('Could not play notification sound:', error);
                 }
             },
 
