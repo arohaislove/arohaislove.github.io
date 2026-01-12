@@ -294,18 +294,13 @@
             gap: 0.5rem;
         }
 
-        /* Small colored dot indicator */
+        /* Small colored dot indicator - always visible */
         .message-dot {
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.3s;
-            flex-shrink: 0;
-        }
-
-        .lens-active .message-dot {
             opacity: 1;
+            flex-shrink: 0;
         }
 
         /* Dot colors for conversational functions */
@@ -361,15 +356,7 @@
         }
 
         .message-indicator {
-            height: 3px;
-            border-radius: 3px;
-            margin-bottom: 0.5rem;
-            transition: opacity 0.3s;
-            opacity: 0;
-        }
-
-        .lens-active .message-indicator {
-            opacity: 1;
+            display: none;
         }
 
         /* Ego State Colors (existing) */
@@ -1032,8 +1019,8 @@
                     this.state.messages = messages;
                     this.renderMessages();
 
-                    // If in conversational function mode with lens active, classify new messages
-                    if (this.state.lensMode === 'function' && this.state.lensActive) {
+                    // If in conversational function mode, auto-classify new messages
+                    if (this.state.lensMode === 'function') {
                         const hasUnclassified = messages.some(
                             msg => !this.state.conversationalFunctions[msg.id]
                         );
@@ -1340,11 +1327,6 @@
                     toggle.textContent = 'Disable Lens';
                     toggle.classList.add('active');
                     chat.classList.add('lens-active');
-
-                    // If switching to conversational function mode, classify messages
-                    if (this.state.lensMode === 'function') {
-                        this.classifyMessages();
-                    }
                 } else {
                     toggle.textContent = 'Enable Lens';
                     toggle.classList.remove('active');
@@ -1361,8 +1343,8 @@
                 });
                 event.target.classList.add('active');
 
-                // If switching to conversational function mode and lens is active, classify
-                if (mode === 'function' && this.state.lensActive) {
+                // If switching to conversational function mode, auto-classify
+                if (mode === 'function') {
                     this.classifyMessages();
                 } else {
                     // Just re-render with current data
