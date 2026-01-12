@@ -154,6 +154,12 @@ async function sendMessage(env, conversationId, request) {
  * Analyze a message using Claude API
  */
 async function analyzeMessage(env, message, conversationHistory, sender) {
+  // Check if API key exists
+  if (!env.ANTHROPIC_API_KEY) {
+    console.error('ANTHROPIC_API_KEY is not configured');
+    return getFallbackAnalysis();
+  }
+
   // Build conversation context
   let contextMessages = conversationHistory.map(msg =>
     `${msg.sender}: ${msg.content}`
@@ -186,6 +192,14 @@ Analyze this message within the conversation context using multiple frameworks. 
     "move": "one-up|one-down|level",
     "indicators": ["e.g., advice-giving", "self-deprecation", "agreement"]
   },
+  "tone": {
+    "overall": "friendly|neutral|formal|playful|serious|aggressive|compassionate",
+    "warmth": "warm|neutral|cold"
+  },
+  "formality": {
+    "level": "very_formal|formal|neutral|casual|very_casual",
+    "markers": ["e.g., contractions, slang, professional vocabulary, hedging"]
+  },
   "subtext": "One sentence describing what this message is really doing beneath the surface"
 }`;
 
@@ -208,6 +222,8 @@ Analyze this message within the conversation context using multiple frameworks. 
     });
 
     if (!response.ok) {
+      const errorBody = await response.text();
+      console.error(`Claude API error: ${response.status}`, errorBody);
       throw new Error(`Claude API error: ${response.status}`);
     }
 
@@ -215,32 +231,47 @@ Analyze this message within the conversation context using multiple frameworks. 
     const analysisText = data.content[0].text;
 
     // Parse the JSON response
-    return JSON.parse(analysisText);
+    const parsed = JSON.parse(analysisText);
+    return parsed;
   } catch (error) {
-    console.error('Analysis error:', error);
-    // Return a fallback analysis structure
-    return {
-      transactional_analysis: {
-        ego_state: "Adult",
-        ego_subtype: "Adult",
-        invited_response: "Adult",
-        transaction_type: "complementary"
-      },
-      speech_act: {
-        primary: "assertive",
-        specific: "statement"
-      },
-      discourse: {
-        markers: [],
-        topic_control: "maintaining"
-      },
-      power_dynamics: {
-        move: "level",
-        indicators: []
-      },
-      subtext: "Analysis unavailable"
-    };
+    console.error('Analysis error:', error.message, error.stack);
+    return getFallbackAnalysis();
   }
+}
+
+/**
+ * Get fallback analysis when API fails
+ */
+function getFallbackAnalysis() {
+  return {
+    transactional_analysis: {
+      ego_state: "Adult",
+      ego_subtype: "Adult",
+      invited_response: "Adult",
+      transaction_type: "complementary"
+    },
+    speech_act: {
+      primary: "assertive",
+      specific: "statement"
+    },
+    discourse: {
+      markers: [],
+      topic_control: "maintaining"
+    },
+    power_dynamics: {
+      move: "level",
+      indicators: []
+    },
+    tone: {
+      overall: "neutral",
+      warmth: "neutral"
+    },
+    formality: {
+      level: "neutral",
+      markers: []
+    },
+    subtext: "Analysis unavailable - API error"
+  };
 }
 
 /**
