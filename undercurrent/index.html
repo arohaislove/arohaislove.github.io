@@ -173,30 +173,217 @@
         .landing {
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
             flex: 1;
-            padding: 2rem;
-            text-align: center;
+            padding: 0;
         }
 
         .landing h2 {
-            font-size: 2rem;
+            font-size: 1.5rem;
             margin-bottom: 0.5rem;
+            padding: 1.5rem 1rem 0.5rem 1rem;
         }
 
-        .landing p {
+        .landing-intro {
             color: #999;
-            margin-bottom: 2rem;
-            max-width: 320px;
+            padding: 0 1rem 1rem 1rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #333;
         }
 
         .landing-actions {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .new-conversation-btn {
+            width: 100%;
+            background: #4a90e2;
+            border-color: #4a90e2;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .new-conversation-btn:hover {
+            background: #3a7bc8;
+        }
+
+        .search-box {
+            padding: 0 1rem 1rem 1rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .search-box input {
+            width: 100%;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #e0e0e0;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #4a90e2;
+        }
+
+        .search-box input::placeholder {
+            color: #666;
+        }
+
+        /* Conversation History */
+        .conversation-history {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .conversation-list-item {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            transition: background 0.2s;
+        }
+
+        .conversation-list-item:hover {
+            background: #222;
+        }
+
+        .conversation-header {
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .conversation-summary {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .conversation-date {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .conversation-preview {
+            font-size: 0.9rem;
+            color: #ccc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .conversation-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .conversation-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4a90e2;
+        }
+
+        .conversation-indicator.has-analysis {
+            background: #6cb36c;
+        }
+
+        .conversation-indicator.ended {
+            background: #666;
+        }
+
+        .conversation-chevron {
+            color: #666;
+            font-size: 0.85rem;
+            transition: transform 0.2s;
+        }
+
+        .conversation-list-item.expanded .conversation-chevron {
+            transform: rotate(180deg);
+        }
+
+        .conversation-messages {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .conversation-list-item.expanded .conversation-messages {
+            max-height: 600px;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .conversation-messages-inner {
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            width: 100%;
-            max-width: 300px;
+            gap: 0.75rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .conversation-message-item {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .conversation-message-sender {
+            font-weight: 600;
+            color: #4a90e2;
+            margin-bottom: 0.25rem;
+            font-size: 0.8rem;
+        }
+
+        .conversation-message-content {
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .conversation-actions {
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            border-top: 1px solid #2a2a2a;
+        }
+
+        .conversation-actions button {
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem 2rem;
+            text-align: center;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            margin-bottom: 1.5rem;
         }
 
         button {
@@ -653,6 +840,124 @@
             border-color: #4a90e2;
         }
 
+        /* Iceberg Analysis Modal */
+        .iceberg-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .iceberg-header {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .iceberg-header h3 {
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .iceberg-close {
+            background: transparent;
+            border: none;
+            color: #4a90e2;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .iceberg-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .iceberg-layer {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .iceberg-layer h4 {
+            color: #4a90e2;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .iceberg-stat {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .iceberg-stat:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .iceberg-stat-label {
+            font-size: 0.8rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .iceberg-stat-value {
+            font-size: 1.1rem;
+            color: #e0e0e0;
+            font-weight: 600;
+        }
+
+        .iceberg-arc {
+            display: flex;
+            align-items: flex-end;
+            gap: 0.25rem;
+            height: 80px;
+            margin-top: 1rem;
+            padding: 0 0.5rem;
+        }
+
+        .iceberg-arc-bar {
+            flex: 1;
+            background: linear-gradient(180deg, #4a90e2, #2a6bc2);
+            border-radius: 4px 4px 0 0;
+            min-height: 10px;
+            transition: all 0.3s;
+        }
+
+        .iceberg-arc-bar.positive {
+            background: linear-gradient(180deg, #6cb36c, #4c934c);
+        }
+
+        .iceberg-arc-bar.negative {
+            background: linear-gradient(180deg, #d97575, #b95555);
+        }
+
+        .iceberg-arc-bar.neutral {
+            background: linear-gradient(180deg, #95a5a6, #7a8a8b);
+        }
+
         /* Error Display */
         .error-box {
             background: #2a1a1a;
@@ -738,13 +1043,20 @@
         <!-- Landing Page -->
         <div id="landing" class="landing">
             <h2>Undercurrent</h2>
-            <p>A messaging app that reveals the psychological dynamics beneath your conversations</p>
-            <p style="font-size: 0.85rem; color: #666; margin-top: -1rem;">💡 Start a conversation, then share the link with one other person. Toggle the "Lens" to see analysis.</p>
+            <p class="landing-intro">Messaging with psychological depth</p>
+
             <div class="landing-actions">
-                <button class="primary" onclick="app.createConversation()">Start New Conversation</button>
-                <p style="font-size: 0.85rem; color: #666; margin: 0.5rem 0;">or</p>
-                <input type="text" id="joinCode" placeholder="Paste conversation link or code">
-                <button onclick="app.joinConversation()">Join Conversation</button>
+                <button class="new-conversation-btn" onclick="app.createConversation()">
+                    ✨ Start New Conversation
+                </button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="conversationSearch" placeholder="🔍 Search conversations..." oninput="app.filterConversations()">
+            </div>
+
+            <div class="conversation-history" id="conversationHistory">
+                <!-- Conversation list will be rendered here -->
             </div>
         </div>
 
@@ -752,7 +1064,12 @@
         <div id="chat" class="chat hidden">
             <header>
                 <div class="header-top">
-                    <h1 id="chatTitle">Undercurrent</h1>
+                    <div>
+                        <a href="#" onclick="app.backToHistory(); return false;" style="color: #4a90e2; text-decoration: none; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">
+                            ← Conversations
+                        </a>
+                        <h1 id="chatTitle">Undercurrent</h1>
+                    </div>
                     <div>
                         <button class="lens-toggle" id="lensToggle" onclick="app.toggleLens()">
                             Enable Lens
@@ -825,6 +1142,17 @@
         </div>
     </div>
 
+    <!-- Iceberg Analysis Modal -->
+    <div id="icebergModal" class="iceberg-modal hidden">
+        <div class="iceberg-header">
+            <h3>🧊 Conversation Depths</h3>
+            <button class="iceberg-close" onclick="app.closeIcebergAnalysis()">×</button>
+        </div>
+        <div class="iceberg-content" id="icebergContent">
+            <!-- Analysis will be rendered here -->
+        </div>
+    </div>
+
     <script>
         const API_URL = 'https://undercurrent-api.zammel.workers.dev';
 
@@ -840,7 +1168,65 @@
                 knownParticipants: new Set(),
                 firstLoad: true,
                 patternsVisible: false,
-                draftMessage: null
+                draftMessage: null,
+                expandedConversationId: null // Currently expanded conversation in history view
+            },
+
+            // localStorage conversation cache management
+            conversationCache: {
+                STORAGE_KEY: 'undercurrent_conversations',
+
+                getAll() {
+                    try {
+                        const data = localStorage.getItem(this.STORAGE_KEY);
+                        return data ? JSON.parse(data) : [];
+                    } catch (error) {
+                        console.error('Error reading conversation cache:', error);
+                        return [];
+                    }
+                },
+
+                get(id) {
+                    const conversations = this.getAll();
+                    return conversations.find(c => c.id === id);
+                },
+
+                save(conversation) {
+                    try {
+                        const conversations = this.getAll();
+                        const existingIndex = conversations.findIndex(c => c.id === conversation.id);
+
+                        if (existingIndex >= 0) {
+                            conversations[existingIndex] = conversation;
+                        } else {
+                            conversations.push(conversation);
+                        }
+
+                        // Sort by last accessed (most recent first)
+                        conversations.sort((a, b) => (b.lastAccessedAt || 0) - (a.lastAccessedAt || 0));
+
+                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(conversations));
+                    } catch (error) {
+                        console.error('Error saving conversation cache:', error);
+                    }
+                },
+
+                updateMetadata(id, updates) {
+                    const conversation = this.get(id);
+                    if (conversation) {
+                        Object.assign(conversation, updates);
+                        this.save(conversation);
+                    }
+                },
+
+                delete(id) {
+                    try {
+                        const conversations = this.getAll().filter(c => c.id !== id);
+                        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(conversations));
+                    } catch (error) {
+                        console.error('Error deleting conversation:', error);
+                    }
+                }
             },
 
             init() {
@@ -850,10 +1236,493 @@
 
                 if (conversationId) {
                     this.loadConversation(conversationId);
+                } else {
+                    // Show conversation history on landing page
+                    this.renderConversationHistory();
                 }
 
                 // Get stored username
                 this.state.userName = localStorage.getItem('undercurrent_username');
+            },
+
+            renderConversationHistory() {
+                const container = document.getElementById('conversationHistory');
+                const conversations = this.conversationCache.getAll();
+
+                if (conversations.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💬</div>
+                            <p>No conversations yet</p>
+                            <p style="font-size: 0.85rem; color: #666;">
+                                Start a new conversation and share the link with someone
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = conversations.map(conv => this.createConversationListItem(conv)).join('');
+            },
+
+            filterConversations() {
+                const searchInput = document.getElementById('conversationSearch');
+                const searchTerm = searchInput.value.toLowerCase().trim();
+
+                if (!searchTerm) {
+                    // Show all conversations
+                    this.renderConversationHistory();
+                    return;
+                }
+
+                const container = document.getElementById('conversationHistory');
+                const conversations = this.conversationCache.getAll();
+
+                // Filter conversations by preview text or date
+                const filtered = conversations.filter(conv => {
+                    const preview = (conv.lastMessagePreview || '').toLowerCase();
+                    const date = this.formatDate(new Date(conv.lastAccessedAt || conv.createdAt)).toLowerCase();
+                    return preview.includes(searchTerm) || date.includes(searchTerm);
+                });
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔍</div>
+                            <p>No conversations found</p>
+                            <p style="font-size: 0.85rem; color: #666;">
+                                Try a different search term
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(conv => this.createConversationListItem(conv)).join('');
+            },
+
+            createConversationListItem(conv) {
+                const date = new Date(conv.lastAccessedAt || conv.createdAt);
+                const dateStr = this.formatDate(date);
+                const preview = conv.lastMessagePreview || 'No messages yet';
+                const indicatorClass = conv.endedAt ? 'ended' : (conv.hasAnalysis ? 'has-analysis' : '');
+                const isExpanded = this.state.expandedConversationId === conv.id;
+
+                return `
+                    <div class="conversation-list-item ${isExpanded ? 'expanded' : ''}" data-conversation-id="${conv.id}">
+                        <div class="conversation-header" onclick="app.toggleConversationExpand('${conv.id}')">
+                            <div class="conversation-summary">
+                                <div class="conversation-date">${dateStr}</div>
+                                <div class="conversation-preview">${this.escapeHtml(preview)}</div>
+                            </div>
+                            <div class="conversation-meta">
+                                <div class="conversation-indicator ${indicatorClass}" title="${conv.endedAt ? 'Ended' : (conv.hasAnalysis ? 'Has analysis' : 'Active')}"></div>
+                                <div class="conversation-chevron">▼</div>
+                            </div>
+                        </div>
+                        <div class="conversation-messages" id="conv-messages-${conv.id}">
+                            <!-- Messages will be loaded here when expanded -->
+                        </div>
+                    </div>
+                `;
+            },
+
+            async toggleConversationExpand(conversationId) {
+                const item = document.querySelector(`[data-conversation-id="${conversationId}"]`);
+                if (!item) return;
+
+                const isCurrentlyExpanded = item.classList.contains('expanded');
+
+                // Collapse all other conversations
+                document.querySelectorAll('.conversation-list-item').forEach(el => {
+                    el.classList.remove('expanded');
+                });
+
+                if (isCurrentlyExpanded) {
+                    // Just collapse this one
+                    this.state.expandedConversationId = null;
+                } else {
+                    // Expand this one and load messages
+                    item.classList.add('expanded');
+                    this.state.expandedConversationId = conversationId;
+                    await this.loadConversationMessages(conversationId);
+                }
+            },
+
+            async loadConversationMessages(conversationId) {
+                const container = document.getElementById(`conv-messages-${conversationId}`);
+                if (!container) return;
+
+                container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #666;">Loading messages...</div>';
+
+                try {
+                    const response = await fetch(`${API_URL}/conversation/${conversationId}/messages`);
+                    if (!response.ok) throw new Error('Failed to load messages');
+
+                    const messages = await response.json();
+
+                    if (messages.length === 0) {
+                        container.innerHTML = `
+                            <div class="conversation-messages-inner">
+                                <div style="text-align: center; color: #666; padding: 1rem;">
+                                    No messages in this conversation yet
+                                </div>
+                            </div>
+                            <div class="conversation-actions">
+                                <button onclick="app.openConversation('${conversationId}')">Open</button>
+                                <button onclick="app.deleteConversation('${conversationId}')">Delete</button>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    const messagesHtml = messages.slice(-10).map(msg => `
+                        <div class="conversation-message-item">
+                            <div class="conversation-message-sender">${this.escapeHtml(msg.sender)}</div>
+                            <div class="conversation-message-content">${this.escapeHtml(msg.content)}</div>
+                        </div>
+                    `).join('');
+
+                    const conv = this.conversationCache.get(conversationId);
+                    const endButton = conv && conv.endedAt ? '' : `<button onclick="app.endConversation('${conversationId}')">End</button>`;
+                    const hasAnalysis = messages.some(m => m.analysis && !m.analysis.error);
+                    const analysisButton = hasAnalysis ? `<button onclick="app.showIcebergAnalysis('${conversationId}')">🧊 Analysis</button>` : '';
+
+                    container.innerHTML = `
+                        <div class="conversation-messages-inner">
+                            ${messages.length > 10 ? '<div style="text-align: center; color: #666; font-size: 0.8rem; margin-bottom: 0.5rem;">Showing last 10 messages</div>' : ''}
+                            ${messagesHtml}
+                        </div>
+                        <div class="conversation-actions">
+                            <button class="primary" onclick="app.openConversation('${conversationId}')">Open</button>
+                            ${analysisButton}
+                            ${endButton}
+                            <button onclick="app.deleteConversation('${conversationId}')">Delete</button>
+                        </div>
+                    `;
+                } catch (error) {
+                    container.innerHTML = `
+                        <div class="conversation-messages-inner">
+                            <div style="text-align: center; color: #e74c3c; padding: 1rem;">
+                                Error loading messages: ${this.escapeHtml(error.message)}
+                            </div>
+                        </div>
+                        <div class="conversation-actions">
+                            <button onclick="app.deleteConversation('${conversationId}')">Delete</button>
+                        </div>
+                    `;
+                }
+            },
+
+            openConversation(conversationId) {
+                this.loadConversation(conversationId);
+            },
+
+            endConversation(conversationId) {
+                if (!confirm('End this conversation? You can still view the history, but it will be marked as ended.')) {
+                    return;
+                }
+
+                this.conversationCache.updateMetadata(conversationId, {
+                    endedAt: Date.now()
+                });
+
+                // If this is the current conversation, stop polling
+                if (this.state.conversationId === conversationId) {
+                    this.stopPolling();
+                }
+
+                // Refresh the history view
+                this.renderConversationHistory();
+                // Re-expand if it was expanded
+                if (this.state.expandedConversationId === conversationId) {
+                    setTimeout(() => this.toggleConversationExpand(conversationId), 100);
+                }
+            },
+
+            deleteConversation(conversationId) {
+                if (!confirm('Delete this conversation? This will remove it from your history (but not from other participants).')) {
+                    return;
+                }
+
+                this.conversationCache.delete(conversationId);
+                this.state.expandedConversationId = null;
+                this.renderConversationHistory();
+            },
+
+            backToHistory() {
+                // Stop polling
+                this.stopPolling();
+
+                // Clear conversation state
+                this.state.conversationId = null;
+                this.state.messages = [];
+                this.state.expandedConversationId = null;
+                this.state.firstLoad = true;
+
+                // Update URL
+                const url = new URL(window.location);
+                url.searchParams.delete('c');
+                window.history.pushState({}, '', url);
+
+                // Show landing page
+                document.getElementById('chat').classList.add('hidden');
+                document.getElementById('landing').classList.remove('hidden');
+
+                // Render conversation history
+                this.renderConversationHistory();
+            },
+
+            async showIcebergAnalysis(conversationId) {
+                const modal = document.getElementById('icebergModal');
+                const content = document.getElementById('icebergContent');
+
+                content.innerHTML = '<div style="text-align: center; padding: 2rem; color: #666;">Loading analysis...</div>';
+                modal.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(`${API_URL}/conversation/${conversationId}/messages`);
+                    if (!response.ok) throw new Error('Failed to load messages');
+
+                    const messages = await response.json();
+                    const analysisData = this.calculateIcebergAnalysis(messages);
+
+                    content.innerHTML = this.renderIcebergAnalysis(analysisData);
+                } catch (error) {
+                    content.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: #e74c3c;">
+                            Error loading analysis: ${this.escapeHtml(error.message)}
+                        </div>
+                    `;
+                }
+            },
+
+            calculateIcebergAnalysis(messages) {
+                const messagesWithAnalysis = messages.filter(m => m.analysis && !m.analysis.error);
+
+                if (messagesWithAnalysis.length === 0) {
+                    return null;
+                }
+
+                // Calculate overall stats
+                const participants = {};
+                const egoStates = {};
+                const tones = [];
+                const powerMoves = {};
+
+                messagesWithAnalysis.forEach(msg => {
+                    // Track participant stats
+                    if (!participants[msg.sender]) {
+                        participants[msg.sender] = {
+                            messageCount: 0,
+                            egoStates: [],
+                            tones: [],
+                            powerMoves: []
+                        };
+                    }
+                    participants[msg.sender].messageCount++;
+
+                    // Ego states
+                    const egoState = msg.analysis.transactional_analysis?.ego_subtype;
+                    if (egoState) {
+                        egoStates[egoState] = (egoStates[egoState] || 0) + 1;
+                        participants[msg.sender].egoStates.push(egoState);
+                    }
+
+                    // Tones
+                    const tone = msg.analysis.tone?.overall;
+                    if (tone) {
+                        tones.push({ tone, timestamp: msg.created_at });
+                        participants[msg.sender].tones.push(tone);
+                    }
+
+                    // Power dynamics
+                    const powerMove = msg.analysis.power_dynamics?.move;
+                    if (powerMove) {
+                        powerMoves[powerMove] = (powerMoves[powerMove] || 0) + 1;
+                        participants[msg.sender].powerMoves.push(powerMove);
+                    }
+                });
+
+                // Calculate dominant ego state
+                const dominantEgoState = Object.keys(egoStates).reduce((a, b) =>
+                    egoStates[a] > egoStates[b] ? a : b
+                , Object.keys(egoStates)[0]);
+
+                // Calculate emotional arc (simplified)
+                const emotionalArc = this.calculateEmotionalArc(tones);
+
+                // Calculate power balance
+                const powerBalance = this.calculatePowerBalance(powerMoves);
+
+                return {
+                    totalMessages: messages.length,
+                    analyzedMessages: messagesWithAnalysis.length,
+                    participants: Object.keys(participants).map(name => ({
+                        name,
+                        ...participants[name],
+                        dominantEgoState: this.getMostCommon(participants[name].egoStates),
+                        averageTone: this.getMostCommon(participants[name].tones),
+                        powerTendency: this.getMostCommon(participants[name].powerMoves)
+                    })),
+                    dominantEgoState,
+                    emotionalArc,
+                    powerBalance
+                };
+            },
+
+            calculateEmotionalArc(tones) {
+                if (tones.length === 0) return [];
+
+                // Group tones into buckets (e.g., 5 buckets for the conversation)
+                const bucketCount = Math.min(10, tones.length);
+                const bucketSize = Math.ceil(tones.length / bucketCount);
+                const buckets = [];
+
+                for (let i = 0; i < bucketCount; i++) {
+                    const start = i * bucketSize;
+                    const end = Math.min(start + bucketSize, tones.length);
+                    const bucketTones = tones.slice(start, end).map(t => t.tone);
+                    const dominantTone = this.getMostCommon(bucketTones);
+
+                    // Map tone to sentiment
+                    const sentiment = this.mapToneToSentiment(dominantTone);
+                    buckets.push({ tone: dominantTone, sentiment });
+                }
+
+                return buckets;
+            },
+
+            mapToneToSentiment(tone) {
+                if (!tone) return 'neutral';
+                const lowerTone = tone.toLowerCase();
+                if (lowerTone.includes('positive') || lowerTone.includes('warm') ||
+                    lowerTone.includes('friendly') || lowerTone.includes('enthusiastic')) {
+                    return 'positive';
+                } else if (lowerTone.includes('negative') || lowerTone.includes('cold') ||
+                           lowerTone.includes('hostile') || lowerTone.includes('frustrated')) {
+                    return 'negative';
+                }
+                return 'neutral';
+            },
+
+            calculatePowerBalance(powerMoves) {
+                const total = Object.values(powerMoves).reduce((sum, count) => sum + count, 0);
+                if (total === 0) return {};
+
+                return {
+                    oneUp: ((powerMoves['one-up'] || 0) / total * 100).toFixed(0),
+                    level: ((powerMoves['level'] || 0) / total * 100).toFixed(0),
+                    oneDown: ((powerMoves['one-down'] || 0) / total * 100).toFixed(0)
+                };
+            },
+
+            renderIcebergAnalysis(data) {
+                if (!data) {
+                    return `
+                        <div style="text-align: center; padding: 2rem; color: #666;">
+                            No analysis data available for this conversation.
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="iceberg-layer">
+                        <h4>📊 Conversation Overview</h4>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">Total Messages</div>
+                            <div class="iceberg-stat-value">${data.totalMessages}</div>
+                        </div>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">Messages Analyzed</div>
+                            <div class="iceberg-stat-value">${data.analyzedMessages}</div>
+                        </div>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">Participants</div>
+                            <div class="iceberg-stat-value">${data.participants.length}</div>
+                        </div>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">Dominant Ego State</div>
+                            <div class="iceberg-stat-value">${data.dominantEgoState || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    ${data.emotionalArc.length > 0 ? `
+                    <div class="iceberg-layer">
+                        <h4>🌊 Emotional Arc</h4>
+                        <div class="iceberg-stat-label">How the conversation's tone evolved</div>
+                        <div class="iceberg-arc">
+                            ${data.emotionalArc.map(bucket => {
+                                const height = bucket.sentiment === 'positive' ? 70 :
+                                               (bucket.sentiment === 'negative' ? 40 : 55);
+                                return `<div class="iceberg-arc-bar ${bucket.sentiment}"
+                                             style="height: ${height}px"
+                                             title="${bucket.tone}"></div>`;
+                            }).join('')}
+                        </div>
+                        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #666; text-align: center;">
+                            Start → End
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${Object.keys(data.powerBalance).length > 0 ? `
+                    <div class="iceberg-layer">
+                        <h4>⚖️ Power Dynamics</h4>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">One-Up (Dominant)</div>
+                            <div class="iceberg-stat-value">${data.powerBalance.oneUp}%</div>
+                        </div>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">Level (Equal)</div>
+                            <div class="iceberg-stat-value">${data.powerBalance.level}%</div>
+                        </div>
+                        <div class="iceberg-stat">
+                            <div class="iceberg-stat-label">One-Down (Submissive)</div>
+                            <div class="iceberg-stat-value">${data.powerBalance.oneDown}%</div>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div class="iceberg-layer">
+                        <h4>👥 Participant Patterns</h4>
+                        ${data.participants.map(p => `
+                            <div class="iceberg-stat">
+                                <div class="iceberg-stat-label">${this.escapeHtml(p.name)}</div>
+                                <div style="font-size: 0.9rem; color: #ccc; margin-top: 0.5rem;">
+                                    <div>Messages: <strong>${p.messageCount}</strong></div>
+                                    <div>Dominant Ego State: <strong>${p.dominantEgoState || 'N/A'}</strong></div>
+                                    <div>Average Tone: <strong>${p.averageTone || 'N/A'}</strong></div>
+                                    <div>Power Tendency: <strong>${p.powerTendency || 'N/A'}</strong></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            },
+
+            closeIcebergAnalysis() {
+                document.getElementById('icebergModal').classList.add('hidden');
+            },
+
+            formatDate(date) {
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+                if (messageDate.getTime() === today.getTime()) {
+                    return 'Today, ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else if (messageDate.getTime() === yesterday.getTime()) {
+                    return 'Yesterday, ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else if (now - date < 7 * 24 * 60 * 60 * 1000) {
+                    // Within last week
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    return days[date.getDay()] + ', ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                } else {
+                    return date.toLocaleDateString([], { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+                }
             },
 
             async createConversation() {
@@ -868,6 +1737,19 @@
                     }
 
                     const data = await response.json();
+
+                    // Save to cache
+                    this.conversationCache.save({
+                        id: data.id,
+                        createdAt: Date.now(),
+                        lastAccessedAt: Date.now(),
+                        endedAt: null,
+                        lastMessagePreview: null,
+                        participantCount: 0,
+                        messageCount: 0,
+                        hasAnalysis: false
+                    });
+
                     this.loadConversation(data.id);
                 } catch (error) {
                     alert('Error creating conversation:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
@@ -904,6 +1786,25 @@
                     }
 
                     this.state.conversationId = conversationId;
+
+                    // Save to cache if not exists
+                    if (!this.conversationCache.get(conversationId)) {
+                        this.conversationCache.save({
+                            id: conversationId,
+                            createdAt: Date.now(),
+                            lastAccessedAt: Date.now(),
+                            endedAt: null,
+                            lastMessagePreview: null,
+                            participantCount: 0,
+                            messageCount: 0,
+                            hasAnalysis: false
+                        });
+                    } else {
+                        // Update last accessed time
+                        this.conversationCache.updateMetadata(conversationId, {
+                            lastAccessedAt: Date.now()
+                        });
+                    }
 
                     // Update URL
                     const url = new URL(window.location);
@@ -1018,6 +1919,21 @@
 
                     this.state.messages = messages;
                     this.renderMessages();
+
+                    // Update conversation metadata in cache
+                    if (messages.length > 0) {
+                        const lastMessage = messages[messages.length - 1];
+                        const participants = new Set(messages.map(m => m.sender));
+                        const hasAnalysis = messages.some(m => m.analysis && !m.analysis.error);
+
+                        this.conversationCache.updateMetadata(this.state.conversationId, {
+                            lastMessagePreview: lastMessage.content.substring(0, 80),
+                            participantCount: participants.size,
+                            messageCount: messages.length,
+                            hasAnalysis: hasAnalysis,
+                            lastAccessedAt: Date.now()
+                        });
+                    }
 
                     // If in conversational function mode, auto-classify new messages
                     if (this.state.lensMode === 'function') {
