@@ -1465,6 +1465,77 @@ Return ONLY the JSON object, no explanation:`;
                 }
             },
 
+            buildClassificationPromptForSingle(content) {
+                const categories = `
+1. question - Inquiries, requests for information (e.g., "What do you think?", "How does this work?")
+2. statement - Factual information, neutral observations (e.g., "The meeting is at 3pm", "I finished the report")
+3. emotional - Emotional expressions, feelings (e.g., "I'm so frustrated", "That's wonderful!")
+4. request - Requests, directives, calls to action (e.g., "Please send the file", "Let's meet tomorrow")
+5. reflection - Looking back, analyzing, considering patterns (e.g., "Looking back...", "The pattern here seems...")
+6. agreement - Validation, confirmation, agreement (e.g., "Yes, exactly", "That makes sense")
+7. disagreement - Pushback, disagreement, alternative views (e.g., "I'm not sure about that", "But consider...")`;
+
+                return `You are classifying a message by its conversational function. Here are the categories:
+
+${categories}
+
+Classify the following message into ONE category. Return ONLY a JSON object with a single "category" key containing one of these values: question, statement, emotional, request, reflection, agreement, disagreement.
+
+Message:
+"${content}"
+
+Return ONLY the JSON object, no explanation:`;
+            },
+
+            parseClassificationForSingle(responseText) {
+                try {
+                    // Extract JSON from response (it might have markdown formatting)
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) throw new Error('No JSON found');
+
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    return parsed.category || 'statement';
+                } catch (error) {
+                    console.error('Error parsing classification:', error);
+                    return 'statement';
+                }
+            },
+
+            renderPreviewClassification(classification) {
+                const labels = {
+                    question: 'Question',
+                    statement: 'Statement / Information',
+                    emotional: 'Emotional Expression',
+                    request: 'Request / Directive',
+                    reflection: 'Reflection / Analysis',
+                    agreement: 'Agreement / Validation',
+                    disagreement: 'Disagreement / Pushback'
+                };
+
+                const colors = {
+                    question: 'var(--lens-question)',
+                    statement: 'var(--lens-statement)',
+                    emotional: 'var(--lens-emotional)',
+                    request: 'var(--lens-request)',
+                    reflection: 'var(--lens-reflection)',
+                    agreement: 'var(--lens-agreement)',
+                    disagreement: 'var(--lens-disagreement)'
+                };
+
+                return `
+                    <div class="analysis-section">
+                        <h4>Your message reads as:</h4>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem;">
+                            <div style="width: 20px; height: 20px; border-radius: 50%; background: ${colors[classification]}; flex-shrink: 0;"></div>
+                            <p style="font-size: 1.1rem; font-weight: 600; margin: 0;">${labels[classification] || classification}</p>
+                        </div>
+                        <p style="margin-top: 1rem; color: #999; font-size: 0.9rem; font-style: italic;">
+                            This is how your message might be perceived by others. You can edit or send anyway.
+                        </p>
+                    </div>
+                `;
+            },
+
             async previewMessage() {
                 const input = document.getElementById('messageInput');
                 const content = input.value.trim();
@@ -1473,20 +1544,29 @@ Return ONLY the JSON object, no explanation:`;
 
                 this.state.draftMessage = content;
 
+                // Show preview modal with loading state
+                document.getElementById('previewContent').textContent = content;
+                document.getElementById('previewAnalysis').innerHTML = '<div class="loading">Analyzing your message...</div>';
+                document.getElementById('previewModal').classList.remove('hidden');
+
                 try {
-                    const response = await fetch(
-                        `${API_URL}/conversation/${this.state.conversationId}/analyze`,
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                sender: this.state.userName,
-                                content
-                            })
-                        }
-                    );
+                    // Use the same classification logic as Enable Lens
+                    const classificationPrompt = this.buildClassificationPromptForSingle(content);
+
+                    const response = await fetch('https://cors-proxy.zammel.workers.dev', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-3-5-sonnet-20241022',
+                            max_tokens: 500,
+                            messages: [{
+                                role: 'user',
+                                content: classificationPrompt
+                            }]
+                        })
+                    });
 
                     if (!response.ok) {
                         const errorData = await response.text();
@@ -1494,14 +1574,14 @@ Return ONLY the JSON object, no explanation:`;
                     }
 
                     const data = await response.json();
+                    const classification = this.parseClassificationForSingle(data.content[0].text);
 
-                    // Show preview modal
-                    document.getElementById('previewContent').textContent = content;
+                    // Show classification result
                     document.getElementById('previewAnalysis').innerHTML =
-                        this.renderAnalysis(data.analysis);
-                    document.getElementById('previewModal').classList.remove('hidden');
+                        this.renderPreviewClassification(classification);
                 } catch (error) {
-                    alert('Error analyzing message:\n\n' + error.message + '\n\nAPI URL: ' + API_URL);
+                    document.getElementById('previewAnalysis').innerHTML =
+                        `<div class="error-box"><p>Error analyzing message: ${this.escapeHtml(error.message)}</p></div>`;
                 }
             },
 
