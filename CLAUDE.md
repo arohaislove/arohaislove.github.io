@@ -74,6 +74,7 @@ When you create a worker, GitHub Actions automatically injects the `ANTHROPIC_AP
 | Worker | URL | Purpose |
 |--------|-----|---------|
 | `cors-proxy` | `https://cors-proxy.zammel.workers.dev` | CORS proxy for Anthropic API calls (used by Ekphrasis, Oneiros) |
+| `second-brain` | `https://second-brain.zammel.workers.dev` | AI-powered personal knowledge capture and analysis system (used by Second Brain) |
 
 ### How to Create a New Worker
 
