@@ -1,7 +1,7 @@
-// Configuration - UPDATE THESE AFTER DEPLOYMENT
+// Configuration - Configured and ready to use
 const CONFIG = {
     WORKER_URL: 'https://second-brain.zammel.workers.dev',
-    AUTH_TOKEN: 'YOUR_AUTH_TOKEN_HERE' // Get this from your GitHub secrets or generate a secure random string
+    AUTH_TOKEN: 'd4226dc2dd7bff69c4272abdbe43ee3984bcee798dd3e9629f3973fd3e230027'
 };
 
 // Elements
