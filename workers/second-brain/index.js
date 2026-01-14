@@ -35,10 +35,13 @@ export default {
 
     // Health check doesn't require auth
     if (path === '/health') {
+      const kvConfigured = !!env.BRAIN_KV;
       return jsonResponse({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        version: '1.0.0'
+        version: '1.0.0',
+        kvConfigured: kvConfigured,
+        message: kvConfigured ? 'Ready' : 'KV namespace not configured yet'
       });
     }
 
@@ -46,6 +49,15 @@ export default {
     const authError = checkAuth(request, env);
     if (authError) {
       return authError;
+    }
+
+    // Check if KV is configured for data endpoints
+    if (!env.BRAIN_KV) {
+      return jsonResponse({
+        error: 'KV namespace not configured',
+        message: 'The BRAIN_KV namespace needs to be created and configured in wrangler.toml',
+        instructions: 'See workers/second-brain/README.md for setup instructions'
+      }, 503);
     }
 
     try {

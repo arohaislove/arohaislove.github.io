@@ -58,7 +58,7 @@ jobs:
       - name: Install Wrangler
         run: npm install -g wrangler
 
-      - name: Check if ANTHROPIC_API_KEY is needed
+      - name: Check if secrets are needed
         id: check-secrets
         run: |
           # Check if worker code references ANTHROPIC_API_KEY
@@ -79,6 +79,24 @@ jobs:
             echo "ℹ️  Worker does not use ELEVENLABS_API_KEY - skipping secret configuration"
           fi
 
+          # Check if worker code references AUTH_TOKEN
+          if grep -q "AUTH_TOKEN" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-auth-token=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses AUTH_TOKEN - will configure secret"
+          else
+            echo "needs-auth-token=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use AUTH_TOKEN - skipping secret configuration"
+          fi
+
+          # Check if worker code references NTFY_TOPIC
+          if grep -q "NTFY_TOPIC" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-ntfy-topic=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses NTFY_TOPIC - will configure secret"
+          else
+            echo "needs-ntfy-topic=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use NTFY_TOPIC - skipping secret configuration"
+          fi
+
       - name: Set ANTHROPIC_API_KEY secret
         if: steps.check-secrets.outputs.needs-anthropic-key == 'true'
         env:
@@ -96,6 +114,24 @@ jobs:
         run: |
           cd workers/${{ matrix.worker }}
           echo "${{ secrets.ELEVENLABS_API_KEY }}" | wrangler secret put ELEVENLABS_API_KEY
+
+      - name: Set AUTH_TOKEN secret
+        if: steps.check-secrets.outputs.needs-auth-token == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd workers/${{ matrix.worker }}
+          echo "${{ secrets.AUTH_TOKEN }}" | wrangler secret put AUTH_TOKEN
+
+      - name: Set NTFY_TOPIC secret
+        if: steps.check-secrets.outputs.needs-ntfy-topic == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd workers/${{ matrix.worker }}
+          echo "${{ secrets.NTFY_TOPIC }}" | wrangler secret put NTFY_TOPIC
 
       - name: Deploy worker
         env:
