@@ -1,0 +1,13 @@
+name = "second-brain"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# KV namespace for storing brain data
+# Create with: npx wrangler kv:namespace create "BRAIN_KV"
+[[kv_namespaces]]
+binding = "BRAIN_KV"
+id = "YOUR_KV_ID_HERE"
+
+# Cron trigger - analyze every 4 hours
+[triggers]
+crons = ["0 */4 * * *"]

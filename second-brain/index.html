@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>🧠 Capture</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 Second Brain</h1>
+
+        <div class="capture-area">
+            <textarea id="input" placeholder="Speak or type anything..." aria-label="Capture input"></textarea>
+            <div class="buttons">
+                <button class="mic-btn" id="micBtn" aria-label="Start voice capture">🎤 Speak</button>
+                <button class="send-btn" id="sendBtn" aria-label="Send capture">Send →</button>
+            </div>
+        </div>
+
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+
+        <div class="recent" id="recentSection" style="display: none;">
+            <h2>Recent Captures</h2>
+            <div id="recentItems"></div>
+        </div>
+
+        <div class="settings">
+            <p>Worker: <a href="#" id="workerUrl" target="_blank" rel="noopener">Not configured</a></p>
+            <p><a href="/" class="back-link">← Back to Projects</a></p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
