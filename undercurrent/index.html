@@ -1049,6 +1049,10 @@
                 <button class="new-conversation-btn" onclick="app.createConversation()">
                     ✨ Start New Conversation
                 </button>
+                <button class="new-conversation-btn" onclick="app.triggerWhatsAppImport()" style="background: #25D366; border-color: #25D366; margin-top: 0.75rem;">
+                    📱 Import WhatsApp Chat
+                </button>
+                <input type="file" id="whatsappFileInput" accept=".txt" style="display: none;" onchange="app.handleWhatsAppFile(event)">
             </div>
 
             <div class="search-box">
@@ -1153,6 +1157,19 @@
         </div>
     </div>
 
+    <!-- WhatsApp Import Preview Modal -->
+    <div id="whatsappImportModal" class="modal hidden">
+        <div class="modal-content">
+            <h3>📱 Import WhatsApp Chat</h3>
+            <div id="whatsappPreview">
+                <!-- Preview will be inserted here -->
+            </div>
+            <div class="modal-actions" id="whatsappActions">
+                <!-- Actions will be inserted here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = 'https://undercurrent-api.zammel.workers.dev';
 
@@ -1169,7 +1186,8 @@
                 firstLoad: true,
                 patternsVisible: false,
                 draftMessage: null,
-                expandedConversationId: null // Currently expanded conversation in history view
+                expandedConversationId: null, // Currently expanded conversation in history view
+                whatsappImportData: null // Temporary storage for WhatsApp import preview
             },
 
             // localStorage conversation cache management
@@ -2629,6 +2647,305 @@ Return ONLY the JSON object, no explanation:`;
             scrollToBottom() {
                 const container = document.getElementById('messages');
                 container.scrollTop = container.scrollHeight;
+            },
+
+            // WhatsApp Import Functions
+            triggerWhatsAppImport() {
+                document.getElementById('whatsappFileInput').click();
+            },
+
+            async handleWhatsAppFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Reset file input for future imports
+                event.target.value = '';
+
+                try {
+                    const text = await file.text();
+                    const parsedData = this.parseWhatsAppChat(text);
+
+                    if (!parsedData || parsedData.messages.length === 0) {
+                        alert('No messages found in the file. Please make sure this is a valid WhatsApp chat export.');
+                        return;
+                    }
+
+                    // Show preview modal
+                    this.showWhatsAppPreview(parsedData);
+                } catch (error) {
+                    alert('Error reading file:\n\n' + error.message);
+                }
+            },
+
+            parseWhatsAppChat(text) {
+                const lines = text.split('\n');
+                const messages = [];
+                let currentMessage = null;
+
+                // WhatsApp format: [DD/MM/YYYY, HH:MM:SS] Sender Name: Message content
+                // Or: [MM/DD/YY, HH:MM:SS AM/PM] Sender Name: Message content
+                const messagePattern = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),?\s+(\d{1,2}:\d{2}(?::\d{2})?(?:\s?[AP]M)?)\]\s*([^:]+?):\s*(.*)$/i;
+
+                for (const line of lines) {
+                    const match = line.match(messagePattern);
+
+                    if (match) {
+                        // Save previous message if exists
+                        if (currentMessage) {
+                            messages.push(currentMessage);
+                        }
+
+                        // Start new message
+                        const [, date, time, sender, content] = match;
+
+                        // Parse timestamp (handle both DD/MM/YYYY and MM/DD/YY formats)
+                        const timestamp = this.parseWhatsAppTimestamp(date, time);
+
+                        currentMessage = {
+                            timestamp,
+                            sender: sender.trim(),
+                            content: content.trim()
+                        };
+                    } else if (currentMessage && line.trim()) {
+                        // Continuation of previous message (multi-line)
+                        currentMessage.content += '\n' + line.trim();
+                    }
+                }
+
+                // Don't forget the last message
+                if (currentMessage) {
+                    messages.push(currentMessage);
+                }
+
+                // Extract metadata
+                const participants = [...new Set(messages.map(m => m.sender))];
+                const timestamps = messages.map(m => m.timestamp).filter(t => t);
+                const dateRange = {
+                    start: timestamps.length > 0 ? Math.min(...timestamps) : null,
+                    end: timestamps.length > 0 ? Math.max(...timestamps) : null
+                };
+
+                return {
+                    messages,
+                    participants,
+                    dateRange,
+                    messageCount: messages.length
+                };
+            },
+
+            parseWhatsAppTimestamp(dateStr, timeStr) {
+                try {
+                    // Try to parse the date and time
+                    // WhatsApp exports can be in different formats:
+                    // DD/MM/YYYY or MM/DD/YY or DD/MM/YY
+                    const dateParts = dateStr.split('/');
+                    const timeParts = timeStr.trim().split(/[\s:]+/);
+
+                    let day, month, year, hour, minute, second = 0;
+
+                    // Determine format based on year length
+                    if (dateParts[2].length === 4) {
+                        // DD/MM/YYYY format (common in Europe)
+                        day = parseInt(dateParts[0]);
+                        month = parseInt(dateParts[1]) - 1; // JS months are 0-indexed
+                        year = parseInt(dateParts[2]);
+                    } else {
+                        // MM/DD/YY format (common in US) or DD/MM/YY
+                        // We'll assume DD/MM/YY as it's more common globally
+                        day = parseInt(dateParts[0]);
+                        month = parseInt(dateParts[1]) - 1;
+                        year = 2000 + parseInt(dateParts[2]); // Assume 20xx
+                    }
+
+                    // Parse time
+                    hour = parseInt(timeParts[0]);
+                    minute = parseInt(timeParts[1]);
+
+                    if (timeParts.length > 2) {
+                        // Has seconds or AM/PM
+                        if (timeParts[2].match(/^\d+$/)) {
+                            second = parseInt(timeParts[2]);
+                        }
+
+                        // Check for AM/PM
+                        const ampm = timeParts.find(p => p.match(/^[AP]M$/i));
+                        if (ampm) {
+                            if (ampm.toUpperCase() === 'PM' && hour < 12) hour += 12;
+                            if (ampm.toUpperCase() === 'AM' && hour === 12) hour = 0;
+                        }
+                    }
+
+                    // Create Date object
+                    const date = new Date(year, month, day, hour, minute, second);
+                    return date.getTime();
+                } catch (error) {
+                    console.error('Error parsing timestamp:', dateStr, timeStr, error);
+                    return Date.now();
+                }
+            },
+
+            showWhatsAppPreview(data) {
+                const modal = document.getElementById('whatsappImportModal');
+                const preview = document.getElementById('whatsappPreview');
+                const actions = document.getElementById('whatsappActions');
+
+                const dateStart = data.dateRange.start ? new Date(data.dateRange.start).toLocaleDateString() : 'Unknown';
+                const dateEnd = data.dateRange.end ? new Date(data.dateRange.end).toLocaleDateString() : 'Unknown';
+
+                preview.innerHTML = `
+                    <div style="background: #2a2a2a; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: #4a90e2;">Participants:</strong>
+                            <div style="margin-top: 0.5rem; color: #ccc;">
+                                ${data.participants.map(p => this.escapeHtml(p)).join(', ')}
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: #4a90e2;">Date Range:</strong>
+                            <div style="color: #ccc;">${dateStart} - ${dateEnd}</div>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong style="color: #4a90e2;">Messages:</strong>
+                            <div style="color: #ccc;">${data.messageCount} messages</div>
+                        </div>
+                        <div style="padding: 0.75rem; background: #1a1a1a; border-radius: 6px; border-left: 3px solid #4a90e2;">
+                            <div style="font-size: 0.85rem; color: #999;">
+                                💡 <strong>Note:</strong> Messages will be imported without analysis for faster processing.
+                                You can use "Enable Lens" after import to analyze the conversation.
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background: #1a1a1a; padding: 1rem; border-radius: 8px; max-height: 200px; overflow-y: auto;">
+                        <strong style="color: #999; font-size: 0.85rem;">Preview (first 5 messages):</strong>
+                        ${data.messages.slice(0, 5).map(msg => `
+                            <div style="margin-top: 0.75rem; padding: 0.5rem; background: #2a2a2a; border-radius: 6px;">
+                                <div style="font-size: 0.8rem; color: #4a90e2; margin-bottom: 0.25rem;">
+                                    ${this.escapeHtml(msg.sender)}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #ccc;">
+                                    ${this.escapeHtml(msg.content.substring(0, 100))}${msg.content.length > 100 ? '...' : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                actions.innerHTML = `
+                    <button onclick="app.closeWhatsAppImport()">Cancel</button>
+                    <button class="primary" onclick="app.confirmWhatsAppImport()">Import</button>
+                `;
+
+                // Store parsed data temporarily
+                this.state.whatsappImportData = data;
+
+                modal.classList.remove('hidden');
+            },
+
+            closeWhatsAppImport() {
+                document.getElementById('whatsappImportModal').classList.add('hidden');
+                this.state.whatsappImportData = null;
+            },
+
+            async confirmWhatsAppImport() {
+                const data = this.state.whatsappImportData;
+                if (!data) return;
+
+                const modal = document.getElementById('whatsappImportModal');
+                const actions = document.getElementById('whatsappActions');
+
+                // Show loading state
+                actions.innerHTML = '<div class="loading">Importing messages...</div>';
+
+                try {
+                    // Create a new conversation
+                    const createResponse = await fetch(`${API_URL}/conversation`, {
+                        method: 'POST'
+                    });
+
+                    if (!createResponse.ok) {
+                        throw new Error('Failed to create conversation');
+                    }
+
+                    const { id: conversationId } = await createResponse.json();
+
+                    // Import messages in batches
+                    const batchSize = 50;
+                    for (let i = 0; i < data.messages.length; i += batchSize) {
+                        const batch = data.messages.slice(i, i + batchSize);
+
+                        // Update progress
+                        const progress = Math.round((i / data.messages.length) * 100);
+                        actions.innerHTML = `<div class="loading">Importing messages... ${progress}%</div>`;
+
+                        // Import batch (skip analysis for faster imports)
+                        await Promise.all(batch.map(async (msg) => {
+                            try {
+                                const response = await fetch(
+                                    `${API_URL}/conversation/${conversationId}/messages`,
+                                    {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({
+                                            sender: msg.sender,
+                                            content: msg.content,
+                                            timestamp: msg.timestamp,
+                                            skip_analysis: true
+                                        })
+                                    }
+                                );
+
+                                if (!response.ok) {
+                                    console.error('Failed to import message:', msg);
+                                }
+                            } catch (error) {
+                                console.error('Error importing message:', error);
+                            }
+                        }));
+                    }
+
+                    // Save to conversation cache
+                    this.conversationCache.save({
+                        id: conversationId,
+                        createdAt: data.dateRange.start || Date.now(),
+                        lastAccessedAt: Date.now(),
+                        endedAt: data.dateRange.end || null,
+                        lastMessagePreview: data.messages[data.messages.length - 1]?.content.substring(0, 80) || '',
+                        participantCount: data.participants.length,
+                        messageCount: data.messageCount,
+                        hasAnalysis: false,
+                        imported: true,
+                        source: 'whatsapp'
+                    });
+
+                    // Close modal and show success
+                    modal.classList.add('hidden');
+                    this.state.whatsappImportData = null;
+
+                    // Refresh conversation history
+                    this.renderConversationHistory();
+
+                    // Show success notification
+                    const toast = document.createElement('div');
+                    toast.className = 'notification-toast';
+                    toast.textContent = `✅ Imported ${data.messageCount} messages successfully!`;
+                    toast.style.background = '#25D366';
+                    document.body.appendChild(toast);
+
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+
+                    // Optionally open the imported conversation
+                    if (confirm('Import complete! Would you like to open the imported conversation?')) {
+                        this.loadConversation(conversationId);
+                    }
+                } catch (error) {
+                    alert('Error importing WhatsApp chat:\n\n' + error.message);
+                    modal.classList.add('hidden');
+                    this.state.whatsappImportData = null;
+                }
             },
 
             escapeHtml(text) {
