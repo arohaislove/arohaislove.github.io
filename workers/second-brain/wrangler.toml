@@ -7,9 +7,9 @@ compatibility_date = "2024-01-01"
 # 1. Run: npx wrangler kv:namespace create "BRAIN_KV"
 # 2. Replace YOUR_KV_ID_HERE with the actual ID
 # 3. Uncomment the lines below
-# [[kv_namespaces]]
-# binding = "BRAIN_KV"
-# id = "38349bc2045a4168aa94ce50d1f8e19b"
+ [[kv_namespaces]]
+ binding = "BRAIN_KV"
+ id = "38349bc2045a4168aa94ce50d1f8e19b"
 
 # Cron trigger - analyze every 4 hours (will activate when KV is configured)
  [triggers]
