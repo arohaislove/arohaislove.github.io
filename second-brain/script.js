@@ -19,11 +19,13 @@ workerUrlEl.href = CONFIG.WORKER_URL + '/health';
 // Speech recognition
 let recognition = null;
 let isListening = false;
+let autoSendTimer = null;
+const AUTO_SEND_DELAY = 3000; // Wait 3 seconds of silence before auto-sending
 
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    recognition.continuous = true; // Keep listening through pauses
     recognition.interimResults = true;
     recognition.lang = 'en-NZ';
 
@@ -31,7 +33,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         isListening = true;
         micBtn.classList.add('listening');
         micBtn.textContent = '🔴 Listening...';
-        showStatus('Listening...', 'info');
+        showStatus('Listening... (pauses are okay!)', 'info');
     };
 
     recognition.onend = () => {
@@ -39,6 +41,12 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         micBtn.classList.remove('listening');
         micBtn.textContent = '🎤 Speak';
         hideStatus();
+
+        // Clear any pending auto-send when stopping
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+            autoSendTimer = null;
+        }
     };
 
     recognition.onresult = (event) => {
@@ -48,9 +56,20 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         }
         input.value = transcript;
 
-        // Auto-send on final result
+        // Clear existing timer since user is still speaking
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+        }
+
+        // Only start auto-send timer on final results (natural pauses)
         if (event.results[event.results.length - 1].isFinal) {
-            setTimeout(() => sendCapture(), 500);
+            showStatus('Listening... (will send in 3 seconds)', 'info');
+            autoSendTimer = setTimeout(() => {
+                if (isListening && input.value.trim()) {
+                    recognition.stop(); // Stop listening
+                    sendCapture(); // Send the message
+                }
+            }, AUTO_SEND_DELAY);
         }
     };
 
@@ -60,6 +79,11 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         isListening = false;
         micBtn.classList.remove('listening');
         micBtn.textContent = '🎤 Speak';
+
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+            autoSendTimer = null;
+        }
     };
 } else {
     micBtn.textContent = '🎤 Not supported';
