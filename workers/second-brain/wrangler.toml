@@ -9,8 +9,8 @@ compatibility_date = "2024-01-01"
 # 3. Uncomment the lines below
 # [[kv_namespaces]]
 # binding = "BRAIN_KV"
-# id = "YOUR_KV_ID_HERE"
+# id = "38349bc2045a4168aa94ce50d1f8e19b"
 
 # Cron trigger - analyze every 4 hours (will activate when KV is configured)
-# [triggers]
-# crons = ["0 */4 * * *"]
+ [triggers]
+ crons = ["0 */4 * * *"]
