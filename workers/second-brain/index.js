@@ -41,6 +41,7 @@ export default {
         timestamp: new Date().toISOString(),
         version: '1.0.0',
         kvConfigured: kvConfigured,
+        ntfyTopic: env.NTFY_TOPIC || 'not-set',
         message: kvConfigured ? 'Ready' : 'KV namespace not configured yet'
       });
     }
