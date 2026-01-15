@@ -145,7 +145,7 @@ async function analyzeOnly(env, conversationId, request) {
  */
 async function sendMessage(env, conversationId, request) {
   const body = await request.json();
-  const { sender, content } = body;
+  const { sender, content, timestamp, skip_analysis } = body;
 
   if (!sender || !content) {
     return jsonResponse({
@@ -162,24 +162,30 @@ async function sendMessage(env, conversationId, request) {
     return jsonResponse({ error: 'Conversation not found' }, 404);
   }
 
-  // Get conversation history for context
-  const history = await env.DB.prepare(
-    'SELECT sender, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 20'
-  ).bind(conversationId).all();
+  // Get conversation history for context (only if analyzing)
+  let analysis = null;
+  if (!skip_analysis) {
+    const history = await env.DB.prepare(
+      'SELECT sender, content FROM messages WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 20'
+    ).bind(conversationId).all();
 
-  // Analyze the message
-  const analysis = await analyzeMessage(env, content, history.results, sender);
+    // Analyze the message
+    analysis = await analyzeMessage(env, content, history.results, sender);
+  }
 
-  // Store the message
+  // Store the message with custom timestamp (if provided) or current time
   const messageId = generateId();
+  const createdAt = timestamp ? Math.floor(timestamp / 1000) : Math.floor(Date.now() / 1000);
+
   await env.DB.prepare(
-    'INSERT INTO messages (id, conversation_id, sender, content, analysis) VALUES (?, ?, ?, ?, ?)'
+    'INSERT INTO messages (id, conversation_id, sender, content, analysis, created_at) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(
     messageId,
     conversationId,
     sender,
     content,
-    JSON.stringify(analysis)
+    analysis ? JSON.stringify(analysis) : null,
+    createdAt
   ).run();
 
   return jsonResponse({
@@ -188,7 +194,7 @@ async function sendMessage(env, conversationId, request) {
     sender,
     content,
     analysis,
-    created_at: Math.floor(Date.now() / 1000)
+    created_at: createdAt
   }, 201);
 }
 

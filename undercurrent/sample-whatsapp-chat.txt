@@ -1,0 +1,16 @@
+[15/01/2026, 10:23:45] Alice: Hey! How are you doing?
+[15/01/2026, 10:24:12] Bob: I'm great, thanks for asking! Just finished a big project at work.
+[15/01/2026, 10:24:35] Alice: That's awesome! What was the project about?
+[15/01/2026, 10:25:01] Bob: It was a website redesign for a major client. Took us 3 months but we're really proud of the result.
+[15/01/2026, 10:25:28] Alice: Wow, that sounds like a lot of work. You must be relieved it's done!
+[15/01/2026, 10:26:15] Bob: Definitely! Now I can finally relax a bit.
+What are you up to these days?
+[15/01/2026, 10:27:02] Alice: Working on a few things. Mostly focusing on learning new skills.
+[15/01/2026, 10:27:34] Bob: Nice! What kind of skills?
+[15/01/2026, 10:28:15] Alice: Machine learning and AI stuff. It's fascinating how much it's evolving.
+[15/01/2026, 10:28:52] Bob: That's really cool! I've been wanting to learn about that too.
+[15/01/2026, 10:29:20] Alice: You should! There are so many good resources online now.
+[15/01/2026, 10:30:05] Bob: Any recommendations?
+[15/01/2026, 10:30:38] Alice: Fast.ai is great for practical stuff, and Coursera has good theoretical courses.
+[15/01/2026, 10:31:12] Bob: Thanks! I'll check those out this weekend.
+[15/01/2026, 10:31:45] Alice: Let me know how it goes! I'd love to hear what you think.
