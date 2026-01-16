@@ -653,9 +653,9 @@ async function sendNotification(message, env) {
     await fetch(`https://ntfy.sh/${ntfyTopic}`, {
       method: 'POST',
       headers: {
-        'Title': '🧠 Second Brain',
+        'Title': '💎 Second Brain',
         'Priority': 'default',
-        'Tags': 'brain'
+        'Tags': 'thinking,crystal'
       },
       body: message
     });
