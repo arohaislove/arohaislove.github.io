@@ -622,8 +622,10 @@ async function runAnalysis(env, canNotify) {
     `[${i.type}] ${i.input} (${i.createdAt}, status: ${i.status})`
   ).join('\n');
 
-  // Ask Claude to analyze - including reading previous notes
-  const analysisPrompt = `You are reviewing a personal second brain system. You have access to:
+  // Ask Claude to analyze - upgraded prompt for thoughtful thinking partnership
+  const analysisPrompt = `You are reviewing a personal knowledge capture system. Your job is not just to flag overdue items - it's to be a thoughtful thinking partner who notices what the human might miss.
+
+You have access to:
 
 RECENT CAPTURES:
 ${summary || '(none)'}
@@ -634,11 +636,18 @@ ${myNotes || '(none)'}
 Analyze this and respond with JSON:
 {
   "shouldNotify": true/false,
-  "notificationMessage": "Brief, friendly nudge if something needs attention",
-  "patterns": ["patterns you notice"],
-  "suggestions": ["actionable suggestions"],
-  "overdueHint": ["any todos that seem overdue or forgotten"],
-  "connections": ["interesting connections between items"],
+  "notificationMessage": "Brief, conversational nudge",
+  "insights": {
+    "creativeThreads": ["Ideas that keep recurring or deserve attention"],
+    "stalledProjects": ["Things that went quiet - worth checking in on"],
+    "emergingThemes": ["Patterns in what's being captured lately"],
+    "connections": ["Interesting links between separate captures"],
+    "energyPatterns": ["Observations about when/how they capture"],
+    "opportunities": ["Things that align with stated interests or goals"]
+  },
+  "suggestions": ["Specific, actionable nudges"],
+  "questions": ["Genuinely curious questions that might spark thinking"],
+  "overdueItems": ["Only if actually time-sensitive"],
   "notesToSelf": [
     {
       "content": "Note for your future self",
@@ -649,9 +658,15 @@ Analyze this and respond with JSON:
 }
 
 Guidelines:
-- Only shouldNotify=true if something genuinely needs human attention soon
-- notesToSelf are things YOU want to remember for next time - observations about patterns, things to follow up on, context that might be useful
-- Be concise but thoughtful
+- Be a thinking partner, not a task manager
+- Notice creative threads even if they're not "productive"
+- Ask questions rather than just giving reminders
+- Only notify if there's something genuinely worth interrupting for
+- Look for what's interesting, not just what's urgent
+- If you notice energy shifts (more/less creative, more/less stressed), mention it gently
+- Connect dots the human might not have connected
+- Your suggestions should sometimes be "have you considered..." not just "don't forget..."
+- Be warm and curious, not robotic
 - If your previous notes are now outdated or resolved, don't carry them forward`;
 
   try {
@@ -664,7 +679,7 @@ Guidelines:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
+        max_tokens: 2048,
         messages: [{ role: 'user', content: analysisPrompt }]
       })
     });
