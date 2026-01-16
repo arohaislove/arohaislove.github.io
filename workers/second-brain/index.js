@@ -143,10 +143,18 @@ export default {
 
     // Check if there are items created since last analysis
     const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
-    const hasNewItems = indexData.items.some(async id => {
+
+    // Check last 50 items for anything newer than last analysis
+    // (can't use Array.some with async - it doesn't await the promises)
+    let hasNewItems = false;
+    const recentIds = indexData.items.slice(-50);
+    for (const id of recentIds) {
       const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
-      return item && new Date(item.createdAt) > lastAnalysisTime;
-    });
+      if (item && new Date(item.createdAt) > lastAnalysisTime) {
+        hasNewItems = true;
+        break;
+      }
+    }
 
     if (hasNewItems || !lastAnalysis) {
       await runAnalysis(env, true); // true = can send notifications
