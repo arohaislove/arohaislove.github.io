@@ -20,7 +20,21 @@ workerUrlEl.href = CONFIG.WORKER_URL + '/health';
 let recognition = null;
 let isListening = false;
 let autoSendTimer = null;
-const AUTO_SEND_DELAY = 3000; // Wait 3 seconds of silence before auto-sending
+let typingTimer = null;
+const AUTO_SEND_DELAY = 3000; // Wait 3 seconds of silence before auto-sending (voice)
+const TYPING_AUTO_SEND_DELAY = 5000; // Wait 5 seconds after typing stops
+
+// Helper to clear typing timer
+function clearTypingTimer() {
+    if (typingTimer) {
+        clearTimeout(typingTimer);
+        if (typingTimer.countdownInterval) {
+            clearInterval(typingTimer.countdownInterval);
+        }
+        typingTimer = null;
+        hideStatus();
+    }
+}
 
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -33,6 +47,7 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         isListening = true;
         micBtn.classList.add('listening');
         micBtn.textContent = '🔴 Listening...';
+        clearTypingTimer(); // Clear any pending typing auto-send
         showStatus('Listening... (pauses are okay!)', 'info');
     };
 
@@ -97,6 +112,7 @@ micBtn.addEventListener('click', () => {
     if (isListening) {
         recognition.stop();
     } else {
+        clearTypingTimer(); // Clear any pending typing auto-send
         input.value = '';
         recognition.start();
     }
@@ -107,14 +123,53 @@ sendBtn.addEventListener('click', sendCapture);
 input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
+        clearTypingTimer();
         sendCapture();
     }
+});
+
+// Auto-send after typing pause
+input.addEventListener('input', () => {
+    // Clear any existing typing timer
+    clearTypingTimer();
+
+    // Don't start timer if listening to speech
+    if (isListening) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    // Start countdown in status
+    let secondsLeft = Math.ceil(TYPING_AUTO_SEND_DELAY / 1000);
+    showStatus(`Will auto-send in ${secondsLeft}s... (keep typing to cancel)`, 'info');
+
+    // Update countdown every second
+    let countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+            showStatus(`Will auto-send in ${secondsLeft}s... (keep typing to cancel)`, 'info');
+        }
+    }, 1000);
+
+    // Set timer to auto-send
+    typingTimer = setTimeout(() => {
+        clearInterval(countdownInterval);
+        if (input.value.trim() && !isListening) {
+            sendCapture();
+        }
+    }, TYPING_AUTO_SEND_DELAY);
+
+    // Store interval ID so we can clear it
+    typingTimer.countdownInterval = countdownInterval;
 });
 
 // Send capture to worker
 async function sendCapture() {
     const text = input.value.trim();
     if (!text) return;
+
+    // Clear any pending timers
+    clearTypingTimer();
 
     if (CONFIG.AUTH_TOKEN === 'YOUR_AUTH_TOKEN_HERE') {
         showStatus('⚠️ Please configure AUTH_TOKEN in script.js', 'error');
