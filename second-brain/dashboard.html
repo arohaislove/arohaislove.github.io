@@ -236,6 +236,78 @@
             text-decoration: underline;
         }
 
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #fff;
+        }
+
+        .claude-notes {
+            background: rgba(130, 88, 255, 0.1);
+            border: 1px solid rgba(130, 88, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .claude-note {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #8258ff;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .claude-note:last-child {
+            margin-bottom: 0;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .note-category {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+            background: rgba(130, 88, 255, 0.3);
+            border: 1px solid rgba(130, 88, 255, 0.5);
+        }
+
+        .note-time {
+            font-size: 0.75rem;
+            color: #999;
+        }
+
+        .note-content {
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .note-expires {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: #aaa;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -265,6 +337,12 @@
 
         <div class="stats" id="stats"></div>
 
+        <div id="claudeNotesSection"></div>
+
+        <div class="section-header">
+            <h2>Captured Items</h2>
+        </div>
+
         <div class="filters" id="filters">
             <button class="filter-btn active" data-type="all">All</button>
             <button class="filter-btn" data-type="todo">Todo</button>
@@ -288,6 +366,7 @@
         };
 
         let allItems = [];
+        let claudeNotes = [];
         let currentFilter = 'all';
 
         // Load data
@@ -296,20 +375,38 @@
             content.innerHTML = '<div class="loading">Loading your captured data...</div>';
 
             try {
-                const response = await fetch(`${CONFIG.WORKER_URL}/items?limit=500`, {
+                // Fetch items
+                const itemsResponse = await fetch(`${CONFIG.WORKER_URL}/items?limit=500`, {
                     headers: {
                         'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
                     }
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
+                if (!itemsResponse.ok) {
+                    throw new Error(`HTTP ${itemsResponse.status}`);
                 }
 
-                const data = await response.json();
-                allItems = data.items || [];
+                const itemsData = await itemsResponse.json();
+                allItems = itemsData.items || [];
+
+                // Fetch Claude notes
+                try {
+                    const notesResponse = await fetch(`${CONFIG.WORKER_URL}/claude-notes`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    });
+
+                    if (notesResponse.ok) {
+                        const notesData = await notesResponse.json();
+                        claudeNotes = notesData.notes || [];
+                    }
+                } catch (e) {
+                    console.warn('Failed to load Claude notes:', e);
+                }
 
                 renderStats();
+                renderClaudeNotes();
                 renderItems();
             } catch (error) {
                 console.error('Failed to load data:', error);
@@ -346,6 +443,52 @@
             `;
 
             document.getElementById('stats').innerHTML = statsHtml;
+        }
+
+        // Render Claude notes
+        function renderClaudeNotes() {
+            const notesSection = document.getElementById('claudeNotesSection');
+
+            if (!claudeNotes || claudeNotes.length === 0) {
+                notesSection.innerHTML = '';
+                return;
+            }
+
+            const notesHtml = claudeNotes.map(note => {
+                const date = new Date(note.createdAt);
+                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                let expiresHtml = '';
+                if (note.expiresAt) {
+                    const expiresDate = new Date(note.expiresAt);
+                    const now = new Date();
+                    const hoursLeft = Math.round((expiresDate - now) / (1000 * 60 * 60));
+
+                    if (hoursLeft > 0) {
+                        expiresHtml = `<div class="note-expires">Expires in ${hoursLeft} hours</div>`;
+                    }
+                }
+
+                return `
+                    <div class="claude-note">
+                        <div class="note-header">
+                            <span class="note-category">${note.category}</span>
+                            <span class="note-time">${formattedDate}</span>
+                        </div>
+                        <div class="note-content">${escapeHtml(note.content)}</div>
+                        ${expiresHtml}
+                    </div>
+                `;
+            }).join('');
+
+            notesSection.innerHTML = `
+                <div class="section-header">
+                    <h2>🧠 Claude's Working Memory</h2>
+                </div>
+                <div class="claude-notes">
+                    ${notesHtml}
+                </div>
+            `;
         }
 
         // Render items

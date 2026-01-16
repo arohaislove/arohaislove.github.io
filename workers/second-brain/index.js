@@ -520,9 +520,13 @@ async function handleExportCSV(env) {
     if (item) items.push(item);
   }
 
-  // Build CSV
-  const headers = ['ID', 'Type', 'Input', 'Created At', 'Status', 'Source', 'AI Notes', 'Structured Data'];
-  const rows = [headers.join(',')];
+  // Get Claude notes
+  const claudeNotesData = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+  const claudeNotes = claudeNotesData.notes || [];
+
+  // Build CSV - Items section
+  const itemHeaders = ['ID', 'Type', 'Input', 'Created At', 'Status', 'Source', 'AI Notes', 'Structured Data'];
+  const rows = [itemHeaders.join(',')];
 
   for (const item of items) {
     const row = [
@@ -536,6 +540,26 @@ async function handleExportCSV(env) {
       escapeCSV(JSON.stringify(item.structured))
     ];
     rows.push(row.join(','));
+  }
+
+  // Add Claude notes section
+  if (claudeNotes.length > 0) {
+    rows.push('');
+    rows.push('');
+    rows.push('CLAUDE WORKING MEMORY NOTES');
+    const notesHeaders = ['Note ID', 'Category', 'Content', 'Created At', 'Expires At'];
+    rows.push(notesHeaders.join(','));
+
+    for (const note of claudeNotes) {
+      const noteRow = [
+        escapeCSV(note.id),
+        escapeCSV(note.category),
+        escapeCSV(note.content),
+        escapeCSV(note.createdAt),
+        escapeCSV(note.expiresAt || '')
+      ];
+      rows.push(noteRow.join(','));
+    }
   }
 
   const csvContent = rows.join('\n');
