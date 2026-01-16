@@ -9,6 +9,7 @@
  * GET /items - list all items (requires auth)
  * GET /item/:id - get single item (requires auth)
  * GET /export - export all data as JSON (requires auth)
+ * GET /export-csv - export all data as CSV (requires auth)
  * POST /analyze - trigger analysis (requires auth)
  * GET /claude-notes - get Claude's working memory (requires auth)
  * POST /claude-notes - add Claude note (requires auth)
@@ -85,6 +86,10 @@ export default {
         return await handleExport(env);
       }
 
+      if (path === '/export-csv' && request.method === 'GET') {
+        return await handleExportCSV(env);
+      }
+
       if (path === '/analyze' && request.method === 'POST') {
         return await handleAnalyze(env);
       }
@@ -109,7 +114,8 @@ export default {
           'GET /items': 'List items (query: type, status, limit)',
           'GET /item/:id': 'Get single item',
           'PATCH /item/:id': 'Update item classification',
-          'GET /export': 'Export all data',
+          'GET /export': 'Export all data as JSON',
+          'GET /export-csv': 'Export all data as CSV',
           'POST /analyze': 'Trigger analysis',
           'GET /claude-notes': 'Get Claude working memory',
           'POST /claude-notes': 'Add Claude note',
@@ -499,6 +505,85 @@ async function handleExport(env) {
       'Content-Disposition': `attachment; filename="second-brain-export-${Date.now()}.json"`
     }
   });
+}
+
+/**
+ * EXPORT CSV - download all data as CSV
+ */
+async function handleExportCSV(env) {
+  // Get all items
+  const allIndex = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
+
+  const items = [];
+  for (const id of allIndex.items) {
+    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (item) items.push(item);
+  }
+
+  // Get Claude notes
+  const claudeNotesData = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+  const claudeNotes = claudeNotesData.notes || [];
+
+  // Build CSV - Items section
+  const itemHeaders = ['ID', 'Type', 'Input', 'Created At', 'Status', 'Source', 'AI Notes', 'Structured Data'];
+  const rows = [itemHeaders.join(',')];
+
+  for (const item of items) {
+    const row = [
+      escapeCSV(item.id),
+      escapeCSV(item.type),
+      escapeCSV(item.input),
+      escapeCSV(item.createdAt),
+      escapeCSV(item.status),
+      escapeCSV(item.source),
+      escapeCSV(item.aiNotes || ''),
+      escapeCSV(JSON.stringify(item.structured))
+    ];
+    rows.push(row.join(','));
+  }
+
+  // Add Claude notes section
+  if (claudeNotes.length > 0) {
+    rows.push('');
+    rows.push('');
+    rows.push('CLAUDE WORKING MEMORY NOTES');
+    const notesHeaders = ['Note ID', 'Category', 'Content', 'Created At', 'Expires At'];
+    rows.push(notesHeaders.join(','));
+
+    for (const note of claudeNotes) {
+      const noteRow = [
+        escapeCSV(note.id),
+        escapeCSV(note.category),
+        escapeCSV(note.content),
+        escapeCSV(note.createdAt),
+        escapeCSV(note.expiresAt || '')
+      ];
+      rows.push(noteRow.join(','));
+    }
+  }
+
+  const csvContent = rows.join('\n');
+
+  return new Response(csvContent, {
+    status: 200,
+    headers: {
+      ...corsHeaders(),
+      'Content-Type': 'text/csv',
+      'Content-Disposition': `attachment; filename="second-brain-export-${Date.now()}.csv"`
+    }
+  });
+}
+
+/**
+ * Escape CSV field
+ */
+function escapeCSV(field) {
+  if (field === null || field === undefined) return '""';
+  const str = String(field);
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return '"' + str + '"';
 }
 
 /**
