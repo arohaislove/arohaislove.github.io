@@ -1,59 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Transparent background - just the crystal edges -->
+  <!-- Pure wireframe - only the crystal lattice edges, completely transparent -->
 
   <!-- Main hexagonal crystal outline -->
   <path d="M 256 80 L 380 168 L 380 344 L 256 432 L 132 344 L 132 168 Z"
         fill="none"
-        stroke="#1a1a2e"
-        stroke-width="12"
+        stroke="currentColor"
+        stroke-width="3"
         stroke-linejoin="miter"/>
 
-  <!-- Internal crystal facets - creating the 3D lattice effect -->
-  <path d="M 256 80 L 256 256"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
-  <path d="M 256 256 L 380 168"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
-  <path d="M 256 256 L 380 344"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
-  <path d="M 256 256 L 256 432"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
-  <path d="M 256 256 L 132 344"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
-  <path d="M 256 256 L 132 168"
-        stroke="#1a1a2e"
-        stroke-width="8"
-        opacity="0.9"/>
+  <!-- Internal crystal facets -->
+  <path d="M 256 80 L 256 256 M 256 256 L 380 168 M 256 256 L 380 344 M 256 256 L 256 432 M 256 256 L 132 344 M 256 256 L 132 168"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"/>
 
-  <!-- Cross connections for depth -->
-  <path d="M 132 168 L 380 344"
-        stroke="#1a1a2e"
-        stroke-width="6"
-        opacity="0.5"/>
-  <path d="M 380 168 L 132 344"
-        stroke="#1a1a2e"
-        stroke-width="6"
-        opacity="0.5"/>
-
-  <!-- Node points at vertices -->
-  <circle cx="256" cy="256" r="16"
-          fill="none"
-          stroke="#1a1a2e"
-          stroke-width="8"/>
-
-  <circle cx="256" cy="80" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
-  <circle cx="380" cy="168" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
-  <circle cx="380" cy="344" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
-  <circle cx="256" cy="432" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
-  <circle cx="132" cy="344" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
-  <circle cx="132" cy="168" r="10" fill="none" stroke="#1a1a2e" stroke-width="6"/>
+  <!-- Cross connections -->
+  <path d="M 132 168 L 380 344 M 380 168 L 132 344"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        opacity="0.6"/>
 </svg>
