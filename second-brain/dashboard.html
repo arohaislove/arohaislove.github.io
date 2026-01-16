@@ -308,6 +308,98 @@
             font-style: italic;
         }
 
+        /* Analysis Section */
+        .analysis-section {
+            background: rgba(255, 166, 88, 0.05);
+            border: 1px solid rgba(255, 166, 88, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-timestamp {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+
+        .insight-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .insight-category {
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid #ffa658;
+            border-radius: 4px;
+            padding: 1rem;
+        }
+
+        .insight-category h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #ffa658;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .insight-category ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .insight-category li {
+            padding: 0.5rem 0;
+            color: #e0e0e0;
+            line-height: 1.5;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .insight-category li:last-child {
+            border-bottom: none;
+        }
+
+        .insight-category.creative-threads {
+            border-left-color: #8258ff;
+        }
+
+        .insight-category.creative-threads h3 {
+            color: #8258ff;
+        }
+
+        .insight-category.questions {
+            border-left-color: #5aa6ff;
+        }
+
+        .insight-category.questions h3 {
+            color: #5aa6ff;
+        }
+
+        .insight-category.suggestions {
+            border-left-color: #58ffa6;
+        }
+
+        .insight-category.suggestions h3 {
+            color: #58ffa6;
+        }
+
+        .insight-category.energy {
+            border-left-color: #ff58a6;
+        }
+
+        .insight-category.energy h3 {
+            color: #ff58a6;
+        }
+
+        .no-analysis {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            font-style: italic;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 1rem;
@@ -339,6 +431,8 @@
 
         <div id="claudeNotesSection"></div>
 
+        <div id="analysisSection"></div>
+
         <div class="section-header">
             <h2>Captured Items</h2>
         </div>
@@ -367,6 +461,7 @@
 
         let allItems = [];
         let claudeNotes = [];
+        let latestAnalysis = null;
         let currentFilter = 'all';
 
         // Load data
@@ -405,8 +500,25 @@
                     console.warn('Failed to load Claude notes:', e);
                 }
 
+                // Fetch latest analysis
+                try {
+                    const exportResponse = await fetch(`${CONFIG.WORKER_URL}/export`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    });
+
+                    if (exportResponse.ok) {
+                        const exportData = await exportResponse.json();
+                        latestAnalysis = exportData.latestAnalysis || null;
+                    }
+                } catch (e) {
+                    console.warn('Failed to load analysis:', e);
+                }
+
                 renderStats();
                 renderClaudeNotes();
+                renderAnalysis();
                 renderItems();
             } catch (error) {
                 console.error('Failed to load data:', error);
@@ -489,6 +601,171 @@
                     ${notesHtml}
                 </div>
             `;
+        }
+
+        // Render analysis
+        function renderAnalysis() {
+            const analysisSection = document.getElementById('analysisSection');
+
+            if (!latestAnalysis || !latestAnalysis.analysis) {
+                analysisSection.innerHTML = '';
+                return;
+            }
+
+            const analysis = latestAnalysis.analysis;
+            const timestamp = new Date(latestAnalysis.timestamp);
+            const formattedTime = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+
+            let insightsHtml = '';
+
+            // Creative Threads
+            if (analysis.insights?.creativeThreads && analysis.insights.creativeThreads.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category creative-threads">
+                        <h3>💡 Creative Threads</h3>
+                        <ul>
+                            ${analysis.insights.creativeThreads.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Questions
+            if (analysis.questions && analysis.questions.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category questions">
+                        <h3>🤔 Questions to Spark Thinking</h3>
+                        <ul>
+                            ${analysis.questions.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Emerging Themes
+            if (analysis.insights?.emergingThemes && analysis.insights.emergingThemes.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category">
+                        <h3>🌱 Emerging Themes</h3>
+                        <ul>
+                            ${analysis.insights.emergingThemes.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Connections
+            if (analysis.insights?.connections && analysis.insights.connections.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category">
+                        <h3>🔗 Connections</h3>
+                        <ul>
+                            ${analysis.insights.connections.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Energy Patterns
+            if (analysis.insights?.energyPatterns && analysis.insights.energyPatterns.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category energy">
+                        <h3>⚡ Energy Patterns</h3>
+                        <ul>
+                            ${analysis.insights.energyPatterns.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Stalled Projects
+            if (analysis.insights?.stalledProjects && analysis.insights.stalledProjects.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category">
+                        <h3>⏸️ Stalled Projects</h3>
+                        <ul>
+                            ${analysis.insights.stalledProjects.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Opportunities
+            if (analysis.insights?.opportunities && analysis.insights.opportunities.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category">
+                        <h3>🎯 Opportunities</h3>
+                        <ul>
+                            ${analysis.insights.opportunities.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Suggestions
+            if (analysis.suggestions && analysis.suggestions.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category suggestions">
+                        <h3>💬 Suggestions</h3>
+                        <ul>
+                            ${analysis.suggestions.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Overdue Items
+            if (analysis.overdueItems && analysis.overdueItems.length > 0) {
+                insightsHtml += `
+                    <div class="insight-category">
+                        <h3>⏰ Time-Sensitive</h3>
+                        <ul>
+                            ${analysis.overdueItems.map(item =>
+                                `<li>${escapeHtml(item)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            if (insightsHtml) {
+                analysisSection.innerHTML = `
+                    <div class="section-header">
+                        <h2>✨ Latest Analysis</h2>
+                    </div>
+                    <div class="analysis-section">
+                        <div class="analysis-timestamp">Last analyzed: ${formattedTime}</div>
+                        <div class="insight-grid">
+                            ${insightsHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                analysisSection.innerHTML = `
+                    <div class="section-header">
+                        <h2>✨ Latest Analysis</h2>
+                    </div>
+                    <div class="analysis-section">
+                        <div class="no-analysis">No analysis available yet. Capture some thoughts and the system will analyze them every 4 hours!</div>
+                    </div>
+                `;
+            }
         }
 
         // Render items
