@@ -269,7 +269,7 @@ async function handleClearClaudeNotes(request, env) {
  */
 async function handleCapture(request, env) {
   const body = await request.json();
-  const { input, source = 'manual' } = body;
+  const { input, source = 'manual', image = null } = body;
 
   if (!input || typeof input !== 'string') {
     return jsonResponse({ error: 'Missing or invalid input' }, 400);
@@ -279,8 +279,8 @@ async function handleCapture(request, env) {
     return jsonResponse({ error: 'Input too long (max 5000 characters)' }, 400);
   }
 
-  // Classify the input using Claude
-  const classification = await classifyInput(input, env);
+  // Classify the input using Claude (with vision if image provided)
+  const classification = await classifyInput(input, env, image);
 
   // Create item
   const item = {
@@ -293,6 +293,11 @@ async function handleCapture(request, env) {
     createdAt: new Date().toISOString(),
     status: 'active'
   };
+
+  // Add image if provided
+  if (image) {
+    item.image = image;
+  }
 
   // Store in KV
   await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
@@ -310,17 +315,19 @@ async function handleCapture(request, env) {
 /**
  * Classify input using Claude API
  */
-async function classifyInput(input, env) {
+async function classifyInput(input, env, image = null) {
   const systemPrompt = `You are a classification assistant for a personal second brain system.
 
 Classify the input into ONE of these types:
 - todo: A task or action to complete
-- expense: A financial transaction or cost
+- expense: A financial transaction or cost (especially from receipts!)
 - calendar: An event, appointment, or time-based thing
-- creative: A thought, idea, poetry fragment, creative writing
+- creative: A thought, idea, poetry fragment, creative writing, or visual inspiration
 - note: General information worth remembering
 - person: Information about a person (contact, relationship note)
 - project: Related to an ongoing project
+
+${image ? 'The user has provided an IMAGE along with optional text. Analyze the image carefully and classify based on what you see. Extract any text from receipts, notes, or documents. Describe visual content for creative captures.' : ''}
 
 Respond with JSON only:
 {
@@ -330,15 +337,48 @@ Respond with JSON only:
     // todo: { "task": "...", "priority": "high|medium|low", "dueHint": "..." }
     // expense: { "amount": 123.45, "category": "...", "vendor": "...", "date": "..." }
     // calendar: { "event": "...", "dateHint": "...", "timeHint": "...", "location": "..." }
-    // creative: { "content": "...", "theme": "...", "connectedTo": "..." }
+    // creative: { "content": "...", "theme": "...", "connectedTo": "...", "visualDescription": "..." }
     // note: { "summary": "...", "tags": [...] }
     // person: { "name": "...", "context": "...", "detail": "..." }
     // project: { "project": "...", "update": "...", "nextAction": "..." }
   },
-  "notes": "Brief AI observation - patterns noticed, connections to other things, suggestions"
+  "notes": "Brief AI observation - what you saw in the image, patterns noticed, connections, suggestions"
 }`;
 
   try {
+    // Build message content
+    let messageContent;
+
+    if (image) {
+      // Extract media type and base64 data from data URL
+      const matches = image.match(/^data:([^;]+);base64,(.+)$/);
+      if (!matches) {
+        throw new Error('Invalid image data format');
+      }
+
+      const mediaType = matches[1];
+      const base64Data = matches[2];
+
+      // Vision request with image + text
+      messageContent = [
+        {
+          type: 'image',
+          source: {
+            type: 'base64',
+            media_type: mediaType,
+            data: base64Data
+          }
+        },
+        {
+          type: 'text',
+          text: input
+        }
+      ];
+    } else {
+      // Text-only request
+      messageContent = input;
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -350,7 +390,7 @@ Respond with JSON only:
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
         system: systemPrompt,
-        messages: [{ role: 'user', content: input }]
+        messages: [{ role: 'user', content: messageContent }]
       })
     });
 

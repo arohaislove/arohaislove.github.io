@@ -16,11 +16,20 @@
         <h1>💎 Second Brain</h1>
 
         <div class="capture-area">
-            <textarea id="input" placeholder="Speak or type anything..." aria-label="Capture input"></textarea>
+            <textarea id="input" placeholder="Speak, type, or add a photo..." aria-label="Capture input"></textarea>
+
+            <div id="photoPreview" class="photo-preview" style="display: none;">
+                <img id="photoImg" alt="Captured photo">
+                <button class="remove-photo" id="removePhotoBtn" aria-label="Remove photo">✕</button>
+            </div>
+
             <div class="buttons">
                 <button class="mic-btn" id="micBtn" aria-label="Start voice capture">🎤 Speak</button>
+                <button class="camera-btn" id="cameraBtn" aria-label="Add photo">📷 Photo</button>
                 <button class="send-btn" id="sendBtn" aria-label="Send capture">Send →</button>
             </div>
+
+            <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;" aria-label="Photo input">
         </div>
 
         <div class="status" id="status" role="status" aria-live="polite"></div>
