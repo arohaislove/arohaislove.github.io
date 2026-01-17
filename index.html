@@ -224,5 +224,27 @@
             }
         }
     </script>
+
+    <script>
+        // Portfolio visitor notification - once per session
+        if (!sessionStorage.getItem('ntfy-notified')) {
+            const timestamp = new Date().toLocaleString('en-NZ', {
+                timeZone: 'Pacific/Auckland',
+                dateStyle: 'short',
+                timeStyle: 'short'
+            });
+
+            fetch('https://ntfy.sh/aroha-prtfl-v1t5-x7k2', {
+                method: 'POST',
+                headers: {
+                    'Title': '👀 Portfolio Visit',
+                    'Tags': 'eyes,portfolio'
+                },
+                body: `Portfolio visitor at ${timestamp}`
+            }).catch(() => {}); // Silent fail on error
+
+            sessionStorage.setItem('ntfy-notified', '1');
+        }
+    </script>
 </body>
 </html>
