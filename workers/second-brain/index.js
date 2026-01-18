@@ -1,5 +1,6 @@
 /**
  * SECOND BRAIN - Cloudflare Worker
+ * Redeployed: 2026-01-18
  *
  * AI-powered personal knowledge system that captures, classifies, and reminds
  * you about the things that matter.
