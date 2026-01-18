@@ -29,8 +29,17 @@ let recognition = null;
 let isListening = false;
 let autoSendTimer = null;
 let typingTimer = null;
-const AUTO_SEND_DELAY = 3000; // Wait 3 seconds of silence before auto-sending (voice)
+const AUTO_SEND_DELAY = 4000; // Wait 4 seconds of silence before auto-sending (voice)
 const TYPING_AUTO_SEND_DELAY = 5000; // Wait 5 seconds after typing stops
+
+// Audio level monitoring for better silence detection
+let audioContext = null;
+let mediaStream = null;
+let analyser = null;
+let silenceStart = null;
+let volumeCheckInterval = null;
+const SILENCE_THRESHOLD = 0.01; // Audio level threshold to detect silence
+const SILENCE_DURATION = 4000; // 4 seconds of silence before auto-send
 
 // Helper to clear typing timer
 function clearTypingTimer() {
@@ -42,6 +51,102 @@ function clearTypingTimer() {
         typingTimer = null;
         hideStatus();
     }
+}
+
+// Audio level monitoring helpers
+async function startAudioMonitoring() {
+    try {
+        // Get microphone access
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        // Create audio context and analyser
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        source.connect(analyser);
+
+        // Start monitoring volume levels
+        silenceStart = Date.now();
+        volumeCheckInterval = setInterval(checkAudioLevel, 100);
+
+    } catch (error) {
+        console.error('Failed to start audio monitoring:', error);
+    }
+}
+
+function checkAudioLevel() {
+    if (!analyser || !isListening) return;
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    // Calculate RMS (root mean square) of audio signal
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+        const normalized = (dataArray[i] - 128) / 128;
+        sum += normalized * normalized;
+    }
+    const rms = Math.sqrt(sum / bufferLength);
+
+    // Check if audio level indicates speech or silence
+    if (rms > SILENCE_THRESHOLD) {
+        // Sound detected - reset silence timer
+        silenceStart = Date.now();
+
+        // Clear any pending auto-send
+        if (autoSendTimer) {
+            clearTimeout(autoSendTimer);
+            autoSendTimer = null;
+        }
+
+        showStatus('Listening... 🎤', 'info');
+    } else {
+        // Silence detected - check duration
+        const silenceDuration = Date.now() - silenceStart;
+
+        if (silenceDuration >= SILENCE_DURATION && input.value.trim()) {
+            // 4 seconds of silence and we have text - auto send
+            if (!autoSendTimer) {
+                showStatus('Detected silence - sending...', 'info');
+                autoSendTimer = setTimeout(() => {
+                    if (isListening && input.value.trim()) {
+                        stopAudioMonitoring();
+                        recognition.stop();
+                        sendCapture();
+                    }
+                }, 200); // Small delay to avoid race conditions
+            }
+        } else if (silenceDuration >= 2000) {
+            // Show countdown after 2 seconds of silence
+            const secondsLeft = Math.ceil((SILENCE_DURATION - silenceDuration) / 1000);
+            if (input.value.trim()) {
+                showStatus(`Listening... (${secondsLeft}s until auto-send)`, 'info');
+            }
+        }
+    }
+}
+
+function stopAudioMonitoring() {
+    if (volumeCheckInterval) {
+        clearInterval(volumeCheckInterval);
+        volumeCheckInterval = null;
+    }
+
+    if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close();
+        audioContext = null;
+    }
+
+    if (mediaStream) {
+        mediaStream.getTracks().forEach(track => track.stop());
+        mediaStream = null;
+    }
+
+    analyser = null;
+    silenceStart = null;
 }
 
 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -56,7 +161,10 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         micBtn.classList.add('listening');
         micBtn.textContent = '🔴 Listening...';
         clearTypingTimer(); // Clear any pending typing auto-send
-        showStatus('Listening... (pauses are okay!)', 'info');
+        showStatus('Listening... 🎤', 'info');
+
+        // Start audio level monitoring for better silence detection
+        startAudioMonitoring();
     };
 
     recognition.onend = () => {
@@ -64,6 +172,9 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         micBtn.classList.remove('listening');
         micBtn.textContent = '🎤 Speak';
         hideStatus();
+
+        // Stop audio monitoring
+        stopAudioMonitoring();
 
         // Clear any pending auto-send when stopping
         if (autoSendTimer) {
@@ -79,25 +190,25 @@ if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         }
         input.value = transcript;
 
-        // Clear existing timer since user is still speaking
-        if (autoSendTimer) {
-            clearTimeout(autoSendTimer);
-        }
-
-        // Only start auto-send timer on final results (natural pauses)
-        if (event.results[event.results.length - 1].isFinal) {
-            showStatus('Listening... (will send in 3 seconds)', 'info');
-            autoSendTimer = setTimeout(() => {
-                if (isListening && input.value.trim()) {
-                    recognition.stop(); // Stop listening
-                    sendCapture(); // Send the message
-                }
-            }, AUTO_SEND_DELAY);
+        // Audio level monitoring handles silence detection
+        // This handler just updates the transcript
+        // Reset silence timer since we got new speech results
+        if (silenceStart) {
+            silenceStart = Date.now();
         }
     };
 
     recognition.onerror = (event) => {
         console.error('Speech error:', event.error);
+
+        // Stop audio monitoring
+        stopAudioMonitoring();
+
+        // Ignore 'no-speech' and 'aborted' errors (these are normal)
+        if (event.error === 'no-speech' || event.error === 'aborted') {
+            return;
+        }
+
         showStatus('Speech error: ' + event.error, 'error');
         isListening = false;
         micBtn.classList.remove('listening');
