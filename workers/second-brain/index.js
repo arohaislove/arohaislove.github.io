@@ -12,6 +12,7 @@
  * GET /export - export all data as JSON (requires auth)
  * GET /export-csv - export all data as CSV (requires auth)
  * POST /analyze - trigger analysis (requires auth)
+ * POST /briefing - generate morning briefing (requires auth)
  * GET /claude-notes - get Claude's working memory (requires auth)
  * POST /claude-notes - add Claude note (requires auth)
  * DELETE /claude-notes - clear Claude notes (requires auth)
@@ -95,6 +96,10 @@ export default {
         return await handleAnalyze(env);
       }
 
+      if (path === '/briefing' && request.method === 'POST') {
+        return await handleBriefing(env);
+      }
+
       if (path === '/claude-notes' && request.method === 'GET') {
         return await handleGetClaudeNotes(env);
       }
@@ -118,6 +123,7 @@ export default {
           'GET /export': 'Export all data as JSON',
           'GET /export-csv': 'Export all data as CSV',
           'POST /analyze': 'Trigger analysis',
+          'POST /briefing': 'Generate morning briefing',
           'GET /claude-notes': 'Get Claude working memory',
           'POST /claude-notes': 'Add Claude note',
           'DELETE /claude-notes': 'Clear Claude notes',
@@ -144,9 +150,16 @@ export default {
     const isMorningBriefing = hour === 15 || hour === 16;
 
     if (isMorningBriefing) {
-      // Send morning briefing notification
-      await sendMorningBriefingPing(env);
-      console.log('Morning briefing notification sent');
+      // Generate and send full morning briefing
+      try {
+        const briefing = await generateMorningBriefing(env);
+        await sendMorningBriefing(briefing, env);
+        console.log('Morning briefing generated and sent');
+      } catch (error) {
+        console.error('Failed to generate morning briefing:', error);
+        // Fallback to simple ping if briefing generation fails
+        await sendMorningBriefingPing(env);
+      }
       return; // Don't run regular analysis for morning briefing
     }
 
@@ -657,6 +670,25 @@ async function handleAnalyze(env) {
 }
 
 /**
+ * Handle morning briefing request
+ */
+async function handleBriefing(env) {
+  try {
+    const briefing = await generateMorningBriefing(env);
+    return jsonResponse({
+      success: true,
+      briefing: briefing,
+      generatedAt: new Date().toISOString()
+    });
+  } catch (error) {
+    return jsonResponse({
+      success: false,
+      error: error.message
+    }, 500);
+  }
+}
+
+/**
  * Run analysis on all items
  */
 async function runAnalysis(env, canNotify) {
@@ -828,7 +860,7 @@ async function sendNotification(message, env) {
 }
 
 /**
- * Send morning briefing ping via Ntfy
+ * Send morning briefing ping via Ntfy (fallback if briefing generation fails)
  */
 async function sendMorningBriefingPing(env) {
   const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
@@ -847,6 +879,167 @@ async function sendMorningBriefingPing(env) {
     console.log('Morning briefing ping sent');
   } catch (e) {
     console.error('Failed to send morning briefing ping:', e);
+  }
+}
+
+/**
+ * Generate morning briefing using Claude API
+ */
+async function generateMorningBriefing(env) {
+  // Get recent items (last 30)
+  const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
+  const recentIds = indexData.items.slice(-30);
+  const items = [];
+
+  for (const id of recentIds) {
+    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (item) items.push(item);
+  }
+
+  // Get Claude's working memory
+  const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+
+  // Format items for briefing
+  const recentCaptures = items.map(i =>
+    `[${i.type.toUpperCase()}] ${i.createdAt.split('T')[0]}\nInput: ${i.input}\nAI Notes: ${i.aiNotes || 'none'}`
+  ).join('\n\n');
+
+  // Format Claude's working memory
+  const workingMemory = claudeNotes.notes
+    .filter(n => !n.expiresAt || new Date(n.expiresAt) > new Date())
+    .map(n => `[${n.category}] ${n.content}`)
+    .join('\n');
+
+  const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures and patterns.
+
+TODAY'S DATE: ${new Date().toISOString().split('T')[0]}
+
+RECENT CAPTURES (last 30 items):
+${recentCaptures || '(no recent captures)'}
+
+YOUR WORKING MEMORY (patterns you've noticed):
+${workingMemory || '(no working memory yet)'}
+
+Generate a morning briefing in this exact structure:
+
+# ☀️ MORNING BRIEFING - [Day, Month Date, Year]
+
+Dave. Morning.
+
+## What I'm Seeing (Last 48 Hours)
+[Summarize what they've captured, group by themes. Be specific with counts and dates.]
+
+### **[Pattern 1 Name]**
+- Bullet point observations
+- What stands out
+
+### **[Pattern 2 Name]**
+- More observations
+
+### **Health Flags** ⚠️
+[If any health mentions, weight tracking, discomfort - call them out specifically and ask how they're feeling]
+
+### **Open Loops**
+[Tasks or threads that are unfinished]
+
+## What Claude (in your Second Brain) Has Been Noticing
+[Pull key insights from your working memory, quote them]
+
+## The Big Context
+[Life events, transitions, what's happening this week]
+
+## From My World (What I'm Bringing)
+[1-3 external insights: relevant news, tech developments, tools, or connections to their interests. Be specific and useful.]
+
+## One Provocation
+[A gentle challenge or observation that might spark reflection]
+
+## What Needs Attention Today
+
+### 🔴 **Health**
+[If relevant]
+
+### 🟡 **Open Tasks**
+[Specific items]
+
+### 🟢 **Energy Opportunities**
+[Things that might energize them]
+
+## One Thing for Today
+**Practical**: [One clear, small action]
+
+## One Thing to Sit With
+**Reflective**: [One question or thought to carry]
+
+---
+
+TONE:
+- Direct but warm
+- Pattern-spotter, not task-manager
+- Notice what energizes them, not just what's broken
+- Ask questions, don't just remind
+- Be honest, even if uncomfortable
+- Connect dots they might miss
+
+Keep it concise but insightful. This should feel like talking to a smart friend who's been paying attention.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: briefingPrompt }]
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Claude API error');
+    }
+
+    const data = await response.json();
+    const briefing = data.content[0].text;
+
+    return briefing;
+  } catch (error) {
+    console.error('Failed to generate briefing:', error);
+    throw error;
+  }
+}
+
+/**
+ * Send full morning briefing via Ntfy
+ */
+async function sendMorningBriefing(briefing, env) {
+  const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
+
+  // Truncate if too long for ntfy (max ~4000 chars recommended)
+  const maxLength = 3500;
+  let body = briefing;
+  if (briefing.length > maxLength) {
+    body = briefing.substring(0, maxLength) + '\n\n...[Briefing truncated - open Dashboard for full view]';
+  }
+
+  try {
+    await fetch(`https://ntfy.sh/${ntfyTopic}`, {
+      method: 'POST',
+      headers: {
+        'Title': '☀️ Morning Briefing',
+        'Priority': 'high',
+        'Tags': 'alarm,sunrise,coffee',
+        'Actions': 'view, Dashboard, https://arohaislove.github.io/second-brain/dashboard.html; view, Claude Chat, https://claude.ai; view, Claude Code, https://claude.ai/code'
+      },
+      body: body
+    });
+    console.log('Morning briefing sent via ntfy');
+  } catch (e) {
+    console.error('Failed to send morning briefing:', e);
+    throw e;
   }
 }
 
