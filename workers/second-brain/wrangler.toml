@@ -11,6 +11,8 @@ compatibility_date = "2024-01-01"
  binding = "BRAIN_KV"
  id = "38349bc2045a4168aa94ce50d1f8e19b"
 
-# Cron trigger - analyze every 4 hours (will activate when KV is configured)
+# Cron triggers:
+# - Every 4 hours for ongoing analysis
+# - 4am NZT for morning briefing (15:00 UTC during NZDT, 16:00 UTC during NZST)
  [triggers]
- crons = ["0 */4 * * *"]
+ crons = ["0 */4 * * *", "0 15 * * *", "0 16 * * *"]

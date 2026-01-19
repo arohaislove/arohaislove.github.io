@@ -134,10 +134,23 @@ export default {
     }
   },
 
-  // Cron trigger - runs every 4 hours
+  // Cron trigger - runs every 4 hours + morning briefing at 4am NZT
   async scheduled(event, env, ctx) {
     console.log('Cron triggered at:', new Date().toISOString());
 
+    // Check if this is the morning briefing time (4am NZT = 15:00 or 16:00 UTC)
+    const now = new Date();
+    const hour = now.getUTCHours();
+    const isMorningBriefing = hour === 15 || hour === 16;
+
+    if (isMorningBriefing) {
+      // Send morning briefing notification
+      await sendMorningBriefingPing(env);
+      console.log('Morning briefing notification sent');
+      return; // Don't run regular analysis for morning briefing
+    }
+
+    // Regular analysis for other cron runs
     // Only analyze if there are new items
     const lastAnalysis = await env.BRAIN_KV.get('analysis:latest', 'json');
     const lastAnalysisTime = lastAnalysis ? new Date(lastAnalysis.timestamp) : new Date(0);
@@ -811,6 +824,29 @@ async function sendNotification(message, env) {
     console.log('Notification sent:', message);
   } catch (e) {
     console.error('Failed to send notification:', e);
+  }
+}
+
+/**
+ * Send morning briefing ping via Ntfy
+ */
+async function sendMorningBriefingPing(env) {
+  const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
+
+  try {
+    await fetch(`https://ntfy.sh/${ntfyTopic}`, {
+      method: 'POST',
+      headers: {
+        'Title': '☀️ Morning Briefing',
+        'Priority': 'high',
+        'Tags': 'alarm,sunrise,coffee',
+        'Click': 'https://claude.ai'
+      },
+      body: 'Dave. Briefing time. Open Claude and say "morning briefing" or share your Second Brain dashboard.'
+    });
+    console.log('Morning briefing ping sent');
+  } catch (e) {
+    console.error('Failed to send morning briefing ping:', e);
   }
 }
 
