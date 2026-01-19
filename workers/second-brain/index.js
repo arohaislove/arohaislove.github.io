@@ -840,9 +840,9 @@ async function sendMorningBriefingPing(env) {
         'Title': '☀️ Morning Briefing',
         'Priority': 'high',
         'Tags': 'alarm,sunrise,coffee',
-        'Click': 'https://claude.ai'
+        'Actions': 'view, Dashboard, https://arohaislove.github.io/second-brain/dashboard.html; view, Claude Chat, https://claude.ai; view, Claude Code, https://claude.ai/code'
       },
-      body: 'Dave. Briefing time. Open Claude and say "morning briefing" or share your Second Brain dashboard.'
+      body: 'Dave. Briefing time.\n\n1. Tap "Dashboard" to review your recent Second Brain entries\n2. Choose "Claude Chat" for life coach conversation, or "Claude Code" for task-oriented work\n3. Share your dashboard context and we\'ll talk'
     });
     console.log('Morning briefing ping sent');
   } catch (e) {
