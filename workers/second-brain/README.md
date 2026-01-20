@@ -8,9 +8,11 @@ AI-powered personal knowledge system that captures, classifies, and reminds you 
 
 1. **You speak or type** → captured via web interface or direct API
 2. **Claude classifies** → todo, expense, calendar, creative, note, person, project
-3. **Stored in Cloudflare KV** → persistent, fast, queryable
-4. **Analyzed every 4 hours** → patterns, connections, overdue items
-5. **Notifies your phone** → via Ntfy when something needs attention
+3. **Phone comms auto-captured** → Tasker sends WhatsApp/SMS/calls to `/comms` endpoint
+4. **Stored in Cloudflare KV** → persistent, fast, queryable
+5. **Analyzed every 4 hours** → patterns, connections, overdue items
+6. **Morning briefing at 4am NZT** → includes communication pattern analysis
+7. **Notifies your phone** → via Ntfy when something needs attention
 
 ## Setup
 
@@ -76,7 +78,7 @@ const CONFIG = {
 All endpoints except `/health` require `Authorization: Bearer YOUR_TOKEN` header.
 
 ### POST /capture
-Capture a new item.
+Capture a new item (manual entry - voice or text).
 
 ```bash
 curl -X POST https://second-brain.zammel.workers.dev/capture \
@@ -105,6 +107,51 @@ Response:
   }
 }
 ```
+
+### POST /comms
+Capture communication data (designed for Tasker automation).
+
+```bash
+curl -X POST https://second-brain.zammel.workers.dev/comms \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hey, are we still on for dinner tomorrow?",
+    "direction": "incoming",
+    "app": "whatsapp",
+    "contact": "Sarah"
+  }'
+```
+
+**Parameters:**
+- `message` (required) - The message text
+- `direction` (optional) - "incoming" or "outgoing" (default: "incoming")
+- `app` (optional) - App name: "whatsapp", "sms", "messenger", etc. (default: "unknown")
+- `contact` (optional) - Sender/recipient name or number (default: "unknown")
+- `timestamp` (optional) - ISO 8601 timestamp (default: current time)
+
+**Response:**
+```json
+{
+  "success": true,
+  "item": {
+    "id": "xyz789",
+    "type": "comms",
+    "input": "Hey, are we still on for dinner tomorrow?",
+    "structured": {
+      "direction": "incoming",
+      "app": "whatsapp",
+      "contact": "Sarah"
+    },
+    "source": "tasker",
+    "createdAt": "2026-01-20T14:30:00.000Z",
+    "status": "active"
+  },
+  "message": "Captured incoming whatsapp message"
+}
+```
+
+**Setup Guide:** See `/second-brain/TASKER-SETUP.md` for complete Tasker automation instructions.
 
 ### GET /items
 List captured items.
@@ -224,15 +271,16 @@ curl https://second-brain.zammel.workers.dev/health
 
 ## Item Types
 
-| Type | Structured Fields | Example |
-|------|------------------|---------|
-| **todo** | task, priority, dueHint | "Call mum tomorrow" |
-| **expense** | amount, category, vendor, date | "Garage $180 for car service" |
-| **calendar** | event, dateHint, timeHint, location | "Dentist Friday 2pm" |
-| **creative** | content, theme, connectedTo | "Tide patterns like breathing..." |
-| **note** | summary, tags | "Remember the coastguard meeting notes" |
-| **person** | name, context, detail | "Sarah mentioned she's moving to Auckland" |
-| **project** | project, update, nextAction | "Undercurrent - need to fix the haptics" |
+| Type | Structured Fields | Example | Source |
+|------|------------------|---------|--------|
+| **todo** | task, priority, dueHint | "Call mum tomorrow" | manual |
+| **expense** | amount, category, vendor, date | "Garage $180 for car service" | manual |
+| **calendar** | event, dateHint, timeHint, location | "Dentist Friday 2pm" | manual |
+| **creative** | content, theme, connectedTo | "Tide patterns like breathing..." | manual |
+| **note** | summary, tags | "Remember the coastguard meeting notes" | manual |
+| **person** | name, context, detail | "Sarah mentioned she's moving to Auckland" | manual |
+| **project** | project, update, nextAction | "Undercurrent - need to fix the haptics" | manual |
+| **comms** | direction, app, contact | "Hey, are we still on for dinner?" | tasker |
 
 ## How Analysis Works
 
