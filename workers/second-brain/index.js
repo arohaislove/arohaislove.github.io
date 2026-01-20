@@ -7,6 +7,7 @@
  *
  * Endpoints:
  * POST /capture - receive and classify input (requires auth)
+ * POST /comms - capture communication data from Tasker (requires auth)
  * GET /items - list all items (requires auth)
  * GET /item/:id - get single item (requires auth)
  * GET /export - export all data as JSON (requires auth)
@@ -70,6 +71,10 @@ export default {
         return await handleCapture(request, env);
       }
 
+      if (path === '/comms' && request.method === 'POST') {
+        return await handleComms(request, env);
+      }
+
       if (path === '/items' && request.method === 'GET') {
         return await handleListItems(url, env);
       }
@@ -117,6 +122,7 @@ export default {
         error: 'Not found',
         endpoints: {
           'POST /capture': 'Capture new item',
+          'POST /comms': 'Capture communication data (Tasker)',
           'GET /items': 'List items (query: type, status, limit)',
           'GET /item/:id': 'Get single item',
           'PATCH /item/:id': 'Update item classification',
@@ -336,6 +342,56 @@ async function handleCapture(request, env) {
     success: true,
     item: item,
     message: `Captured as ${item.type}`
+  });
+}
+
+/**
+ * COMMS CAPTURE - receive communication data from Tasker
+ */
+async function handleComms(request, env) {
+  const body = await request.json();
+  const {
+    message,
+    direction = 'incoming',
+    app = 'unknown',
+    contact = 'unknown',
+    timestamp = null
+  } = body;
+
+  if (!message || typeof message !== 'string') {
+    return jsonResponse({ error: 'Missing or invalid message' }, 400);
+  }
+
+  if (message.length > 5000) {
+    return jsonResponse({ error: 'Message too long (max 5000 characters)' }, 400);
+  }
+
+  // Create comms item without classification (raw capture)
+  const item = {
+    id: generateId(),
+    input: message,
+    type: 'comms',
+    structured: {
+      direction: direction,
+      app: app,
+      contact: contact
+    },
+    aiNotes: null, // No AI analysis yet - will be analyzed in briefing
+    source: 'tasker',
+    createdAt: timestamp || new Date().toISOString(),
+    status: 'active'
+  };
+
+  // Store in KV
+  await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
+
+  // Add to index
+  await addToIndex(item, env);
+
+  return jsonResponse({
+    success: true,
+    item: item,
+    message: `Captured ${direction} ${app} message`
   });
 }
 
@@ -886,9 +942,9 @@ async function sendMorningBriefingPing(env) {
  * Generate morning briefing using Claude API
  */
 async function generateMorningBriefing(env) {
-  // Get recent items (last 30)
+  // Get recent items (last 50 to ensure we get enough comms)
   const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
-  const recentIds = indexData.items.slice(-30);
+  const recentIds = indexData.items.slice(-50);
   const items = [];
 
   for (const id of recentIds) {
@@ -899,10 +955,20 @@ async function generateMorningBriefing(env) {
   // Get Claude's working memory
   const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
 
-  // Format items for briefing
-  const recentCaptures = items.map(i =>
+  // Separate comms from other captures
+  const commsItems = items.filter(i => i.type === 'comms');
+  const otherItems = items.filter(i => i.type !== 'comms');
+
+  // Format regular captures for briefing
+  const recentCaptures = otherItems.map(i =>
     `[${i.type.toUpperCase()}] ${i.createdAt.split('T')[0]}\nInput: ${i.input}\nAI Notes: ${i.aiNotes || 'none'}`
   ).join('\n\n');
+
+  // Format comms data for analysis
+  const commsData = commsItems.map(i => {
+    const structured = i.structured || {};
+    return `[${structured.direction?.toUpperCase() || 'UNKNOWN'}] ${structured.app || 'unknown'} - ${structured.contact || 'unknown'}\n${i.createdAt.split('T')[0]} ${i.createdAt.split('T')[1]?.substring(0, 5) || ''}\nMessage: ${i.input}`;
+  }).join('\n\n');
 
   // Format Claude's working memory
   const workingMemory = claudeNotes.notes
@@ -910,12 +976,15 @@ async function generateMorningBriefing(env) {
     .map(n => `[${n.category}] ${n.content}`)
     .join('\n');
 
-  const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures and patterns.
+  const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures, communication patterns, and life rhythms.
 
 TODAY'S DATE: ${new Date().toISOString().split('T')[0]}
 
-RECENT CAPTURES (last 30 items):
+RECENT CAPTURES (manual voice/text entries):
 ${recentCaptures || '(no recent captures)'}
+
+COMMUNICATIONS DATA (from Tasker - last 48 hours):
+${commsData || '(no comms data yet)'}
 
 YOUR WORKING MEMORY (patterns you've noticed):
 ${workingMemory || '(no working memory yet)'}
@@ -935,6 +1004,15 @@ Dave. Morning.
 
 ### **[Pattern 2 Name]**
 - More observations
+
+### **Communication Patterns** 📱
+[If comms data available:
+- Who's reaching out, who you're avoiding
+- Response timing patterns (immediate vs delayed)
+- Energy in different conversations
+- Who you haven't heard from in a while
+- Conversations that might need attention
+Be specific with names and patterns. Don't invade privacy - focus on patterns that matter.]
 
 ### **Health Flags** ⚠️
 [If any health mentions, weight tracking, discomfort - call them out specifically and ask how they're feeling]
