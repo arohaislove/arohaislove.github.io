@@ -1096,8 +1096,8 @@ Keep it concise but insightful. This should feel like talking to a smart friend 
 async function sendMorningBriefing(briefing, env) {
   const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
 
-  // Truncate if too long for ntfy (max ~4000 chars recommended)
-  const maxLength = 3500;
+  // Truncate if too long for ntfy (max 4096 bytes)
+  const maxLength = 4000;
   let body = briefing;
   if (briefing.length > maxLength) {
     body = briefing.substring(0, maxLength) + '\n\n...[Briefing truncated - open Dashboard for full view]';
