@@ -44,6 +44,9 @@ Tap the **pencil icon** to configure:
   - Tap the **app list icon**, check the apps you want
 - **Get Text**: Check this box
 - **Get Title**: Check this box
+- **Event Behavior**: Select **"Only Posted Notifications"** (prevents duplicate updates)
+- **Only Posted Notifications**: Check this box
+- **Exclude Ongoing Notifications**: Check this box
 - **Notification Actions**: Leave unchecked
 - Leave everything else as default
 
@@ -164,9 +167,15 @@ AutoNotification provides these variables you can use:
 
 ### Too many notifications being captured:
 
+**Server-side deduplication is enabled** - if you send the same message multiple times within 5 minutes, only the first one is stored.
+
+If you're still getting too many:
+
 1. Edit the AutoNotification Intercept configuration
-2. Reduce the **Apps** list to only messaging apps
-3. Add **Text Filter** to ignore system notifications
+2. Ensure **"Only Posted Notifications"** is checked (prevents updates)
+3. Ensure **"Exclude Ongoing Notifications"** is checked
+4. Reduce the **Apps** list to only messaging apps
+5. Add **Text Filter** to ignore system notifications
 
 ### Battery drain:
 
@@ -199,13 +208,17 @@ Now only messages matching your filter will be captured.
 
 ## Advanced: Deduplicate Messages
 
-If you get multiple notifications for the same message:
+**Automatic deduplication is now enabled** - the Second Brain worker automatically ignores duplicate messages (same content, contact, and direction) within 5 minutes.
+
+You can also add client-side filtering in Tasker if needed:
 
 1. Create a global variable: `%LAST_COMMS_TEXT`
 2. Add **If** condition before HTTP Request:
    - `%antext !~ %LAST_COMMS_TEXT`
 3. Add **Variable Set** action after HTTP Request:
    - `%LAST_COMMS_TEXT` = `%antext`
+
+**Note:** This is usually unnecessary since the server handles it.
 
 ## What Happens Next?
 
