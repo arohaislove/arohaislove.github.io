@@ -366,6 +366,31 @@ async function handleComms(request, env) {
     return jsonResponse({ error: 'Message too long (max 5000 characters)' }, 400);
   }
 
+  // Deduplication: check if same message from same contact in last 5 minutes
+  const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
+  const recentIds = indexData.items.slice(-20); // Check last 20 items
+  const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+
+  for (const id of recentIds) {
+    const existingItem = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (!existingItem || existingItem.type !== 'comms') continue;
+
+    const itemTime = new Date(existingItem.createdAt).getTime();
+    if (itemTime < fiveMinutesAgo) continue;
+
+    // Check if duplicate (same message, contact, and direction)
+    if (existingItem.input === message &&
+        existingItem.structured?.contact === contact &&
+        existingItem.structured?.direction === direction) {
+      return jsonResponse({
+        success: true,
+        item: existingItem,
+        message: 'Duplicate message ignored',
+        duplicate: true
+      });
+    }
+  }
+
   // Create comms item without classification (raw capture)
   const item = {
     id: generateId(),
