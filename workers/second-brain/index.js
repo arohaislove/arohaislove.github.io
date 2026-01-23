@@ -150,10 +150,12 @@ export default {
   async scheduled(event, env, ctx) {
     console.log('Cron triggered at:', new Date().toISOString());
 
-    // Check if this is the morning briefing time (4am NZT = 15:00 or 16:00 UTC)
+    // Check if this is the morning briefing time (4am NZDT = 15:00 UTC, 4am NZST = 16:00 UTC)
     const now = new Date();
     const hour = now.getUTCHours();
-    const isMorningBriefing = hour === 15 || hour === 16;
+    // Currently using 15:00 UTC for NZDT (daylight saving time)
+    // When NZ switches to NZST (winter), change to hour === 16
+    const isMorningBriefing = hour === 15;
 
     if (isMorningBriefing) {
       // Generate and send full morning briefing
