@@ -1,11 +1,45 @@
-// Configuration - Loaded from config.js
-// Make sure config.js is loaded before this script
-if (typeof window.SECOND_BRAIN_CONFIG === 'undefined') {
-    alert('ERROR: config.js not found!\n\nPlease copy config.example.js to config.js and add your AUTH_TOKEN.');
-    throw new Error('config.js not loaded');
+// Configuration - Load from config.js (local dev) or localStorage (production)
+function getConfig() {
+    const WORKER_URL = 'https://second-brain.zammel.workers.dev';
+
+    // Try config.js first (for local development)
+    if (typeof window.SECOND_BRAIN_CONFIG !== 'undefined') {
+        return window.SECOND_BRAIN_CONFIG;
+    }
+
+    // Fall back to localStorage (for production/mobile)
+    const storedToken = localStorage.getItem('SECOND_BRAIN_AUTH_TOKEN');
+    if (storedToken) {
+        return {
+            WORKER_URL: WORKER_URL,
+            AUTH_TOKEN: storedToken
+        };
+    }
+
+    // No config found - prompt user (with default token pre-filled for convenience)
+    const defaultToken = 'd4226dc2dd7bff69c4272abdbe43ee3984bcee798dd3e9629f3973fd3e230027';
+    const token = prompt(
+        '🔐 Second Brain Setup\n\n' +
+        'Your auth token is pre-filled below. Just tap OK to continue.\n\n' +
+        '(The token will be saved securely on your device.)',
+        defaultToken
+    );
+
+    if (!token || token.trim() === '') {
+        alert('Setup cancelled. Second Brain requires an AUTH_TOKEN to work.');
+        throw new Error('No AUTH_TOKEN provided');
+    }
+
+    // Save to localStorage
+    localStorage.setItem('SECOND_BRAIN_AUTH_TOKEN', token.trim());
+
+    return {
+        WORKER_URL: WORKER_URL,
+        AUTH_TOKEN: token.trim()
+    };
 }
 
-const CONFIG = window.SECOND_BRAIN_CONFIG;
+const CONFIG = getConfig();
 
 // Elements
 const input = document.getElementById('input');
@@ -474,6 +508,20 @@ function checkConfiguration() {
         return false;
     }
     return true;
+}
+
+// Token management
+const changeTokenLink = document.getElementById('changeTokenLink');
+if (changeTokenLink) {
+    changeTokenLink.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (confirm('This will clear your current token and prompt you to enter a new one. Continue?')) {
+            localStorage.removeItem('SECOND_BRAIN_AUTH_TOKEN');
+            alert('Token cleared. The page will reload and prompt you for a new token.');
+            location.reload();
+        }
+    });
 }
 
 // Initialize
