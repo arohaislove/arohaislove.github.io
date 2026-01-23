@@ -43,11 +43,12 @@
             <p>Worker: <a href="#" id="workerUrl" target="_blank" rel="noopener">Not configured</a></p>
             <p><a href="dashboard.html" class="back-link">📊 View Dashboard</a></p>
             <p><a href="/" class="back-link">← Back to Projects</a></p>
+            <p><a href="#" id="changeTokenLink" class="back-link" style="color: #ff9999;">🔑 Change Token</a></p>
         </div>
     </div>
 
-    <!-- Load configuration before main script -->
-    <script src="config.js"></script>
+    <!-- Load configuration before main script (optional - will fall back to localStorage if not found) -->
+    <script src="config.js" onerror="console.log('config.js not found, will use localStorage')"></script>
     <script src="script.js"></script>
 </body>
 </html>
