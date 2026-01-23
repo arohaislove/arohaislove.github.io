@@ -161,8 +161,21 @@ export default {
       // Generate and send full morning briefing
       try {
         const briefing = await generateMorningBriefing(env);
+
+        // Save full briefing to KV storage for dashboard
+        const briefingRecord = {
+          timestamp: new Date().toISOString(),
+          date: new Date().toISOString().split('T')[0],
+          briefing: briefing
+        };
+        await env.BRAIN_KV.put('briefing:latest', JSON.stringify(briefingRecord));
+
+        // Also save with date key for history
+        const dateKey = `briefing:${briefingRecord.date}`;
+        await env.BRAIN_KV.put(dateKey, JSON.stringify(briefingRecord));
+
         await sendMorningBriefing(briefing, env);
-        console.log('Morning briefing generated and sent');
+        console.log('Morning briefing generated, saved, and sent');
       } catch (error) {
         console.error('Failed to generate morning briefing:', error);
         // Fallback to simple ping if briefing generation fails
@@ -626,6 +639,7 @@ async function handleExport(env) {
   const allIndex = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
   const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
   const latestAnalysis = await env.BRAIN_KV.get('analysis:latest', 'json') || null;
+  const latestBriefing = await env.BRAIN_KV.get('briefing:latest', 'json') || null;
 
   // Fetch all items
   const items = [];
@@ -652,7 +666,8 @@ async function handleExport(env) {
     },
     items: items,
     claudeNotes: claudeNotes,
-    latestAnalysis: latestAnalysis
+    latestAnalysis: latestAnalysis,
+    latestBriefing: latestBriefing
   };
 
   return new Response(JSON.stringify(exportData, null, 2), {
@@ -1022,6 +1037,35 @@ Generate a morning briefing in this exact structure:
 
 Dave. Morning.
 
+## One Provocation
+[A gentle challenge or observation that might spark reflection. Start with this - it's the most important thing.]
+
+## What Needs Attention Today
+
+### 🔴 **Health**
+[If relevant - call out any health mentions, weight tracking, discomfort]
+
+### 🟡 **Open Tasks**
+[Specific items that need doing]
+
+### 🟢 **Energy Opportunities**
+[Things that might energize them - where their attention is naturally going]
+
+## One Thing for Today
+**Practical**: [One clear, small action they can take]
+
+## One Thing to Sit With
+**Reflective**: [One question or thought to carry through the day]
+
+## From My World (What I'm Bringing)
+[1-3 external insights: relevant news, tech developments, tools, or connections to their interests. Be specific and useful. This is YOUR wisdom, not theirs.]
+
+## What Claude (in your Second Brain) Has Been Noticing
+[Pull key insights from your working memory - patterns you've spotted across their captures]
+
+## The Big Context
+[Life events, transitions, what's happening this week - the broader picture]
+
 ## What I'm Seeing (Last 48 Hours)
 [Summarize what they've captured, group by themes. Be specific with counts and dates.]
 
@@ -1041,42 +1085,12 @@ Dave. Morning.
 - Conversations that might need attention
 Be specific with names and patterns. Don't invade privacy - focus on patterns that matter.]
 
-### **Health Flags** ⚠️
-[If any health mentions, weight tracking, discomfort - call them out specifically and ask how they're feeling]
-
 ### **Open Loops**
 [Tasks or threads that are unfinished]
 
-## What Claude (in your Second Brain) Has Been Noticing
-[Pull key insights from your working memory, quote them]
-
-## The Big Context
-[Life events, transitions, what's happening this week]
-
-## From My World (What I'm Bringing)
-[1-3 external insights: relevant news, tech developments, tools, or connections to their interests. Be specific and useful.]
-
-## One Provocation
-[A gentle challenge or observation that might spark reflection]
-
-## What Needs Attention Today
-
-### 🔴 **Health**
-[If relevant]
-
-### 🟡 **Open Tasks**
-[Specific items]
-
-### 🟢 **Energy Opportunities**
-[Things that might energize them]
-
-## One Thing for Today
-**Practical**: [One clear, small action]
-
-## One Thing to Sit With
-**Reflective**: [One question or thought to carry]
-
 ---
+
+CRITICAL: Put the WISDOM at the TOP (provocation, what needs attention, one thing for today, one thing to sit with, external insights). Put the DATA at the BOTTOM (what I'm seeing, communication patterns). If the briefing gets truncated, we want to keep the wisdom, not the data recap.
 
 TONE:
 - Direct but warm
