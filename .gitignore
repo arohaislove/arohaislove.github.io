@@ -1,0 +1,17 @@
+# Second Brain - Secret configuration file
+# Contains authentication tokens - should never be committed
+second-brain/config.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (if any project uses npm)
+node_modules/

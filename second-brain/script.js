@@ -1,8 +1,11 @@
-// Configuration - Configured and ready to use
-const CONFIG = {
-    WORKER_URL: 'https://second-brain.zammel.workers.dev',
-    AUTH_TOKEN: 'd4226dc2dd7bff69c4272abdbe43ee3984bcee798dd3e9629f3973fd3e230027'
-};
+// Configuration - Loaded from config.js
+// Make sure config.js is loaded before this script
+if (typeof window.SECOND_BRAIN_CONFIG === 'undefined') {
+    alert('ERROR: config.js not found!\n\nPlease copy config.example.js to config.js and add your AUTH_TOKEN.');
+    throw new Error('config.js not loaded');
+}
+
+const CONFIG = window.SECOND_BRAIN_CONFIG;
 
 // Elements
 const input = document.getElementById('input');
