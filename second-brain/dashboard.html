@@ -308,6 +308,61 @@
             font-style: italic;
         }
 
+        /* Briefing Section */
+        .briefing-section {
+            background: linear-gradient(135deg, rgba(255, 200, 87, 0.1) 0%, rgba(255, 140, 105, 0.08) 100%);
+            border: 2px solid rgba(255, 200, 87, 0.3);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .briefing-content {
+            color: #e8e8e8;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .briefing-content h1 {
+            color: #ffc857;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid rgba(255, 200, 87, 0.3);
+            padding-bottom: 0.5rem;
+        }
+
+        .briefing-content h2 {
+            color: #ffb347;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .briefing-content h3 {
+            color: #ffa658;
+            font-size: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .briefing-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .briefing-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .briefing-timestamp {
+            font-size: 0.85rem;
+            color: #999;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 200, 87, 0.2);
+            font-style: italic;
+        }
+
         /* Analysis Section */
         .analysis-section {
             background: rgba(255, 166, 88, 0.05);
@@ -432,6 +487,8 @@
 
         <div class="stats" id="stats"></div>
 
+        <div id="briefingSection"></div>
+
         <div id="claudeNotesSection"></div>
 
         <div id="analysisSection"></div>
@@ -503,6 +560,7 @@
         let allItems = [];
         let claudeNotes = [];
         let latestAnalysis = null;
+        let latestBriefing = null;
         let currentFilter = 'all';
 
         // Load data
@@ -541,7 +599,7 @@
                     console.warn('Failed to load Claude notes:', e);
                 }
 
-                // Fetch latest analysis
+                // Fetch latest analysis and briefing
                 try {
                     const exportResponse = await fetch(`${CONFIG.WORKER_URL}/export`, {
                         headers: {
@@ -552,12 +610,14 @@
                     if (exportResponse.ok) {
                         const exportData = await exportResponse.json();
                         latestAnalysis = exportData.latestAnalysis || null;
+                        latestBriefing = exportData.latestBriefing || null;
                     }
                 } catch (e) {
                     console.warn('Failed to load analysis:', e);
                 }
 
                 renderStats();
+                renderBriefing();
                 renderClaudeNotes();
                 renderAnalysis();
                 renderItems();
@@ -640,6 +700,45 @@
                 </div>
                 <div class="claude-notes">
                     ${notesHtml}
+                </div>
+            `;
+        }
+
+        // Render morning briefing
+        function renderBriefing() {
+            const briefingSection = document.getElementById('briefingSection');
+
+            if (!latestBriefing || !latestBriefing.briefing) {
+                briefingSection.innerHTML = '';
+                return;
+            }
+
+            const timestamp = new Date(latestBriefing.timestamp);
+            const formattedTime = timestamp.toLocaleDateString() + ' at ' + timestamp.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+
+            // Convert markdown-style formatting to HTML
+            let briefingHtml = escapeHtml(latestBriefing.briefing);
+
+            // Convert markdown headers
+            briefingHtml = briefingHtml.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+            briefingHtml = briefingHtml.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            briefingHtml = briefingHtml.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+
+            // Convert bold text
+            briefingHtml = briefingHtml.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Convert line breaks to <br>
+            briefingHtml = briefingHtml.replace(/\n/g, '<br>');
+
+            // Convert bullet points
+            briefingHtml = briefingHtml.replace(/^- (.+)$/gm, '<li>$1</li>');
+
+            briefingSection.innerHTML = `
+                <div class="briefing-section">
+                    <div class="briefing-content">
+                        ${briefingHtml}
+                    </div>
+                    <div class="briefing-timestamp">Generated ${formattedTime}</div>
                 </div>
             `;
         }
