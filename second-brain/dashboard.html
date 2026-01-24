@@ -595,7 +595,7 @@
 
                 // Fetch all data in parallel for faster loading
                 const [itemsResponse, notesResponse, exportResponse] = await Promise.all([
-                    fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=500`, {
+                    fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=100`, {
                         headers: {
                             'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
                         }
