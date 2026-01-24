@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📡 Signal Reading - Second Brain</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn.primary {
+            background: rgba(130, 88, 255, 0.3);
+            border-color: rgba(130, 88, 255, 0.5);
+        }
+
+        .btn.primary:hover {
+            background: rgba(130, 88, 255, 0.5);
+        }
+
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #999;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active {
+            background: rgba(130, 88, 255, 0.2);
+            border-color: rgba(130, 88, 255, 0.4);
+            color: #fff;
+        }
+
+        .signal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .signal-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .signal-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .signal-card.reviewed {
+            opacity: 0.6;
+        }
+
+        .signal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .signal-meta {
+            flex: 1;
+        }
+
+        .signal-contact {
+            font-size: 1.2rem;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .signal-details {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .signal-priority {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .signal-message {
+            background: rgba(0, 0, 0, 0.2);
+            border-left: 3px solid rgba(130, 88, 255, 0.5);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .signal-analysis {
+            display: grid;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .analysis-item {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .analysis-label {
+            font-size: 0.85rem;
+            color: #8258ff;
+            font-weight: 500;
+            min-width: 120px;
+        }
+
+        .analysis-value {
+            font-size: 0.9rem;
+            color: #e0e0e0;
+            line-height: 1.4;
+        }
+
+        .context-badge {
+            display: inline-block;
+            background: rgba(130, 88, 255, 0.2);
+            border: 1px solid rgba(130, 88, 255, 0.3);
+            color: #a78bfa;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
+        .action-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .action-badge.review {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #ffc107;
+        }
+
+        .action-badge.noted {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            color: #4caf50;
+        }
+
+        .action-badge.calibration {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            color: #f44336;
+        }
+
+        .detailed-analysis {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .detailed-analysis.expanded {
+            display: block;
+        }
+
+        .dimension {
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dimension:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .dimension-name {
+            font-size: 0.8rem;
+            color: #8258ff;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .dimension-value {
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.4;
+        }
+
+        .feedback-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feedback-section.has-feedback {
+            background: rgba(76, 175, 80, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .feedback-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .feedback-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ccc;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+
+        .feedback-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .feedback-btn.selected {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+            color: #4caf50;
+        }
+
+        .feedback-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .feedback-display {
+            font-size: 0.85rem;
+            color: #ccc;
+            line-height: 1.5;
+        }
+
+        .feedback-label {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #666;
+        }
+
+        .empty-state h2 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #999;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            border: 1px solid rgba(244, 67, 54, 0.4);
+            color: #f44336;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .signal-card {
+                padding: 1rem;
+            }
+
+            .analysis-label {
+                min-width: 100px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>📡 Signal Reading</h1>
+                <div class="subtitle">Pattern recognition for captured conversations</div>
+            </div>
+            <div class="actions">
+                <a href="dashboard.html" class="btn">← Dashboard</a>
+                <a href="index.html" class="btn">Capture</a>
+            </div>
+        </header>
+
+        <div class="filters">
+            <button class="filter-btn active" data-filter="unreviewed">Unreviewed</button>
+            <button class="filter-btn" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="reviewed">Reviewed</button>
+        </div>
+
+        <div id="content">
+            <div class="loading">
+                <p>Loading signal readings...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_URL = 'https://second-brain.zammel.workers.dev';
+        const AUTH_TOKEN = localStorage.getItem('secondBrainAuthToken');
+
+        let currentFilter = 'unreviewed';
+        let signals = [];
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                loadSignals();
+            });
+        });
+
+        // Load signals
+        async function loadSignals() {
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading"><p>Loading...</p></div>';
+
+            if (!AUTH_TOKEN) {
+                content.innerHTML = '<div class="error">No auth token found. Please configure in dashboard.</div>';
+                return;
+            }
+
+            try {
+                const reviewedParam = currentFilter === 'unreviewed' ? 'false' :
+                                     currentFilter === 'reviewed' ? 'true' : '';
+
+                const url = `${API_URL}/signals?limit=50${reviewedParam ? `&reviewed=${reviewedParam}` : ''}`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${AUTH_TOKEN}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load signals');
+                }
+
+                const data = await response.json();
+                signals = data.signals || [];
+
+                renderSignals();
+            } catch (error) {
+                console.error('Error loading signals:', error);
+                content.innerHTML = `<div class="error">Failed to load signals: ${error.message}</div>`;
+            }
+        }
+
+        // Render signals
+        function renderSignals() {
+            const content = document.getElementById('content');
+
+            if (signals.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No signal readings yet</h2>
+                        <p>Interactions will appear here when they're flagged for analysis.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const signalList = document.createElement('div');
+            signalList.className = 'signal-list';
+
+            signals.forEach(signal => {
+                const card = createSignalCard(signal);
+                signalList.appendChild(card);
+            });
+
+            content.innerHTML = '';
+            content.appendChild(signalList);
+        }
+
+        // Create signal card
+        function createSignalCard(signal) {
+            const { item, analysis, reviewed, priority } = signal;
+            const { structured } = item;
+
+            const card = document.createElement('div');
+            card.className = `signal-card ${reviewed ? 'reviewed' : ''}`;
+
+            const contextClass = analysis.contextType?.replace('-', ' ') || 'unknown';
+            const actionClass = analysis.action || 'noted';
+
+            card.innerHTML = `
+                <div class="signal-header">
+                    <div class="signal-meta">
+                        <div class="signal-contact">
+                            ${signal.contact}
+                            <span class="context-badge">${contextClass}</span>
+                        </div>
+                        <div class="signal-details">
+                            ${structured.direction} via ${structured.app} • ${formatDate(item.createdAt)}
+                            <span class="action-badge ${actionClass}">${analysis.action || 'noted'}</span>
+                        </div>
+                    </div>
+                    <div class="signal-priority">Priority: ${Math.round(priority)}</div>
+                </div>
+
+                <div class="signal-message">${item.input}</div>
+
+                <div class="signal-analysis">
+                    <div class="analysis-item">
+                        <div class="analysis-label">Key dynamic:</div>
+                        <div class="analysis-value">${analysis.keyDynamic}</div>
+                    </div>
+                    <div class="analysis-item">
+                        <div class="analysis-label">Possible subtext:</div>
+                        <div class="analysis-value">${analysis.possibleSubtext}</div>
+                    </div>
+                    ${analysis.whatWorked ? `
+                    <div class="analysis-item">
+                        <div class="analysis-label">What worked:</div>
+                        <div class="analysis-value">${analysis.whatWorked}</div>
+                    </div>
+                    ` : ''}
+                    ${analysis.patternNote ? `
+                    <div class="analysis-item">
+                        <div class="analysis-label">Pattern note:</div>
+                        <div class="analysis-value">${analysis.patternNote}</div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <button class="btn" onclick="toggleDetails('${item.id}')">
+                    Show detailed analysis
+                </button>
+
+                <div class="detailed-analysis" id="details-${item.id}">
+                    ${renderDetailedAnalysis(analysis)}
+                </div>
+
+                ${renderFeedbackSection(signal)}
+            `;
+
+            return card;
+        }
+
+        // Render detailed analysis
+        function renderDetailedAnalysis(analysis) {
+            const detailed = analysis.detailedAnalysis || {};
+
+            const dimensions = [
+                { name: 'Signal vs Noise', key: 'signalVsNoise' },
+                { name: 'Dependency Leak', key: 'dependencyLeak' },
+                { name: 'Status Calibration', key: 'statusCalibration' },
+                { name: 'Purpose Clarity', key: 'purposeClarity' },
+                { name: 'Constraint Awareness', key: 'constraintAwareness' },
+                { name: "What Wasn't Said", key: 'whatWasntSaid' },
+                { name: 'Power Direction', key: 'powerDirection' },
+                { name: 'Time Horizon Mismatch', key: 'timeHorizonMismatch' },
+                { name: 'Context Carry-Over', key: 'contextCarryOver' },
+                { name: 'What Worked', key: 'whatWorked' }
+            ];
+
+            let html = '';
+
+            dimensions.forEach(dim => {
+                if (detailed[dim.key]) {
+                    html += `
+                        <div class="dimension">
+                            <div class="dimension-name">${dim.name}</div>
+                            <div class="dimension-value">${detailed[dim.key]}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            if (analysis.blindSpots && analysis.blindSpots.length > 0) {
+                html += `
+                    <div class="dimension">
+                        <div class="dimension-name">Possible Blind Spots</div>
+                        <div class="dimension-value">
+                            ${analysis.blindSpots.map(b => `• ${b}`).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (analysis.questions && analysis.questions.length > 0) {
+                html += `
+                    <div class="dimension">
+                        <div class="dimension-name">Questions to Consider</div>
+                        <div class="dimension-value">
+                            ${analysis.questions.map(q => `• ${q}`).join('<br>')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            return html;
+        }
+
+        // Render feedback section
+        function renderFeedbackSection(signal) {
+            const { analysis, itemId, reviewed } = signal;
+            const feedback = analysis.feedback;
+
+            if (feedback) {
+                return `
+                    <div class="feedback-section has-feedback">
+                        <strong>Your Feedback:</strong>
+                        <div class="feedback-display">
+                            <p><strong>Accuracy:</strong> ${feedback.accurate}</p>
+                            ${feedback.userRead ? `<p><strong>Your read:</strong> ${feedback.userRead}</p>` : ''}
+                            ${feedback.corrections ? `<p><strong>Corrections:</strong> ${feedback.corrections}</p>` : ''}
+                            <p style="color: #999; font-size: 0.8rem;">Reviewed ${formatDate(feedback.feedbackAt)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="feedback-section" id="feedback-${itemId}">
+                    <strong>Was this analysis accurate?</strong>
+                    <div class="feedback-controls">
+                        <button class="feedback-btn" data-accuracy="yes" onclick="setAccuracy('${itemId}', 'yes')">
+                            Yes, spot on
+                        </button>
+                        <button class="feedback-btn" data-accuracy="partially" onclick="setAccuracy('${itemId}', 'partially')">
+                            Partially
+                        </button>
+                        <button class="feedback-btn" data-accuracy="no" onclick="setAccuracy('${itemId}', 'no')">
+                            No, off base
+                        </button>
+                    </div>
+                    <div id="feedback-input-${itemId}"></div>
+                </div>
+            `;
+        }
+
+        // Toggle detailed analysis
+        function toggleDetails(itemId) {
+            const details = document.getElementById(`details-${itemId}`);
+            const btn = details.previousElementSibling;
+
+            if (details.classList.contains('expanded')) {
+                details.classList.remove('expanded');
+                btn.textContent = 'Show detailed analysis';
+            } else {
+                details.classList.add('expanded');
+                btn.textContent = 'Hide detailed analysis';
+            }
+        }
+
+        // Set accuracy and show input
+        let selectedAccuracy = {};
+
+        function setAccuracy(itemId, accuracy) {
+            selectedAccuracy[itemId] = accuracy;
+
+            const section = document.getElementById(`feedback-${itemId}`);
+            const buttons = section.querySelectorAll('.feedback-btn');
+
+            buttons.forEach(btn => {
+                if (btn.dataset.accuracy === accuracy) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            const inputContainer = document.getElementById(`feedback-input-${itemId}`);
+
+            if (accuracy === 'yes') {
+                inputContainer.innerHTML = `
+                    <button class="btn primary" style="margin-top: 0.5rem;" onclick="submitFeedback('${itemId}')">
+                        Submit feedback
+                    </button>
+                `;
+            } else {
+                inputContainer.innerHTML = `
+                    <textarea
+                        class="feedback-input"
+                        id="user-read-${itemId}"
+                        placeholder="What was your read of this interaction? (optional)"
+                        rows="2"
+                    ></textarea>
+                    <textarea
+                        class="feedback-input"
+                        id="corrections-${itemId}"
+                        placeholder="What did the analysis get wrong?"
+                        rows="3"
+                    ></textarea>
+                    <button class="btn primary" style="margin-top: 0.5rem;" onclick="submitFeedback('${itemId}')">
+                        Submit feedback
+                    </button>
+                `;
+            }
+        }
+
+        // Submit feedback
+        async function submitFeedback(itemId) {
+            const accuracy = selectedAccuracy[itemId];
+            if (!accuracy) return;
+
+            const userReadEl = document.getElementById(`user-read-${itemId}`);
+            const correctionsEl = document.getElementById(`corrections-${itemId}`);
+
+            const feedback = {
+                accurate: accuracy,
+                userRead: userReadEl ? userReadEl.value : null,
+                corrections: correctionsEl ? correctionsEl.value : null
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/signal/${itemId}/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${AUTH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(feedback)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit feedback');
+                }
+
+                // Reload signals to show updated state
+                await loadSignals();
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                alert('Failed to submit feedback: ' + error.message);
+            }
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffHours = (now - date) / (1000 * 60 * 60);
+
+            if (diffHours < 1) {
+                return 'just now';
+            } else if (diffHours < 24) {
+                return `${Math.floor(diffHours)}h ago`;
+            } else if (diffHours < 48) {
+                return 'yesterday';
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        // Make functions global
+        window.toggleDetails = toggleDetails;
+        window.setAccuracy = setAccuracy;
+        window.submitFeedback = submitFeedback;
+
+        // Load on start
+        loadSignals();
+    </script>
+</body>
+</html>

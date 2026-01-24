@@ -117,6 +117,23 @@ export default {
         return await handleClearClaudeNotes(request, env);
       }
 
+      if (path === '/signals' && request.method === 'GET') {
+        return await handleGetSignals(url, env);
+      }
+
+      if (path.startsWith('/signal/') && path.endsWith('/feedback') && request.method === 'POST') {
+        const id = path.replace('/signal/', '').replace('/feedback', '');
+        return await handleSignalFeedback(id, request, env);
+      }
+
+      if (path === '/signal-exclusions' && request.method === 'GET') {
+        return await handleGetExclusions(env);
+      }
+
+      if (path === '/signal-exclusions' && request.method === 'POST') {
+        return await handleAddExclusion(request, env);
+      }
+
       // Default response
       return jsonResponse({
         error: 'Not found',
@@ -133,6 +150,10 @@ export default {
           'GET /claude-notes': 'Get Claude working memory',
           'POST /claude-notes': 'Add Claude note',
           'DELETE /claude-notes': 'Clear Claude notes',
+          'GET /signals': 'Get signal readings queue',
+          'POST /signal/:id/feedback': 'Add feedback to signal analysis',
+          'GET /signal-exclusions': 'Get excluded contacts/apps',
+          'POST /signal-exclusions': 'Add exclusion',
           'GET /health': 'Health check'
         }
       }, 404);
@@ -406,6 +427,9 @@ async function handleComms(request, env) {
     }
   }
 
+  // Check if this should be flagged for signal analysis
+  const shouldFlag = await shouldFlagForSignalAnalysis(message, direction, app, contact, env);
+
   // Create comms item without classification (raw capture)
   const item = {
     id: generateId(),
@@ -419,7 +443,8 @@ async function handleComms(request, env) {
     aiNotes: null, // No AI analysis yet - will be analyzed in briefing
     source: 'tasker',
     createdAt: timestamp || new Date().toISOString(),
-    status: 'active'
+    status: 'active',
+    needsSignalAnalysis: shouldFlag
   };
 
   // Store in KV
@@ -428,10 +453,18 @@ async function handleComms(request, env) {
   // Add to index
   await addToIndex(item, env);
 
+  // Add to contact history
+  await addToContactHistory(contact, item.id, env);
+
+  // If flagged, queue for signal analysis
+  if (shouldFlag) {
+    await queueSignalAnalysis(item, env);
+  }
+
   return jsonResponse({
     success: true,
     item: item,
-    message: `Captured ${direction} ${app} message`
+    message: `Captured ${direction} ${app} message${shouldFlag ? ' [flagged for signal analysis]' : ''}`
   });
 }
 
@@ -1018,6 +1051,37 @@ async function generateMorningBriefing(env) {
     .map(n => `[${n.category}] ${n.content}`)
     .join('\n');
 
+  // Get top 3 signal readings (unreviewed, highest priority)
+  const signalQueue = await env.BRAIN_KV.get('signal-queue:all', 'json') || { items: [] };
+  const topSignals = signalQueue.items.filter(s => !s.reviewed).slice(0, 3);
+
+  const signalReadings = [];
+  for (const queueItem of topSignals) {
+    const analysis = await env.BRAIN_KV.get(`signal:${queueItem.itemId}`, 'json');
+    const item = await env.BRAIN_KV.get(`item:${queueItem.itemId}`, 'json');
+
+    if (analysis && item) {
+      signalReadings.push({
+        contact: queueItem.contact,
+        date: item.createdAt.split('T')[0],
+        message: item.input,
+        direction: item.structured?.direction,
+        app: item.structured?.app,
+        analysis: analysis
+      });
+    }
+  }
+
+  const signalData = signalReadings.map(s =>
+    `[${s.contact}] ${s.date} (${s.direction} via ${s.app})
+Message: ${s.message}
+Key dynamic: ${s.analysis.keyDynamic}
+Possible subtext: ${s.analysis.possibleSubtext}
+What worked: ${s.analysis.whatWorked || 'n/a'}
+Pattern note: ${s.analysis.patternNote || 'n/a'}
+Action: ${s.analysis.action}`
+  ).join('\n\n---\n\n');
+
   const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures, communication patterns, and life rhythms.
 
 TODAY'S DATE: ${new Date().toISOString().split('T')[0]}
@@ -1027,6 +1091,9 @@ ${recentCaptures || '(no recent captures)'}
 
 COMMUNICATIONS DATA (from Tasker - last 48 hours):
 ${commsData || '(no comms data yet)'}
+
+SIGNAL READINGS (analyzed interactions - what you might have missed):
+${signalData || '(no signal readings yet)'}
 
 YOUR WORKING MEMORY (patterns you've noticed):
 ${workingMemory || '(no working memory yet)'}
@@ -1059,6 +1126,16 @@ Dave. Morning.
 
 ## From My World (What I'm Bringing)
 [1-3 external insights: relevant news, tech developments, tools, or connections to their interests. Be specific and useful. This is YOUR wisdom, not theirs.]
+
+## Signal Reading: What You Might Have Missed 📡
+[IF signal readings are available, include up to 3 analyzed interactions. For each:
+- **[Contact name]** - [Date]
+- Key dynamic: [one sentence]
+- Possible subtext: [one sentence]
+- What worked: [one sentence or "nothing notable"]
+- Pattern note: [if connects to recurring theme]
+
+If no signal readings, say "No flagged interactions this period."]
 
 ## What Claude (in your Second Brain) Has Been Noticing
 [Pull key insights from your working memory - patterns you've spotted across their captures]
@@ -1160,6 +1237,424 @@ async function sendMorningBriefing(briefing, env) {
     console.error('Failed to send morning briefing:', e);
     throw e;
   }
+}
+
+/**
+ * SIGNAL READING MODULE
+ * Analyzes captured interactions for subtext and dynamics
+ */
+
+/**
+ * Determine if an interaction should be flagged for signal analysis
+ */
+async function shouldFlagForSignalAnalysis(message, direction, app, contact, env) {
+  // Check exclusions first
+  const exclusions = await env.BRAIN_KV.get('signal-exclusions', 'json') || { contacts: [], apps: [] };
+
+  if (exclusions.contacts.includes(contact.toLowerCase())) return false;
+  if (exclusions.apps.includes(app.toLowerCase())) return false;
+
+  // Auto-exclude transactional/service apps
+  const transactionalApps = ['banking', 'bank', 'delivery', 'uber', 'lyft', 'food', 'health'];
+  if (transactionalApps.some(t => app.toLowerCase().includes(t))) return false;
+
+  // Uncertainty markers (more likely in outgoing messages you sent)
+  const uncertaintyMarkers = [
+    'not sure', 'weird', 'confused', 'unclear', 'strange',
+    'did i', 'should i have', 'was that', 'awkward', '??'
+  ];
+  if (direction === 'outgoing' && uncertaintyMarkers.some(m => message.toLowerCase().includes(m))) {
+    return true;
+  }
+
+  // Professional-ambiguous keywords
+  const professionalKeywords = [
+    'interview', 'opportunity', 'meeting', 'proposal', 'project',
+    'collaboration', 'feedback', 'review', 'discuss', 'catch up'
+  ];
+  if (professionalKeywords.some(k => message.toLowerCase().includes(k))) {
+    return true;
+  }
+
+  // Questions left unanswered (outgoing question, then silence)
+  if (direction === 'outgoing' && message.includes('?')) {
+    // Check if there's been a response from this contact in last 24 hours
+    const contactHistory = await env.BRAIN_KV.get(`contact:${contact}`, 'json') || { interactions: [] };
+    const recentInteractions = contactHistory.interactions.slice(-5);
+
+    const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const hasRecentResponse = recentInteractions.some(id => {
+      // This is simplified - in full implementation, we'd fetch each item
+      return true; // Placeholder
+    });
+
+    if (!hasRecentResponse) return true;
+  }
+
+  // Long outgoing messages (might indicate over-explaining)
+  if (direction === 'outgoing' && message.length > 500) {
+    return true;
+  }
+
+  // Default: don't flag routine exchanges
+  return false;
+}
+
+/**
+ * Analyze interaction for signal reading
+ */
+async function analyzeSignal(item, env) {
+  const { input: message, structured } = item;
+  const { direction, app, contact } = structured;
+
+  // Get contact history for context
+  const contactHistory = await env.BRAIN_KV.get(`contact:${contact}`, 'json') || { interactions: [] };
+  const recentIds = contactHistory.interactions.slice(-5);
+
+  // Fetch recent interactions with this contact
+  const recentInteractions = [];
+  for (const id of recentIds) {
+    if (id === item.id) continue; // Skip current item
+    const interaction = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (interaction) {
+      recentInteractions.push({
+        date: interaction.createdAt.split('T')[0],
+        direction: interaction.structured?.direction,
+        message: interaction.input,
+        app: interaction.structured?.app
+      });
+    }
+  }
+
+  // Get calibration notes
+  const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+  const calibrationNotes = claudeNotes.notes
+    .filter(n => n.category === 'signal-calibration')
+    .map(n => n.content)
+    .join('\n');
+
+  const analysisPrompt = `You are analyzing a captured interaction for subtext and dynamics. This is part of a signal reading system to help the user recognize patterns they might miss.
+
+INTERACTION:
+Direction: ${direction}
+App: ${app}
+Contact: ${contact}
+Message: ${message}
+Date: ${item.createdAt}
+
+RECENT HISTORY WITH ${contact}:
+${recentInteractions.length > 0 ? recentInteractions.map(i =>
+  `[${i.date}] ${i.direction} via ${i.app}: ${i.message}`
+).join('\n') : '(no recent history)'}
+
+CALIBRATION NOTES (what you've learned about analysis accuracy):
+${calibrationNotes || '(none yet)'}
+
+Analyze this interaction across these dimensions:
+
+1. **Signal vs Noise**: Was this precise and context-aware, or vague and generic?
+2. **Dependency/Urgency Leak**: Does it signal that stability depends on the outcome?
+3. **Status Calibration**: Over-explaining (insecurity) or under-explaining (assumes alignment)?
+4. **Purpose Clarity**: Was intent clear, or was this processing out loud?
+5. **Constraint Awareness**: Did it show understanding of the other person's constraints?
+6. **What Wasn't Said**: What got avoided or talked around?
+7. **Power Direction**: Who adjusted to whom? Who set the frame?
+8. **Time Horizon Mismatch**: Different timescales at play?
+9. **Context Carry-Over**: How does history with this person affect subtext?
+10. **What Worked**: What landed as intended?
+
+Respond with JSON only:
+{
+  "contextType": "professional-ambiguous|operational-clear|personal-close|transactional",
+  "keyDynamic": "One sentence summary of the core dynamic",
+  "possibleSubtext": "One sentence about what might be happening beneath the surface",
+  "whatWorked": "One sentence about what was effective (or null if nothing notable)",
+  "patternNote": "Connection to recurring themes (or null)",
+  "action": "review|noted|calibration-needed",
+  "detailedAnalysis": {
+    "signalVsNoise": "Brief assessment",
+    "dependencyLeak": "Brief assessment",
+    "statusCalibration": "Brief assessment",
+    "purposeClarity": "Brief assessment",
+    "constraintAwareness": "Brief assessment",
+    "whatWasntSaid": "Brief assessment",
+    "powerDirection": "Brief assessment",
+    "timeHorizonMismatch": "Brief assessment",
+    "contextCarryOver": "Brief assessment",
+    "whatWorked": "Brief assessment"
+  },
+  "blindSpots": ["Patterns the user might be missing"],
+  "questions": ["Curious questions that might spark reflection"]
+}
+
+CRITICAL: Be honest and insightful, not validating. Focus on what's interesting, not what's flattering. Use the calibration notes to adjust your analysis.`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: analysisPrompt }]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Signal analysis API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const analysis = JSON.parse(jsonMatch[0]);
+
+      // Add metadata
+      analysis.analyzedAt = new Date().toISOString();
+      analysis.itemId = item.id;
+      analysis.contact = contact;
+
+      return analysis;
+    }
+  } catch (error) {
+    console.error('Signal analysis error:', error);
+    return null;
+  }
+
+  return null;
+}
+
+/**
+ * Queue an interaction for signal analysis
+ */
+async function queueSignalAnalysis(item, env) {
+  // Run analysis
+  const analysis = await analyzeSignal(item, env);
+
+  if (!analysis) {
+    console.log('Failed to analyze signal for item:', item.id);
+    return;
+  }
+
+  // Store analysis
+  await env.BRAIN_KV.put(`signal:${item.id}`, JSON.stringify(analysis));
+
+  // Add to priority queue
+  const queue = await env.BRAIN_KV.get('signal-queue:all', 'json') || { items: [] };
+
+  // Calculate priority score (higher = more important)
+  let priority = 0;
+
+  // Recent items get higher priority
+  const ageHours = (Date.now() - new Date(item.createdAt).getTime()) / (1000 * 60 * 60);
+  priority += Math.max(0, 48 - ageHours); // Newer = higher score
+
+  // Action type affects priority
+  if (analysis.action === 'calibration-needed') priority += 20;
+  if (analysis.action === 'review') priority += 10;
+
+  // Professional-ambiguous contexts get higher priority
+  if (analysis.contextType === 'professional-ambiguous') priority += 15;
+
+  queue.items.push({
+    itemId: item.id,
+    contact: item.structured.contact,
+    timestamp: item.createdAt,
+    priority: priority,
+    reviewed: false
+  });
+
+  // Sort by priority (highest first)
+  queue.items.sort((a, b) => b.priority - a.priority);
+
+  // Keep only last 100 items
+  if (queue.items.length > 100) {
+    queue.items = queue.items.slice(0, 100);
+  }
+
+  await env.BRAIN_KV.put('signal-queue:all', JSON.stringify(queue));
+
+  console.log(`Signal analysis queued for ${item.id} (priority: ${priority})`);
+}
+
+/**
+ * Add interaction to contact history
+ */
+async function addToContactHistory(contact, itemId, env) {
+  const history = await env.BRAIN_KV.get(`contact:${contact}`, 'json') || {
+    contact: contact,
+    interactions: [],
+    firstSeen: new Date().toISOString()
+  };
+
+  history.interactions.push(itemId);
+  history.lastSeen = new Date().toISOString();
+
+  // Keep last 50 interactions per contact
+  if (history.interactions.length > 50) {
+    history.interactions = history.interactions.slice(-50);
+  }
+
+  await env.BRAIN_KV.put(`contact:${contact}`, JSON.stringify(history));
+}
+
+/**
+ * Get signal readings queue
+ */
+async function handleGetSignals(url, env) {
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+  const reviewedFilter = url.searchParams.get('reviewed'); // 'true', 'false', or null (all)
+
+  const queue = await env.BRAIN_KV.get('signal-queue:all', 'json') || { items: [] };
+
+  let items = queue.items;
+
+  // Filter by reviewed status if specified
+  if (reviewedFilter === 'true') {
+    items = items.filter(i => i.reviewed);
+  } else if (reviewedFilter === 'false') {
+    items = items.filter(i => !i.reviewed);
+  }
+
+  // Take top N by priority
+  items = items.slice(0, limit);
+
+  // Fetch full analysis and item data
+  const signals = [];
+  for (const queueItem of items) {
+    const analysis = await env.BRAIN_KV.get(`signal:${queueItem.itemId}`, 'json');
+    const item = await env.BRAIN_KV.get(`item:${queueItem.itemId}`, 'json');
+
+    if (analysis && item) {
+      signals.push({
+        ...queueItem,
+        analysis: analysis,
+        item: item
+      });
+    }
+  }
+
+  return jsonResponse({
+    signals: signals,
+    count: signals.length,
+    totalInQueue: queue.items.length
+  });
+}
+
+/**
+ * Add feedback to signal analysis
+ */
+async function handleSignalFeedback(itemId, request, env) {
+  const body = await request.json();
+  const { accurate, userRead, corrections } = body;
+
+  // Get the analysis
+  const analysis = await env.BRAIN_KV.get(`signal:${itemId}`, 'json');
+  if (!analysis) {
+    return jsonResponse({ error: 'Signal analysis not found' }, 404);
+  }
+
+  // Add feedback
+  analysis.feedback = {
+    accurate: accurate, // 'yes', 'partially', 'no'
+    userRead: userRead, // User's own interpretation
+    corrections: corrections, // What was wrong
+    feedbackAt: new Date().toISOString()
+  };
+
+  // Save updated analysis
+  await env.BRAIN_KV.put(`signal:${itemId}`, JSON.stringify(analysis));
+
+  // Mark as reviewed in queue
+  const queue = await env.BRAIN_KV.get('signal-queue:all', 'json') || { items: [] };
+  const queueItem = queue.items.find(i => i.itemId === itemId);
+  if (queueItem) {
+    queueItem.reviewed = true;
+    await env.BRAIN_KV.put('signal-queue:all', JSON.stringify(queue));
+  }
+
+  // Add calibration note if there were corrections
+  if (corrections && (accurate === 'partially' || accurate === 'no')) {
+    const calibrationNote = `Signal analysis calibration: ${corrections}`;
+
+    const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+    claudeNotes.notes.push({
+      id: generateId(),
+      content: calibrationNote,
+      category: 'signal-calibration',
+      createdAt: new Date().toISOString(),
+      expiresAt: null // Never expire calibration notes
+    });
+
+    if (claudeNotes.notes.length > 50) {
+      claudeNotes.notes = claudeNotes.notes.slice(-50);
+    }
+
+    claudeNotes.lastUpdated = new Date().toISOString();
+    await env.BRAIN_KV.put('claude:notes', JSON.stringify(claudeNotes));
+  }
+
+  return jsonResponse({
+    success: true,
+    message: 'Feedback recorded',
+    analysis: analysis
+  });
+}
+
+/**
+ * Get exclusions
+ */
+async function handleGetExclusions(env) {
+  const exclusions = await env.BRAIN_KV.get('signal-exclusions', 'json') || {
+    contacts: [],
+    apps: [],
+    updatedAt: null
+  };
+  return jsonResponse(exclusions);
+}
+
+/**
+ * Add exclusion
+ */
+async function handleAddExclusion(request, env) {
+  const body = await request.json();
+  const { type, value } = body; // type: 'contact' or 'app'
+
+  if (!type || !value) {
+    return jsonResponse({ error: 'Missing type or value' }, 400);
+  }
+
+  const exclusions = await env.BRAIN_KV.get('signal-exclusions', 'json') || {
+    contacts: [],
+    apps: []
+  };
+
+  if (type === 'contact') {
+    if (!exclusions.contacts.includes(value.toLowerCase())) {
+      exclusions.contacts.push(value.toLowerCase());
+    }
+  } else if (type === 'app') {
+    if (!exclusions.apps.includes(value.toLowerCase())) {
+      exclusions.apps.push(value.toLowerCase());
+    }
+  } else {
+    return jsonResponse({ error: 'Invalid type (must be contact or app)' }, 400);
+  }
+
+  exclusions.updatedAt = new Date().toISOString();
+  await env.BRAIN_KV.put('signal-exclusions', JSON.stringify(exclusions));
+
+  return jsonResponse({
+    success: true,
+    exclusions: exclusions
+  });
 }
 
 /**
