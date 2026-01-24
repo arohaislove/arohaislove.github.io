@@ -594,8 +594,9 @@
                 console.log('Starting to load data...');
 
                 // Fetch essential data in parallel (items + notes only, skip export for speed)
+                // Reduced to 50 items for faster initial load
                 const [itemsResponse, notesResponse] = await Promise.all([
-                    fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=100`, {
+                    fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=50`, {
                         headers: {
                             'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
                         }
