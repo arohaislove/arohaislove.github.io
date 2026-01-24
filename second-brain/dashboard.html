@@ -593,8 +593,8 @@
             try {
                 console.log('Starting to load data...');
 
-                // Fetch all data in parallel for faster loading
-                const [itemsResponse, notesResponse, exportResponse] = await Promise.all([
+                // Fetch essential data in parallel (items + notes only, skip export for speed)
+                const [itemsResponse, notesResponse] = await Promise.all([
                     fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=100`, {
                         headers: {
                             'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
@@ -610,21 +610,12 @@
                     }).catch(e => {
                         console.warn('Failed to load Claude notes:', e);
                         return null;
-                    }),
-                    fetchWithTimeout(`${CONFIG.WORKER_URL}/export`, {
-                        headers: {
-                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
-                        }
-                    }).catch(e => {
-                        console.warn('Failed to load analysis:', e);
-                        return null;
                     })
                 ]);
 
                 console.log('Received responses:', {
                     items: itemsResponse?.status,
-                    notes: notesResponse?.status,
-                    export: exportResponse?.status
+                    notes: notesResponse?.status
                 });
 
                 // Process items response (required)
@@ -642,13 +633,10 @@
                     console.log(`Loaded ${claudeNotes.length} Claude notes`);
                 }
 
-                // Process analysis and briefing (optional)
-                if (exportResponse && exportResponse.ok) {
-                    const exportData = await exportResponse.json();
-                    latestAnalysis = exportData.latestAnalysis || null;
-                    latestBriefing = exportData.latestBriefing || null;
-                    console.log('Loaded analysis and briefing');
-                }
+                // Skip loading analysis/briefing for now (was causing 30s timeout)
+                // TODO: Add separate lightweight endpoints for these
+                latestAnalysis = null;
+                latestBriefing = null;
 
                 renderStats();
                 renderBriefing();
