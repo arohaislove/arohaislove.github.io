@@ -570,51 +570,49 @@
             content.innerHTML = '<div class="loading">Loading your captured data...</div>';
 
             try {
-                // Fetch items
-                const itemsResponse = await fetch(`${CONFIG.WORKER_URL}/items?limit=500`, {
-                    headers: {
-                        'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
-                    }
-                });
+                // Fetch all data in parallel for faster loading
+                const [itemsResponse, notesResponse, exportResponse] = await Promise.all([
+                    fetch(`${CONFIG.WORKER_URL}/items?limit=500`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    }),
+                    fetch(`${CONFIG.WORKER_URL}/claude-notes`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    }).catch(e => {
+                        console.warn('Failed to load Claude notes:', e);
+                        return null;
+                    }),
+                    fetch(`${CONFIG.WORKER_URL}/export`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    }).catch(e => {
+                        console.warn('Failed to load analysis:', e);
+                        return null;
+                    })
+                ]);
 
+                // Process items response (required)
                 if (!itemsResponse.ok) {
                     throw new Error(`HTTP ${itemsResponse.status}`);
                 }
-
                 const itemsData = await itemsResponse.json();
                 allItems = itemsData.items || [];
 
-                // Fetch Claude notes
-                try {
-                    const notesResponse = await fetch(`${CONFIG.WORKER_URL}/claude-notes`, {
-                        headers: {
-                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
-                        }
-                    });
-
-                    if (notesResponse.ok) {
-                        const notesData = await notesResponse.json();
-                        claudeNotes = notesData.notes || [];
-                    }
-                } catch (e) {
-                    console.warn('Failed to load Claude notes:', e);
+                // Process Claude notes (optional)
+                if (notesResponse && notesResponse.ok) {
+                    const notesData = await notesResponse.json();
+                    claudeNotes = notesData.notes || [];
                 }
 
-                // Fetch latest analysis and briefing
-                try {
-                    const exportResponse = await fetch(`${CONFIG.WORKER_URL}/export`, {
-                        headers: {
-                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
-                        }
-                    });
-
-                    if (exportResponse.ok) {
-                        const exportData = await exportResponse.json();
-                        latestAnalysis = exportData.latestAnalysis || null;
-                        latestBriefing = exportData.latestBriefing || null;
-                    }
-                } catch (e) {
-                    console.warn('Failed to load analysis:', e);
+                // Process analysis and briefing (optional)
+                if (exportResponse && exportResponse.ok) {
+                    const exportData = await exportResponse.json();
+                    latestAnalysis = exportData.latestAnalysis || null;
+                    latestBriefing = exportData.latestBriefing || null;
                 }
 
                 renderStats();
