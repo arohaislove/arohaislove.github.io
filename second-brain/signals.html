@@ -410,9 +410,9 @@
     </div>
 
     <script>
-        // Configuration
+        // Configuration - use same localStorage key as dashboard
         const API_URL = 'https://second-brain.zammel.workers.dev';
-        const AUTH_TOKEN = localStorage.getItem('secondBrainAuthToken');
+        const AUTH_TOKEN = localStorage.getItem('SECOND_BRAIN_AUTH_TOKEN');
 
         let currentFilter = 'unreviewed';
         let signals = [];
@@ -433,7 +433,16 @@
             content.innerHTML = '<div class="loading"><p>Loading...</p></div>';
 
             if (!AUTH_TOKEN) {
-                content.innerHTML = '<div class="error">No auth token found. Please configure in dashboard.</div>';
+                content.innerHTML = `
+                    <div class="error">
+                        <strong>No auth token found</strong>
+                        <p style="margin-top: 0.5rem;">Please visit the <a href="dashboard.html" style="color: #8258ff; text-decoration: underline;">Dashboard</a> first to configure your auth token.</p>
+                        <p style="margin-top: 0.5rem; font-size: 0.85rem; color: #999;">
+                            When you open the dashboard for the first time (or after clearing data),
+                            you'll be prompted to enter your auth token. It will be saved automatically.
+                        </p>
+                    </div>
+                `;
                 return;
             }
 
