@@ -27,6 +27,129 @@
  * Used by: second-brain capture interface
  */
 
+/**
+ * TIMEZONE CONFIGURATION
+ * All time-based operations use this timezone for determining "today", grouping by date, etc.
+ */
+const CONFIG = {
+  timezone: 'Pacific/Auckland',
+  morningBriefingHour: 4 // 4am in the configured timezone
+};
+
+/**
+ * TIMEZONE HELPER FUNCTIONS
+ * Convert UTC timestamps to user's timezone for date calculations
+ */
+
+/**
+ * Get the current date in the configured timezone (YYYY-MM-DD format)
+ */
+function getTodayInTimezone() {
+  const now = new Date();
+  return new Intl.DateTimeFormat('en-NZ', {
+    timeZone: CONFIG.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(now).split('/').reverse().join('-');
+}
+
+/**
+ * Get date from ISO timestamp in the configured timezone (YYYY-MM-DD format)
+ */
+function getDateInTimezone(isoTimestamp) {
+  const date = new Date(isoTimestamp);
+  return new Intl.DateTimeFormat('en-NZ', {
+    timeZone: CONFIG.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date).split('/').reverse().join('-');
+}
+
+/**
+ * Get current hour in the configured timezone (0-23)
+ */
+function getCurrentHourInTimezone() {
+  const now = new Date();
+  const timeStr = new Intl.DateTimeFormat('en-NZ', {
+    timeZone: CONFIG.timezone,
+    hour: '2-digit',
+    hour12: false
+  }).format(now);
+  return parseInt(timeStr, 10);
+}
+
+/**
+ * Format a date for display in the configured timezone
+ */
+function formatDateInTimezone(isoTimestamp, format = 'short') {
+  const date = new Date(isoTimestamp);
+
+  if (format === 'short') {
+    // YYYY-MM-DD
+    return getDateInTimezone(isoTimestamp);
+  } else if (format === 'long') {
+    // "Day, Month Date, Year" (e.g., "Friday, January 24, 2026")
+    return new Intl.DateTimeFormat('en-NZ', {
+      timeZone: CONFIG.timezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }).format(date);
+  } else if (format === 'time') {
+    // HH:MM
+    return new Intl.DateTimeFormat('en-NZ', {
+      timeZone: CONFIG.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+  }
+
+  return getDateInTimezone(isoTimestamp);
+}
+
+/**
+ * Check if a timestamp is "today" in the configured timezone
+ */
+function isToday(isoTimestamp) {
+  const today = getTodayInTimezone();
+  const itemDate = getDateInTimezone(isoTimestamp);
+  return itemDate === today;
+}
+
+/**
+ * Check if a timestamp is "yesterday" in the configured timezone
+ */
+function isYesterday(isoTimestamp) {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = new Intl.DateTimeFormat('en-NZ', {
+    timeZone: CONFIG.timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(yesterday).split('/').reverse().join('-');
+
+  const itemDate = getDateInTimezone(isoTimestamp);
+  return itemDate === yesterdayStr;
+}
+
+/**
+ * Get items from the last N hours in the user's timezone
+ */
+function getItemsFromLastNHours(items, hours) {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - (hours * 60 * 60 * 1000));
+
+  return items.filter(item => {
+    const itemTime = new Date(item.createdAt);
+    return itemTime >= cutoff;
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     // Handle CORS preflight
@@ -167,16 +290,13 @@ export default {
     }
   },
 
-  // Cron trigger - runs every 4 hours + morning briefing at 4am NZT
+  // Cron trigger - runs every 4 hours + morning briefing at configured hour in user's timezone
   async scheduled(event, env, ctx) {
     console.log('Cron triggered at:', new Date().toISOString());
 
-    // Check if this is the morning briefing time (4am NZDT = 15:00 UTC, 4am NZST = 16:00 UTC)
-    const now = new Date();
-    const hour = now.getUTCHours();
-    // Currently using 15:00 UTC for NZDT (daylight saving time)
-    // When NZ switches to NZST (winter), change to hour === 16
-    const isMorningBriefing = hour === 15;
+    // Check if this is the morning briefing time using timezone-aware logic
+    const currentHour = getCurrentHourInTimezone();
+    const isMorningBriefing = currentHour === CONFIG.morningBriefingHour;
 
     if (isMorningBriefing) {
       // Generate and send full morning briefing
@@ -186,7 +306,7 @@ export default {
         // Save full briefing to KV storage for dashboard
         const briefingRecord = {
           timestamp: new Date().toISOString(),
-          date: new Date().toISOString().split('T')[0],
+          date: getTodayInTimezone(), // Use timezone-aware date
           briefing: briefing
         };
         await env.BRAIN_KV.put('briefing:latest', JSON.stringify(briefingRecord));
@@ -1034,15 +1154,15 @@ async function generateMorningBriefing(env) {
   const commsItems = items.filter(i => i.type === 'comms');
   const otherItems = items.filter(i => i.type !== 'comms');
 
-  // Format regular captures for briefing
+  // Format regular captures for briefing (using timezone-aware dates)
   const recentCaptures = otherItems.map(i =>
-    `[${i.type.toUpperCase()}] ${i.createdAt.split('T')[0]}\nInput: ${i.input}\nAI Notes: ${i.aiNotes || 'none'}`
+    `[${i.type.toUpperCase()}] ${getDateInTimezone(i.createdAt)}\nInput: ${i.input}\nAI Notes: ${i.aiNotes || 'none'}`
   ).join('\n\n');
 
-  // Format comms data for analysis
+  // Format comms data for analysis (using timezone-aware dates)
   const commsData = commsItems.map(i => {
     const structured = i.structured || {};
-    return `[${structured.direction?.toUpperCase() || 'UNKNOWN'}] ${structured.app || 'unknown'} - ${structured.contact || 'unknown'}\n${i.createdAt.split('T')[0]} ${i.createdAt.split('T')[1]?.substring(0, 5) || ''}\nMessage: ${i.input}`;
+    return `[${structured.direction?.toUpperCase() || 'UNKNOWN'}] ${structured.app || 'unknown'} - ${structured.contact || 'unknown'}\n${getDateInTimezone(i.createdAt)} ${formatDateInTimezone(i.createdAt, 'time')}\nMessage: ${i.input}`;
   }).join('\n\n');
 
   // Format Claude's working memory
@@ -1063,7 +1183,7 @@ async function generateMorningBriefing(env) {
     if (analysis && item) {
       signalReadings.push({
         contact: queueItem.contact,
-        date: item.createdAt.split('T')[0],
+        date: getDateInTimezone(item.createdAt), // Use timezone-aware date
         message: item.input,
         direction: item.structured?.direction,
         app: item.structured?.app,
@@ -1084,7 +1204,7 @@ Action: ${s.analysis.action}`
 
   const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures, communication patterns, and life rhythms.
 
-TODAY'S DATE: ${new Date().toISOString().split('T')[0]}
+TODAY'S DATE: ${getTodayInTimezone()} (${CONFIG.timezone})
 
 RECENT CAPTURES (manual voice/text entries):
 ${recentCaptures || '(no recent captures)'}
@@ -1100,7 +1220,7 @@ ${workingMemory || '(no working memory yet)'}
 
 Generate a morning briefing in this exact structure:
 
-# ☀️ MORNING BRIEFING - [Day, Month Date, Year]
+# ☀️ MORNING BRIEFING - ${formatDateInTimezone(new Date().toISOString(), 'long')}
 
 Dave. Morning.
 
