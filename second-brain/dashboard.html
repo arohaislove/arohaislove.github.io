@@ -696,7 +696,8 @@
                 return;
             }
 
-            const notesHtml = claudeNotes.map(note => {
+            // Show latest notes first (reverse chronological order)
+            const notesHtml = [...claudeNotes].reverse().map(note => {
                 const date = new Date(note.createdAt);
                 const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 
