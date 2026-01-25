@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talk Coastguard - Audio Learning Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header class="hero">
+            <h1>Talk Coastguard</h1>
+            <p class="subtitle">Audio Learning Guide Generator</p>
+            <p class="description">Professional narration of the Coastguard Communications Style Guide</p>
+        </header>
+
+        <section class="controls">
+            <div class="voice-select">
+                <label for="voiceSelect">Narrator Voice:</label>
+                <select id="voiceSelect">
+                    <option value="calm-professional" selected>Calm & Professional</option>
+                    <option value="warm-narrator">Warm Narrator</option>
+                    <option value="clear-instructor">Clear Instructor</option>
+                </select>
+            </div>
+            <button id="generateAllBtn" class="btn-primary">
+                <span class="btn-icon">🎙</span>
+                Generate All Audio
+            </button>
+        </section>
+
+        <div id="status" class="status hidden"></div>
+        <div id="progressContainer" class="progress-container hidden">
+            <div id="progressBar" class="progress-bar"></div>
+            <span id="progressText">0%</span>
+        </div>
+
+        <section class="audio-player hidden" id="combinedPlayer">
+            <h2>Complete Audio Guide</h2>
+            <audio id="fullAudio" controls></audio>
+            <button id="downloadAllBtn" class="btn-download">
+                Download Full Audio (MP3)
+            </button>
+        </section>
+
+        <section class="script-sections">
+            <h2>Script Sections</h2>
+            <p class="section-intro">Click on any section to generate its audio individually, or use "Generate All Audio" above.</p>
+
+            <!-- INTRO -->
+            <article class="script-section" data-section="intro">
+                <div class="section-header">
+                    <h3>Introduction</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Welcome to the Talk Coastguard audio guide. This is the official communications style guide prepared by the Coastguard Communications team.</p>
+                    <p>This guide covers our go-to phrases for key topics, words to use and avoid, and how to incorporate te reo Māori into your communications. Whether you're writing social media posts, unit newsletters, or speaking with the public, this guide will help you represent Coastguard with consistency and care.</p>
+                    <p>Let's get started.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- WORDS TO AVOID -->
+            <article class="script-section" data-section="words-avoid">
+                <div class="section-header">
+                    <h3>Words to Avoid</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Before we dive into our key messages, here are some words to avoid in Coastguard communications.</p>
+                    <p><strong>Avoid technical jargon</strong> unless you're certain your audience will understand it. Instead of weather warning terms like gale or storm, use relatable language like "choppy seas" or more general but accessible terms like "challenging conditions" or "risky weather".</p>
+                    <p><strong>Avoid the word "victim"</strong> as in "The victim was located by Coastguard volunteers near the rocks." Instead, use "person" or "individual".</p>
+                    <p><strong>Avoid "Volunteer Members"</strong>. Drop "members" and simply say "volunteers".</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- WHO WE ARE -->
+            <article class="script-section" data-section="who-we-are">
+                <div class="section-header">
+                    <h3>Who We Are & What We Do</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are key messages about who Coastguard is and what we do. Use these in your communications.</p>
+                    <p>Coastguard is Aotearoa New Zealand's primary marine safety, rescue, and education organisation. Over 2,000 passionate volunteers give their all to save lives on the water.</p>
+                    <p>Our vision is that with our support everyone can enjoy Aotearoa New Zealand's waters safely and with confidence.</p>
+                    <p>Whether you're a seasoned boatie, a kayak enthusiast, jet skier, or enjoy paddleboarding and more, Coastguard is here for you. We're all about supporting every water lover, no matter your waka.</p>
+                    <p>We're the people you can turn to for help, big or small, for help, advice, or assistance. We're with you on and off the water. It's what we do.</p>
+                    <p>Our incredible volunteers give up their time to train to ensure they're ready to put their skills into action when Kiwis need them the most.</p>
+                    <p>We're not here to measure the size of your fish. Not to search your boat. And definitely not to judge your trailer backing skills. All we're here to do is help. All we care about is keeping you safe. All we want is to see you out there, enjoying life on the water. Confident in your own abilities, confident in knowing we'll always have your back.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- FUNDING -->
+            <article class="script-section" data-section="funding">
+                <div class="section-header">
+                    <h3>Funding & Charity Status</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When talking about our funding and charity status, here's what to emphasise.</p>
+                    <p>As a charity, we're reliant on the generosity of others. A big chunk of our operating income, 60 percent, comes from donations, lotteries, membership, sponsorship, and grants. The remaining 40 percent comes from central government funding, all of which is critical to delivering our search and rescue service.</p>
+                    <p>With 63 units across the country, 104 rescue vessels to fuel and maintain, and over 2,000 volunteers to train and equip, it's no small feat. We rely on the generosity of Kiwis to support us.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- DAILY WORK -->
+            <article class="script-section" data-section="daily-work">
+                <div class="section-header">
+                    <h3>Our Daily Work</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Every day, all throughout Aotearoa, we're there for boaties. With you on and off the water, whatever your waka.</p>
+                    <p>Sometimes that means a simple tow back to shore. Or sharing knowledge and advice before you head out, through our education courses. Sometimes that means putting everything we've trained for into action to make a difference between life and death. It's what we do.</p>
+                    <p>Day in and day out, through a team of over 2,000 highly skilled and experienced volunteers. Yep, that's right, volunteers. People who love being out on the oceans, lakes and rivers of Aotearoa New Zealand, just like you.</p>
+                    <p>Giving up their days, nights and weekends not to go fishing, but to put in the mahi to be ready for any emergency you and Tangaroa can throw at them.</p>
+                    <p>Whether it's giving great advice before you head out or helping if you get in a spot of bother, we're side by side with you on the water, whatever your waka.</p>
+                    <p>Our dedicated volunteers and staff are proudly on the water, in the sky, behind the radio, at our units, in our classrooms, and in our communities. Going above and beyond to help save lives on the water.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- EDUCATION -->
+            <article class="script-section" data-section="education">
+                <div class="section-header">
+                    <h3>Education</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When talking about our education programmes, use these messages.</p>
+                    <p>Our Coastguard education team oversees the delivery of boating courses across Aotearoa New Zealand, with qualified tutors providing training for all skill levels, boat types, and learning pathways.</p>
+                    <p>Our Coastguard education team is here to help Kiwis all over Aotearoa build their skills and confidence on the water. With passionate, qualified tutors leading the way, we offer boating courses for every skill level, boat type, and learning pathway.</p>
+                    <p>We're here to be your safe boating buddies, providing the know-how to keep you safe and informed. With courses and seminars for all water lovers, from newbies to seasoned boaties, we're your go-to for boating safety.</p>
+                    <p>As water safety advocates, we're putting in the mahi to reduce preventable watercraft drownings. We do this through education, community outreach programmes, and by teaming up with like-minded people.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- FUNDRAISING -->
+            <article class="script-section" data-section="fundraising">
+                <div class="section-header">
+                    <h3>Fundraising</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When talking about fundraising, these are the key messages.</p>
+                    <p>We rely on donations to fund training, rescue gear, and support for our skilled volunteers who respond to an average of eight callouts every day, rain or shine.</p>
+                    <p>Donations make a huge difference. They help train over 2,000 volunteers nationwide and provide them with the gear they need to save lives on the water. Without the generosity of Kiwis, we simply couldn't do what we do.</p>
+                    <p>As a charity, we depend on your help to save lives. Our volunteers, who are out in all weather, all year round, are funded mainly through donations.</p>
+                    <p>We have 63 units nationwide, over 100 rescue vessels and two search aircraft to maintain, and over 2,000 volunteers to train and equip. We need the support of Kiwis to save lives on the water.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- MEMBERSHIP -->
+            <article class="script-section" data-section="membership">
+                <div class="section-header">
+                    <h3>Membership</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When promoting membership, use these messages.</p>
+                    <p>Membership includes discounts on our most popular boating courses, exclusive deals from partners, and more. Plus a regular email newsletter with the latest news, competitions, promotions, and useful info for an enhanced boating experience.</p>
+                    <p>Being a member means we've got your back with free non-urgent assistance every time you hit the water.</p>
+                    <p>Join Coastguard as a member and enjoy non-urgent on-water assistance 24/7, 365 days a year, in all popular boating areas across the motu.</p>
+                    <p>Have peace of mind whenever you hit the water. If you join Coastguard as a member, you can enjoy unlimited non-urgent assistance whenever you need it.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- SAR -->
+            <article class="script-section" data-section="sar">
+                <div class="section-header">
+                    <h3>Search and Rescue</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When talking about our Search and Rescue operations.</p>
+                    <p>Our 63 units across Aotearoa are run by volunteers, who ensure everyone can enjoy our beautiful oceans, lakes and rivers and come home with smiles on their faces and good stories to share.</p>
+                    <p>Equipped with purpose-built rescue vessels and aircraft, we're always ready to provide assistance to anyone when it's needed.</p>
+                    <p>Driven by a passion for saving lives on the water, we're on call 24/7, 365 days a year. Our volunteers undergo extensive training to carry out our lifesaving mahi.</p>
+                    <p>We're here for all water users, from boaties to kayakers, paddleboarders, and more.</p>
+                    <p>From weather updates, bar crossing watches, to search and rescue coordination, our Operations Centre and radio operators ensure every journey on the water is safe and enjoyable, no matter your waka!</p>
+                    <p>With 70% of our operations focused on preventative Search and Rescue, we proactively work to prevent major incidents and emergencies on the water.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- TOOLS -->
+            <article class="script-section" data-section="tools">
+                <div class="section-header">
+                    <h3>Tools & Technology</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When promoting our tools and technology.</p>
+                    <p>Whatever your waka, the Coastguard app is a game changer. It's a simple way to stay safe out on the water, so don't leave the dock without it. Log your trips, check weather conditions, and save your secret fishing spots where the big ones are biting. Download it for FREE today from the App Store or Google Play!</p>
+                    <p>Stay connected, stay safe, and have peace of mind knowing you've got what you need at your fingertips for a great time out on the water.</p>
+                    <p>The free Coastguard App makes planning your next water adventure easy! Log your trip, check live weather updates, and save your favourite spots for quick access.</p>
+                    <p>Like a number plate for your car, a VHF Callsign is a unique ID for your boat. You'll need one when you contact Coastguard Radio to log a trip report, and most importantly, it helps us find you faster if you need help. Your callsign stores key details like your boat's size, type, colour, safety equipment, and emergency contacts, so we know exactly what to look for and who to notify. In Aotearoa New Zealand, you're legally required to use a Callsign when operating a Maritime VHF Radio. And for just $60, it's yours for life!</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- VOLUNTEERS -->
+            <article class="script-section" data-section="volunteers">
+                <div class="section-header">
+                    <h3>Volunteers & Volunteering</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When talking about our volunteers and volunteering opportunities.</p>
+                    <p>We're powered by over 2,000 highly trained and skilled volunteers, all passionate about saving lives on the water. They're here to help every water-loving Kiwi, whatever their waka.</p>
+                    <p>Our volunteers embody compassion and camaraderie, giving up their time away from home or work to lend a helping hand when it's needed.</p>
+                    <p>Across diverse roles, backgrounds, and communities, our volunteers come together as one inclusive whānau, reflecting the Aotearoa we know and love.</p>
+                    <p>Volunteering for Coastguard is more than just our on-water capability. We have amazing shore crews from our radio operators to training coordinators whose teamwork enable us to bring people home safely.</p>
+                    <p>Wāhine, or women, make up 20% of our 2,000 plus strong volunteer crew.</p>
+                    <p>You don't have to be a boatie or even love the water to volunteer. All the training you need is provided and there are heaps of ways you can contribute without setting foot on a rescue vessel. Whether it's on the water or in the back room, there's a role with your name on it.</p>
+                    <p>At Coastguard, volunteers are the heartbeat of our organisation. Whether on the water or behind the scenes, every volunteer plays a crucial role in keeping New Zealand's water-loving community safe. No matter how much time you can give, or where your skills lie, there's a place for you in our crew.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- TE REO TIPS -->
+            <article class="script-section" data-section="te-reo-tips">
+                <div class="section-header">
+                    <h3>Using Te Reo Māori - Tips</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are top tips for incorporating te reo Māori into your communications.</p>
+                    <p>Everyone is on their own journey when it comes to use and inclusion of Māori words and phrases. You don't have to use any te reo Māori if you don't want to. But, if you're keen to include a few kupu, or words, into your every day, here are some tips.</p>
+                    <p><strong>Macrons.</strong> Macrons are used in te reo Māori to indicate the correct pronunciation of a vowel which has a lengthened sound. It's important to use macrons correctly. Missing a macron off a word is like spelling a word wrong. And if a macron is used on the wrong letters, it can change the meaning of a word altogether.</p>
+                    <p><strong>Avoid the letter S.</strong> The letter 's' isn't in the Māori alphabet, so don't add it to make words plural. For example, don't write "Māoris" or "taongas".</p>
+                    <p><strong>Put Te Reo Māori first.</strong> When using both Te Reo Māori and English, try to put the Māori word first, then the English. For example, Aotearoa New Zealand.</p>
+                    <p><strong>How to refer to Aotearoa New Zealand.</strong> Use Aotearoa New Zealand in full the first time you mention it, then use Aotearoa alone every other time. Feel free to use either term depending on the context and your preference. A mix of both is perfectly fine.</p>
+                    <p><strong>Keep it simple.</strong> Choose a few words or phrases you'd like to incorporate and work to include them in ways that make sense for your content and audience. It's best to start slow and become proficient at using a few words well.</p>
+                    <p><strong>Ask for help.</strong> Our Kaihautū Māori is here to support and advise on the use and inclusion of te reo Māori, should you need it.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- KUPUTAKA GREETINGS -->
+            <article class="script-section" data-section="kuputaka-greetings">
+                <div class="section-header">
+                    <h3>Kuputaka - Greetings & Farewells</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are commonly used te reo Māori greetings and farewells.</p>
+                    <p><strong>Kia ora</strong> means hello or greetings. Use it at the start of emails: Kia ora, followed by the person's first name.</p>
+                    <p><strong>Kia ora kōrua</strong> is hello to two people.</p>
+                    <p><strong>Kia ora koutou</strong> is hello to three or more people, or to all.</p>
+                    <p><strong>Mōrena</strong> means good morning. Mōrena, how are you?</p>
+                    <p><strong>Haere mai</strong> means come here or welcome. For example: Haere mai to our new Unit Support Manager.</p>
+                    <p><strong>Haere rā</strong> means goodbye to someone leaving. Used when referring to staff departing: Haere rā to some of the greats.</p>
+                    <p><strong>Ngā mihi</strong> means thank you or regards. Use it to close emails: Ngā mihi, followed by your name, or Ngā mihi, The Crew at Coastguard.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- KUPUTAKA COMMON WORDS -->
+            <article class="script-section" data-section="kuputaka-common">
+                <div class="section-header">
+                    <h3>Kuputaka - Common Words</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are commonly used te reo Māori words for everyday use.</p>
+                    <p><strong>Aotearoa</strong> means New Zealand. Use Aotearoa New Zealand the first time, then just Aotearoa. Example: On Aotearoa New Zealand's waters. Our volunteers across Aotearoa.</p>
+                    <p><strong>Hui</strong> means meeting. Example: At the recent Southern hui, volunteers told us...</p>
+                    <p><strong>Kōrero</strong> means talk or discuss. Let's keep the kōrero going.</p>
+                    <p><strong>Kupu</strong> means word. Have a go at using a few new Māori kupu.</p>
+                    <p><strong>Mahi</strong> means work. Our mahi on the water. Delivering lifesaving mahi.</p>
+                    <p><strong>Moana</strong> means ocean, sea, or water. Our volunteers on the moana.</p>
+                    <p><strong>Motu</strong> means country, land, or island. Our volunteers across the motu. 63 units across the motu.</p>
+                    <p><strong>Whānau</strong> means family, team, or group. Our volunteer whānau. Ensuring boaties can get home safe to their whānau and friends.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- KUPUTAKA SPECIAL TERMS -->
+            <article class="script-section" data-section="kuputaka-special">
+                <div class="section-header">
+                    <h3>Kuputaka - Special Coastguard Terms</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are special te reo Māori terms relevant to Coastguard.</p>
+                    <p><strong>Tautiaki Moana</strong> is our ingoa, our name. Tautiaki Moana isn't a literal translation of Coastguard. Instead, it explains what we do on and off the water. Tautiaki means guard, guardian, and care. Moana means ocean, large lake, or body of water. Together, Tautiaki Moana speaks to the support, guidance, education and care, we provide for boaties on lakes, rivers, and oceans around the country. We are Coastguard Tautiaki Moana, Coastguard for short.</p>
+                    <p><strong>Tangaroa</strong> is the god of the sea and all the creatures that live there. He is one of the many sons of Papatūānuku and Ranginui, the sky father and earth mother. Example: Our volunteers give up their days, nights and weekends not to go fishing, but to put in the mahi to be ready for any emergency you and Tangaroa can throw at them.</p>
+                    <p><strong>Taonga</strong> means treasure, or anything considered to be of value. When referring to our name Tautiaki Moana: This precious taonga was gifted to us by Te Arawa Iwi in 2021.</p>
+                    <p><strong>Te Ao Māori</strong> means the Māori worldview. Coastguard is on a journey to better understand and reflect Te Ao Māori.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- OUTRO -->
+            <article class="script-section" data-section="outro">
+                <div class="section-header">
+                    <h3>Conclusion</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>That concludes the Talk Coastguard audio guide.</p>
+                    <p>Remember, we're fortunate to have a great story to tell. These messages can be used across all the main topics we communicate about regularly. Copy and paste them to use in your communications, or use them as inspiration.</p>
+                    <p>We want everyone to know that we've got their back out there. No matter who they are, where they're from, or their watercraft of choice. We're the people you can turn to whenever you need help.</p>
+                    <p>Ngā mihi, The Crew at Coastguard.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+        </section>
+
+        <section class="info-box">
+            <h3>About This Tool</h3>
+            <p>This tool uses ElevenLabs AI voice synthesis to generate professional audio narration of the Talk Coastguard communications guide. Perfect for:</p>
+            <ul>
+                <li>Learning key messages while commuting or exercising</li>
+                <li>Refreshing on Coastguard messaging before media interviews</li>
+                <li>Training new volunteers and staff on communications standards</li>
+                <li>Accessibility for team members who prefer audio learning</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>Talk Coastguard Audio Guide | Coastguard NZ Communications Team</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
