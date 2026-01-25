@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAR Crew Welfare - Audio Learning Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header class="hero">
+            <h1>SAR Crew Welfare</h1>
+            <p class="subtitle">Audio Learning Guide Generator</p>
+            <p class="description">Generate professional narration of the Coastguard Boat Book - Chapter 1: Crew Welfare</p>
+        </header>
+
+        <section class="controls">
+            <div class="voice-select">
+                <label for="voiceSelect">Narrator Voice:</label>
+                <select id="voiceSelect">
+                    <option value="calm-professional" selected>Calm & Professional</option>
+                    <option value="warm-narrator">Warm Narrator</option>
+                    <option value="clear-instructor">Clear Instructor</option>
+                </select>
+            </div>
+            <button id="generateAllBtn" class="btn-primary">
+                <span class="btn-icon">🎙</span>
+                Generate All Audio
+            </button>
+        </section>
+
+        <div id="status" class="status hidden"></div>
+        <div id="progressContainer" class="progress-container hidden">
+            <div id="progressBar" class="progress-bar"></div>
+            <span id="progressText">0%</span>
+        </div>
+
+        <section class="audio-player hidden" id="combinedPlayer">
+            <h2>Complete Audio Guide</h2>
+            <audio id="fullAudio" controls></audio>
+            <button id="downloadAllBtn" class="btn-download">
+                Download Full Audio (MP3)
+            </button>
+        </section>
+
+        <section class="script-sections">
+            <h2>Script Sections</h2>
+            <p class="section-intro">Click on any section to generate its audio individually, or use "Generate All Audio" above.</p>
+
+            <!-- INTRO -->
+            <article class="script-section" data-section="intro">
+                <div class="section-header">
+                    <h3>Introduction</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Welcome to your SAR Boat Book audio guide. Today we're covering Chapter One: Crew Welfare. This is essential knowledge for anyone operating on a Coastguard rescue vessel, so let's get into it.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- SECTION 1 -->
+            <article class="script-section" data-section="big-picture">
+                <div class="section-header">
+                    <h3>Section 1: The Big Picture</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>First up, the core principle. Coastguard has a responsibility to ensure the safety and wellbeing of all crew. The goal is simple: everyone goes home healthy and safe. That's not negotiable.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- SECTION 2 -->
+            <article class="script-section" data-section="imsafe">
+                <div class="section-header">
+                    <h3>Section 2: IMSAFE - Your Personal Checklist</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Before every departure, you need to run through what's called IMSAFE. It's a self-assessment system, and you need to confirm to the Master that you've done it and you're fit for duty. This gets recorded in the ship's log.</p>
+                    <p>IMSAFE is an acronym. Let's break it down letter by letter.</p>
+                    <p><strong>I is for Illness.</strong> Ask yourself: Am I free of illness? Free of symptoms? Am I medically fit to be out there?</p>
+                    <p><strong>M is for Medication.</strong> Am I taking any medication, and is it safe? Will it affect my ability to drive or use machinery? And importantly - is there any medication I should have with me?</p>
+                    <p><strong>S is for Stress.</strong> Am I managing stress well? Both at home and at work. Stress affects judgment, and judgment keeps people alive.</p>
+                    <p><strong>A is for Alcohol.</strong> Am I free of alcohol and drugs, and free of their effects? This means not just "have I had a drink today" but "am I still affected from last night?"</p>
+                    <p><strong>F is for Fatigue Management.</strong> Am I rested? Have I been sleeping well? We'll talk more about fatigue in a moment because it's a big one.</p>
+                    <p><strong>E is for Eating.</strong> Am I fed and watered? Ready to go? You can't perform if you're running on empty.</p>
+                    <p>So that's IMSAFE. Illness, Medication, Stress, Alcohol, Fatigue, Eating. Run through it before every job.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- SECTION 3 -->
+            <article class="script-section" data-section="fatigue-critical">
+                <div class="section-header">
+                    <h3>Section 3: Fatigue - The Critical Risk</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Now let's dig into fatigue, because Coastguard considers this a critical risk. Not just a risk - a critical one. It must be carefully monitored during all activities on board.</p>
+                    <p>Fatigue needs to be discussed during the pre-departure briefing. Not after you're already out there struggling to stay alert - before you leave. And it needs to be actively monitored while underway. The Master is ultimately responsible for crew safety and wellbeing, but everyone needs to be honest about how they're tracking.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- SECTION 4 -->
+            <article class="script-section" data-section="fatigue-factors">
+                <div class="section-header">
+                    <h3>Section 4: Fatigue Management Factors</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When managing fatigue, you need to ensure there's sufficient crew on board. But what does "sufficient" mean? It depends on several factors. Let's run through them.</p>
+                    <p><strong>First: Nature of the tasking.</strong> What kind of job is it? A straightforward tow is different from a complex search pattern in rough conditions.</p>
+                    <p><strong>Second: Duration.</strong> How long is this going to take? A quick job close to base is very different from an extended operation.</p>
+                    <p><strong>Third: Location from base.</strong> How far are you going? The further out you are, the longer the return journey when everyone's already tired.</p>
+                    <p><strong>Fourth: Expected weather conditions.</strong> Rough weather is exhausting. It demands constant physical effort and mental focus.</p>
+                    <p><strong>Fifth: Crew's existing state of fatigue.</strong> What state is everyone in right now, before you even leave? Has someone just finished a night shift at their day job?</p>
+                    <p><strong>Sixth: Crew state of health.</strong> Is anyone carrying a niggling injury or feeling under the weather?</p>
+                    <p><strong>And seventh: Crew training and experience.</strong> Less experienced crew may fatigue faster because everything requires more conscious effort.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- OUTRO -->
+            <article class="script-section" data-section="outro">
+                <div class="section-header">
+                    <h3>Conclusion</h3>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>That's Chapter One: Crew Welfare. The key takeaways? Run IMSAFE before every departure. Take fatigue seriously - it's a critical risk. And remember, the goal is always the same: everyone goes home healthy and safe.</p>
+                    <p><em>End of audio guide.</em></p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+        </section>
+
+        <section class="info-box">
+            <h3>About This Tool</h3>
+            <p>This tool uses ElevenLabs AI voice synthesis to generate professional audio narration of the SAR Crew Welfare training material. Perfect for:</p>
+            <ul>
+                <li>Listening during commutes</li>
+                <li>Audio learners who prefer listening over reading</li>
+                <li>Refresher training while doing other tasks</li>
+                <li>Accessibility for crew with reading difficulties</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>SAR Crew Welfare Audio Guide | Coastguard NZ Training Material</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
