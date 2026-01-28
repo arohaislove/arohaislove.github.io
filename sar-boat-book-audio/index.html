@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAR Boat Book - Audio Learning Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header class="hero">
+            <h1>SAR Boat Book</h1>
+            <p class="subtitle">Audio Learning Guide</p>
+            <p class="description">Professional narration of the Coastguard Search and Rescue Boat Book</p>
+        </header>
+
+        <section class="chapter-nav">
+            <h2>Chapters</h2>
+            <div class="chapter-buttons">
+                <button class="chapter-btn active" data-chapter="1">Chapter 1: Crew Welfare</button>
+                <button class="chapter-btn disabled" data-chapter="2" disabled title="Coming soon">Chapter 2</button>
+                <button class="chapter-btn disabled" data-chapter="3" disabled title="Coming soon">Chapter 3</button>
+                <button class="chapter-btn disabled" data-chapter="4" disabled title="Coming soon">Chapter 4</button>
+            </div>
+        </section>
+
+        <section class="controls">
+            <div class="voice-select">
+                <label for="voiceSelect">Narrator Voice:</label>
+                <select id="voiceSelect">
+                    <option value="calm-professional" selected>Calm & Professional</option>
+                    <option value="warm-narrator">Warm Narrator</option>
+                    <option value="clear-instructor">Clear Instructor</option>
+                </select>
+            </div>
+            <button id="generateAllBtn" class="btn-primary">
+                <span class="btn-icon">🎙</span>
+                Generate Chapter Audio
+            </button>
+        </section>
+
+        <div id="status" class="status hidden"></div>
+        <div id="progressContainer" class="progress-container hidden">
+            <div id="progressBar" class="progress-bar"></div>
+            <span id="progressText">0%</span>
+        </div>
+
+        <section class="audio-player hidden" id="combinedPlayer">
+            <h2>Complete Chapter Audio</h2>
+            <audio id="fullAudio" controls></audio>
+            <button id="downloadAllBtn" class="btn-download">
+                Download Chapter Audio (MP3)
+            </button>
+        </section>
+
+        <!-- CHAPTER 1: CREW WELFARE -->
+        <section class="script-sections" id="chapter-1">
+            <h2>Chapter 1: Crew Welfare</h2>
+            <p class="section-intro">12 sections • Approximately 15-20 minutes total</p>
+
+            <!-- 1. INTRODUCTION -->
+            <article class="script-section" data-section="ch1-intro">
+                <div class="section-header">
+                    <h3>1. Introduction</h3>
+                    <span class="duration">~1 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Welcome to the SAR Boat Book audio guide. This is Chapter One: Crew Welfare.</p>
+                    <p>This chapter covers essential knowledge for anyone operating on a Coastguard rescue vessel. We'll go through your personal responsibility for fitness, how to manage crew effectively, the health and safety requirements you need to know, and the support services available to you.</p>
+                    <p>Coastguard has a responsibility to ensure the safety and wellbeing of all crew. The goal is simple: everyone goes home healthy and safe. That's not negotiable.</p>
+                    <p>Let's get started.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 2. IMSAFE OVERVIEW -->
+            <article class="script-section" data-section="ch1-imsafe-overview">
+                <div class="section-header">
+                    <h3>2. IMSAFE - Your Personal Checklist</h3>
+                    <span class="duration">~1 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Before every departure, you need to run a self-assessment called IMSAFE. This isn't optional.</p>
+                    <p>IMSAFE is a system that helps crew assess their fitness for duty. Prior to departure, all crew must confirm to the Master that they've undertaken a self-assessment and believe they are safe to work on the vessel. This should be recorded in the ship's log.</p>
+                    <p>IMSAFE is an acronym that helps you systematically check your fitness across six key areas. Let's go through each one.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 3. IMSAFE DEEP DIVE -->
+            <article class="script-section" data-section="ch1-imsafe-detail">
+                <div class="section-header">
+                    <h3>3. IMSAFE - The Six Checks</h3>
+                    <span class="duration">~2 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p><strong>I is for Illness.</strong> Ask yourself: Am I free of illness, symptoms, and medically fit?</p>
+                    <p><strong>M is for Medication.</strong> Am I taking any medication and is it safe? Will it affect my ability to drive or use machinery? And importantly - is there any medication I should have with me?</p>
+                    <p><strong>S is for Stress.</strong> Am I managing stress well at home and at work? Stress affects judgment, and judgment keeps people alive.</p>
+                    <p><strong>A is for Alcohol.</strong> Am I free of alcohol and drugs, and free of their effects? This means not just "have I had a drink today" but "am I still affected from last night?"</p>
+                    <p><strong>F is for Fatigue Management.</strong> Am I rested and sleeping well? We'll talk more about fatigue shortly because it's critical.</p>
+                    <p><strong>E is for Eating.</strong> Am I fed, watered, and ready to go? You can't perform if you're running on empty.</p>
+                    <p>That's IMSAFE. Illness, Medication, Stress, Alcohol, Fatigue, Eating. Run through it before every job.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 4. FATIGUE - THE CRITICAL RISK -->
+            <article class="script-section" data-section="ch1-fatigue-risk">
+                <div class="section-header">
+                    <h3>4. Fatigue - The Critical Risk</h3>
+                    <span class="duration">~1.5 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Now let's dig into fatigue, because Coastguard deems this a critical risk. Not just a risk - a critical one. It must be carefully monitored when conducting activities on board the vessel.</p>
+                    <p>Fatigue must be discussed as part of the pre-departure briefing. Not after you're already out there struggling to stay alert - before you leave. And it needs to be actively monitored while underway.</p>
+                    <p>The Master is ultimately responsible for the safety and wellbeing of the crew, but everyone needs to be honest about how they're tracking.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 5. FATIGUE MANAGEMENT FACTORS -->
+            <article class="script-section" data-section="ch1-fatigue-factors">
+                <div class="section-header">
+                    <h3>5. The Seven Fatigue Factors</h3>
+                    <span class="duration">~2 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>When managing fatigue, you need to ensure there's sufficient crew on board the vessel. But what does "sufficient" mean? It depends on seven key factors.</p>
+                    <p><strong>First: Nature of the tasking.</strong> What kind of job is it? A straightforward tow is different from a complex search pattern in rough conditions.</p>
+                    <p><strong>Second: Duration of the tasking.</strong> How long is this going to take? A quick job close to base is very different from an extended operation.</p>
+                    <p><strong>Third: Location from base.</strong> How far are you going? The further out you are, the longer the return journey when everyone's already tired.</p>
+                    <p><strong>Fourth: Expected weather conditions.</strong> Rough weather is exhausting. It demands constant physical effort and mental focus.</p>
+                    <p><strong>Fifth: Crew's existing state of fatigue.</strong> What state is everyone in right now, before you even leave? Has someone just finished a night shift at their day job?</p>
+                    <p><strong>Sixth: Crew state of health.</strong> Is anyone carrying a niggling injury or feeling under the weather?</p>
+                    <p><strong>And seventh: Crew training and experience.</strong> Less experienced crew may fatigue faster because everything requires more conscious effort.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 6. FATIGUE PRACTICAL TIPS -->
+            <article class="script-section" data-section="ch1-fatigue-tips">
+                <div class="section-header">
+                    <h3>6. Managing Fatigue - Practical Tips</h3>
+                    <span class="duration">~1 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Here are practical things you can do to manage fatigue during operations.</p>
+                    <p>Regularly talk with crew about their state of alertness. Check in with each other. Don't wait for someone to speak up - ask them directly.</p>
+                    <p>Rotate tasks between crew. Don't leave one person on helm for hours. Switch things up to keep everyone fresh.</p>
+                    <p>Ensure healthy food and drinks are available. But don't over-eat - a heavy meal can make you drowsy. Stay hydrated.</p>
+                    <p>Rest or sleep when possible. If the operation allows it and you're not needed, grab some rest. It all helps.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 7. HEALTH & SAFETY BASICS -->
+            <article class="script-section" data-section="ch1-hs-basics">
+                <div class="section-header">
+                    <h3>7. Health & Safety - Key Definitions</h3>
+                    <span class="duration">~1.5 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Let's talk about health and safety, starting with some key definitions.</p>
+                    <p>A <strong>PCBU</strong> - that's Person Conducting a Business or Undertaking - has a primary duty of care to ensure, so far as reasonably practicable, that the health and safety of workers and other people is not put at risk by the work it does. Coastguard is a PCBU.</p>
+                    <p>A <strong>Worker</strong> is an individual who carries out work in any capacity for a PCBU. That includes you as a volunteer.</p>
+                    <p>Coastguard has to operate within the boundaries of the Health and Safety at Work Act 2015, known as HSWA. This means we have clear health and safety processes in place to ensure the wellbeing of all people. Operating within the Act means Coastguard proactively tries to identify and manage risks so those involved within the organisation are safe and healthy.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 8. YOUR RIGHTS UNDER HSWA -->
+            <article class="script-section" data-section="ch1-hs-rights">
+                <div class="section-header">
+                    <h3>8. Your Rights Under Health & Safety Law</h3>
+                    <span class="duration">~1.5 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Under the Health and Safety at Work Act, the HSWA states that it is the responsibility of Coastguard to ensure workers have rights to:</p>
+                    <p>Work in a healthy and safe environment.</p>
+                    <p>Get appropriate training.</p>
+                    <p>Work with safe machinery, vehicles, vessels, tools and equipment.</p>
+                    <p>Be provided with Personal Protective Equipment - PPE.</p>
+                    <p>Stop or refuse to carry out dangerous work.</p>
+                    <p>Have access to health and safety information.</p>
+                    <p>Speak up about any health and safety issues.</p>
+                    <p>Be given a chance to have input into health and safety matters.</p>
+                    <p>Be represented through Health and Safety Representatives, known as HSRs, and Health and Safety Committees, known as HSCs.</p>
+                    <p>And understand what to do in an emergency.</p>
+                    <p>These aren't suggestions - they're your rights.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 9. YOUR RESPONSIBILITIES -->
+            <article class="script-section" data-section="ch1-hs-responsibilities">
+                <div class="section-header">
+                    <h3>9. Your Responsibilities as a Volunteer</h3>
+                    <span class="duration">~1 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Along with rights come responsibilities. As a volunteer, you have two key duties.</p>
+                    <p>First: Take reasonable care for your own health and safety. Look after yourself.</p>
+                    <p>Second: Take reasonable care that what you do or don't do does not adversely affect the health and safety of others. Your actions - or inactions - matter to everyone around you.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 10. VAULT REPORTING -->
+            <article class="script-section" data-section="ch1-vault">
+                <div class="section-header">
+                    <h3>10. VAULT - Reporting Incidents</h3>
+                    <span class="duration">~1.5 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>VAULT is the health and safety management system that Coastguard has put in place to capture reporting of injury, incidents and near misses. It also includes the identification and management of hazards and risks.</p>
+                    <p>Anyone can use VAULT to report injuries, incidents, near misses, hazards and risks. These can be reported using the VAULT portal found in Teams, on the Coastguard Intranet, or via the VAULT Notify app.</p>
+                    <p>There are four types of reports:</p>
+                    <p><strong>Report Injury</strong> - have you seen or been involved in an incident that has caused injury to a person?</p>
+                    <p><strong>Report Incident</strong> - have you seen or been involved in an incident that could have caused harm to a person, or caused damage to property or the environment?</p>
+                    <p><strong>Report Near Miss</strong> - have you seen or been involved in an event that had the potential to cause an injury or an incident?</p>
+                    <p><strong>Report Risk or Hazard</strong> - have you observed something that has the potential to cause harm to a person, property, or environment?</p>
+                    <p>If in doubt, report it.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 11. TRAUMATIC EVENTS -->
+            <article class="script-section" data-section="ch1-trauma">
+                <div class="section-header">
+                    <h3>11. Understanding Traumatic Events</h3>
+                    <span class="duration">~2 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>Although most Coastguard operations don't involve major injuries, sometimes you will be asked to attend a critical incident that may expose you to trauma.</p>
+                    <p>A critical incident is any event that has a significant emotional power to overwhelm usual coping methods. It can involve any situation or event that causes a distressing, dramatic or profound change or disruption in physical or psychological functioning. There are often unusually strong emotions attached to the event which have the potential to interfere with a person's ability to function either at the scene or away from it.</p>
+                    <p>Critical incidents can produce characteristic sets of psychological and physiological reactions in people, although not all will be displayed by all people.</p>
+                    <p>Common symptoms of critical incident stress include: restlessness, moodiness, irritability, muscle tremors, excessive fatigue, difficulties concentrating, sleep disturbances, nightmares, anxiety, vomiting, startle reactions, diarrhoea, depression, and suspiciousness.</p>
+                    <p>These symptoms are especially destructive when a person denies their presence or misinterprets the stress responses as something going wrong with them.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+
+            <!-- 12. SUPPORT SERVICES -->
+            <article class="script-section" data-section="ch1-support">
+                <div class="section-header">
+                    <h3>12. Support Services & Conclusion</h3>
+                    <span class="duration">~1.5 min</span>
+                    <div class="section-controls">
+                        <button class="btn-generate" title="Generate this section">🎙</button>
+                        <button class="btn-play hidden" title="Play">▶</button>
+                        <button class="btn-download-section hidden" title="Download">⬇</button>
+                    </div>
+                </div>
+                <div class="section-content">
+                    <p>A critical incident debrief is a specific technique designed to assist others in dealing with the physical or psychological symptoms that are generally associated with trauma exposure. Debriefing allows those involved with the incident to process the event and reflect on its impact.</p>
+                    <p>It is understood that people deal with trauma in different ways, and Coastguard provides professional support services to help with this. Confidential external counselling support is available, and volunteers are encouraged to take advantage of it.</p>
+                    <p>Details can be provided via Unit leadership, the Coastguard People Team, or your Unit Support Manager.</p>
+                    <p>Remember - seeking help is a sign of strength, not weakness.</p>
+                    <p>That's Chapter One: Crew Welfare. The key takeaways? Run IMSAFE before every departure. Take fatigue seriously - it's a critical risk. Know your rights and responsibilities under health and safety law. Report incidents through VAULT. And if you're affected by a traumatic event, reach out for support. It's there for you.</p>
+                    <p>The goal is always the same: everyone goes home healthy and safe.</p>
+                </div>
+                <audio class="section-audio"></audio>
+            </article>
+        </section>
+
+        <section class="info-box">
+            <h3>About This Tool</h3>
+            <p>This tool uses ElevenLabs AI voice synthesis to generate professional audio narration of the SAR Boat Book training material. Perfect for:</p>
+            <ul>
+                <li>Listening during commutes or exercise</li>
+                <li>Audio learners who prefer listening over reading</li>
+                <li>Refresher training while doing other tasks</li>
+                <li>Accessibility for crew with reading difficulties</li>
+            </ul>
+            <p class="source-note">Content sourced from the Search and Rescue Boat Book (MTOP, Version 19, 2021)</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>SAR Boat Book Audio Guide | Coastguard NZ Training Material</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
