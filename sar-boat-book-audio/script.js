@@ -1,210 +1,227 @@
 /**
- * SAR Boat Book - Audio Learning Guide
- * One button per chapter: generates all sections, combines, and plays.
+ * SAR Boat Book - Static Audio Playback
+ * No API calls. Pre-generated MP3 files in /audio/ folder.
+ * One play button, scrub bar, section highlighting.
  */
 
-const CONFIG = {
-    workerUrl: 'https://vox-api.zammel.workers.dev',
-    voice: {
-        voiceId: 'CwhRBWXzGAHq8TQ4Fs17', // Roger - calm & professional
-        stability: 0.75,
-        similarity_boost: 0.75,
-        style: 0.0,
-        use_speaker_boost: true
-    },
-    chapters: {
-        1: [
-            'ch1-intro',
-            'ch1-imsafe-overview',
-            'ch1-imsafe-detail',
-            'ch1-fatigue-risk',
-            'ch1-fatigue-factors',
-            'ch1-fatigue-tips',
-            'ch1-hs-basics',
-            'ch1-hs-rights',
-            'ch1-hs-responsibilities',
-            'ch1-vault',
-            'ch1-trauma',
-            'ch1-support'
-        ]
-    },
-    sectionNames: {
-        'ch1-intro': 'Introduction',
-        'ch1-imsafe-overview': 'IMSAFE - Your Personal Checklist',
-        'ch1-imsafe-detail': 'IMSAFE - The Six Checks',
-        'ch1-fatigue-risk': 'Fatigue - The Critical Risk',
-        'ch1-fatigue-factors': 'The Seven Fatigue Factors',
-        'ch1-fatigue-tips': 'Managing Fatigue - Practical Tips',
-        'ch1-hs-basics': 'Health & Safety - Key Definitions',
-        'ch1-hs-rights': 'Your Rights Under Health & Safety Law',
-        'ch1-hs-responsibilities': 'Your Responsibilities as a Volunteer',
-        'ch1-vault': 'VAULT - Reporting Incidents',
-        'ch1-trauma': 'Understanding Traumatic Events',
-        'ch1-support': 'Support Services & Conclusion'
-    }
-};
+const AUDIO_FILES = [
+    'audio/ch1-01-introduction.mp3',
+    'audio/ch1-02-imsafe-overview.mp3',
+    'audio/ch1-03-imsafe-detail.mp3',
+    'audio/ch1-04-fatigue-risk.mp3',
+    'audio/ch1-05-fatigue-factors.mp3',
+    'audio/ch1-06-fatigue-tips.mp3',
+    'audio/ch1-07-hs-basics.mp3',
+    'audio/ch1-08-hs-rights.mp3',
+    'audio/ch1-09-hs-responsibilities.mp3',
+    'audio/ch1-10-vault.mp3',
+    'audio/ch1-11-trauma.mp3',
+    'audio/ch1-12-support.mp3'
+];
 
-// State
-const state = {
-    audioCache: {},      // sectionId -> blob (persists across plays)
-    isGenerating: false
-};
+let audio = null;
+let sectionDurations = [];  // cumulative end times
+let totalDuration = 0;
+let isLoaded = false;
+let currentSectionIndex = -1;
 
-// DOM refs
-const statusEl = document.getElementById('status');
-const progressContainer = document.getElementById('progressContainer');
-const progressBar = document.getElementById('progressBar');
-const progressText = document.getElementById('progressText');
-
-function init() {
-    document.querySelectorAll('.btn-play-chapter').forEach(btn => {
-        btn.addEventListener('click', () => playChapter(btn.dataset.chapter));
-    });
-}
+const playBtn = document.getElementById('playBtn');
+const playIcon = document.getElementById('playIcon');
+const scrubber = document.getElementById('scrubber');
+const currentTimeEl = document.getElementById('currentTime');
+const totalTimeEl = document.getElementById('totalTime');
+const sectionItems = document.querySelectorAll('.section-item');
 
 /**
- * Play an entire chapter: generate any missing audio, combine, and play
+ * On first play, fetch all MP3s, combine into one audio blob,
+ * and track section boundaries for highlighting.
  */
-async function playChapter(chapterNum) {
-    if (state.isGenerating) return;
+async function loadAudio() {
+    if (isLoaded) return;
 
-    const sections = CONFIG.chapters[chapterNum];
-    if (!sections) return;
+    playIcon.textContent = '...';
+    playBtn.disabled = true;
 
-    const btn = document.getElementById(`playChapter${chapterNum}`);
-    const playerDiv = document.getElementById(`player${chapterNum}`);
-    const audioEl = document.getElementById(`audio${chapterNum}`);
-    const nowPlaying = document.getElementById(`nowPlaying${chapterNum}`);
+    try {
+        const blobs = [];
+        const durations = [];
 
-    // Check if we already have all audio cached
-    const allCached = sections.every(id => state.audioCache[id]);
+        for (const file of AUDIO_FILES) {
+            const resp = await fetch(file);
+            if (!resp.ok) throw new Error(`Failed to load ${file}`);
+            const blob = await resp.blob();
+            blobs.push(blob);
 
-    if (allCached) {
-        // Already generated - just combine and play
-        const combined = combineBlobs(sections);
-        audioEl.src = URL.createObjectURL(combined);
-        playerDiv.classList.remove('hidden');
-        nowPlaying.textContent = 'Playing Chapter ' + chapterNum;
-        audioEl.play();
+            // Get duration by loading into temporary audio element
+            const dur = await getAudioDuration(blob);
+            durations.push(dur);
+        }
+
+        // Build cumulative timestamps
+        let cumulative = 0;
+        sectionDurations = durations.map(d => {
+            cumulative += d;
+            return cumulative;
+        });
+        totalDuration = cumulative;
+
+        // Combine all blobs
+        const combined = new Blob(blobs, { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(combined);
+
+        audio = new Audio(url);
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('ended', onEnded);
+        audio.addEventListener('loadedmetadata', () => {
+            // Use actual duration if available (more accurate)
+            if (audio.duration && isFinite(audio.duration)) {
+                totalDuration = audio.duration;
+            }
+            totalTimeEl.textContent = formatTime(totalDuration);
+        });
+
+        totalTimeEl.textContent = formatTime(totalDuration);
+        isLoaded = true;
+
+    } catch (err) {
+        console.error('Error loading audio:', err);
+        playIcon.textContent = '!';
         return;
     }
 
-    // Need to generate
-    state.isGenerating = true;
-    btn.querySelector('.play-icon').textContent = '⏳';
-    btn.querySelector('.play-label').textContent = 'Generating...';
-    btn.disabled = true;
+    playBtn.disabled = false;
+    playIcon.textContent = '▶';
+}
 
-    showStatus('Generating audio...', 'info');
-    showProgress(0);
-
-    try {
-        for (let i = 0; i < sections.length; i++) {
-            const sectionId = sections[i];
-            const sectionName = CONFIG.sectionNames[sectionId] || sectionId;
-
-            if (!state.audioCache[sectionId]) {
-                showStatus(`Generating: ${sectionName} (${i + 1}/${sections.length})`, 'info');
-                const text = getSectionText(sectionId);
-                const blob = await callAPI(text);
-                state.audioCache[sectionId] = blob;
+/**
+ * Get duration of an audio blob
+ */
+function getAudioDuration(blob) {
+    return new Promise((resolve) => {
+        const a = new Audio();
+        a.addEventListener('loadedmetadata', () => {
+            if (a.duration && isFinite(a.duration)) {
+                resolve(a.duration);
+            } else {
+                // Fallback: estimate ~150 words/min, ~0.4s per word
+                resolve(30); // rough fallback
             }
-
-            showProgress(((i + 1) / sections.length) * 100);
-        }
-
-        // Combine and play
-        const combined = combineBlobs(sections);
-        audioEl.src = URL.createObjectURL(combined);
-        playerDiv.classList.remove('hidden');
-        nowPlaying.textContent = 'Playing Chapter ' + chapterNum;
-        audioEl.play();
-
-        showStatus('Playing Chapter ' + chapterNum, 'success');
-        setTimeout(hideStatus, 3000);
-
-    } catch (err) {
-        console.error('Error:', err);
-        showStatus('Error generating audio. Please try again.', 'error');
-    } finally {
-        state.isGenerating = false;
-        hideProgress();
-        btn.querySelector('.play-icon').textContent = '▶';
-        btn.querySelector('.play-label').textContent = 'Play Chapter';
-        btn.disabled = false;
-    }
-}
-
-/**
- * Get script text for a section from the hidden content divs
- */
-function getSectionText(sectionId) {
-    const div = document.querySelector(`#chapter-scripts [data-section="${sectionId}"]`);
-    if (!div) return '';
-    const paragraphs = div.querySelectorAll('p');
-    return Array.from(paragraphs).map(p => p.textContent.trim()).join(' ');
-}
-
-/**
- * Combine multiple audio blobs into one
- */
-function combineBlobs(sectionIds) {
-    const blobs = sectionIds
-        .map(id => state.audioCache[id])
-        .filter(Boolean);
-    return new Blob(blobs, { type: 'audio/mpeg' });
-}
-
-/**
- * Call ElevenLabs API via worker
- */
-async function callAPI(text) {
-    const response = await fetch(`${CONFIG.workerUrl}/speak`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            text: text,
-            voiceSettings: {
-                voiceId: CONFIG.voice.voiceId,
-                stability: CONFIG.voice.stability,
-                similarity_boost: CONFIG.voice.similarity_boost,
-                style: CONFIG.voice.style,
-                use_speaker_boost: CONFIG.voice.use_speaker_boost
-            }
-        })
+            URL.revokeObjectURL(a.src);
+        });
+        a.addEventListener('error', () => resolve(30));
+        a.src = URL.createObjectURL(blob);
     });
+}
 
-    if (!response.ok) {
-        throw new Error('Audio generation failed');
+/**
+ * Play/pause toggle
+ */
+function togglePlay() {
+    if (!isLoaded) {
+        loadAudio().then(() => {
+            if (isLoaded) {
+                audio.play();
+                playIcon.textContent = '⏸';
+            }
+        });
+        return;
     }
 
-    return await response.blob();
+    if (audio.paused) {
+        audio.play();
+        playIcon.textContent = '⏸';
+    } else {
+        audio.pause();
+        playIcon.textContent = '▶';
+    }
 }
 
-// UI helpers
-function showStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = `status ${type}`;
-    statusEl.classList.remove('hidden');
+/**
+ * Update scrubber and section highlighting during playback
+ */
+function onTimeUpdate() {
+    if (!audio || !totalDuration) return;
+
+    const t = audio.currentTime;
+    const pct = (t / totalDuration) * 100;
+    scrubber.value = pct;
+    currentTimeEl.textContent = formatTime(t);
+
+    // Highlight current section
+    let idx = 0;
+    for (let i = 0; i < sectionDurations.length; i++) {
+        if (t < sectionDurations[i]) {
+            idx = i;
+            break;
+        }
+        if (i === sectionDurations.length - 1) idx = i;
+    }
+
+    if (idx !== currentSectionIndex) {
+        currentSectionIndex = idx;
+        sectionItems.forEach((el, i) => {
+            el.classList.toggle('active', i === idx);
+        });
+    }
 }
 
-function hideStatus() {
-    statusEl.classList.add('hidden');
+/**
+ * When audio ends
+ */
+function onEnded() {
+    playIcon.textContent = '▶';
+    scrubber.value = 0;
+    currentTimeEl.textContent = '0:00';
+    currentSectionIndex = -1;
+    sectionItems.forEach(el => el.classList.remove('active'));
 }
 
-function showProgress(pct) {
-    progressContainer.classList.remove('hidden');
-    progressBar.style.width = `${pct}%`;
-    progressText.textContent = `${Math.round(pct)}%`;
+/**
+ * Scrubber interaction
+ */
+function onScrub() {
+    if (!audio || !totalDuration) return;
+    const pct = parseFloat(scrubber.value);
+    audio.currentTime = (pct / 100) * totalDuration;
 }
 
-function hideProgress() {
-    progressContainer.classList.add('hidden');
+/**
+ * Click a section to jump to it
+ */
+function jumpToSection(index) {
+    if (!audio || !isLoaded) {
+        loadAudio().then(() => {
+            if (isLoaded) jumpToSection(index);
+        });
+        return;
+    }
+
+    const startTime = index === 0 ? 0 : sectionDurations[index - 1];
+    audio.currentTime = startTime;
+    if (audio.paused) {
+        audio.play();
+        playIcon.textContent = '⏸';
+    }
 }
 
-// Init
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
+/**
+ * Format seconds as M:SS
+ */
+function formatTime(s) {
+    const mins = Math.floor(s / 60);
+    const secs = Math.floor(s % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
+
+// Event listeners
+playBtn.addEventListener('click', togglePlay);
+scrubber.addEventListener('input', onScrub);
+
+sectionItems.forEach(item => {
+    item.addEventListener('click', () => {
+        jumpToSection(parseInt(item.dataset.index));
+    });
+});
+
+// Pre-load audio on page load so first play is fast
+loadAudio();

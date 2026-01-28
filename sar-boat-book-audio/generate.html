@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Audio Files - SAR Boat Book</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; max-width: 700px; margin: 2rem auto; padding: 1rem; }
+        h1 { color: #1a5276; }
+        .section { padding: 0.75rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .section.done { background: #d4edda; }
+        .section.generating { background: #fff3cd; }
+        .section.error { background: #f8d7da; }
+        button { padding: 0.75rem 1.5rem; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; background: #e74c3c; color: white; font-weight: 600; }
+        button:disabled { opacity: 0.5; cursor: wait; }
+        .status { margin: 1rem 0; font-weight: 500; }
+        .instructions { background: #e8f4fd; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+        .download-link { color: #1a5276; font-weight: 500; }
+    </style>
+</head>
+<body>
+    <h1>Generate Audio Files</h1>
+    <p>This page generates all 12 Chapter 1 audio files using ElevenLabs. Run it once, download the files, then commit them to the repo.</p>
+
+    <div class="instructions">
+        <strong>Steps:</strong>
+        <ol>
+            <li>Click "Generate All" below</li>
+            <li>Wait for all 12 sections to generate (progress shown below)</li>
+            <li>Each file auto-downloads as it's generated</li>
+            <li>Move the downloaded MP3 files into <code>sar-boat-book-audio/audio/</code></li>
+            <li>Commit and push</li>
+        </ol>
+    </div>
+
+    <button id="generateBtn" onclick="generateAll()">Generate All (12 sections)</button>
+    <div class="status" id="status"></div>
+
+    <div id="sections"></div>
+
+    <script>
+const WORKER_URL = 'https://vox-api.zammel.workers.dev';
+const VOICE = {
+    voiceId: 'CwhRBWXzGAHq8TQ4Fs17',
+    stability: 0.75,
+    similarity_boost: 0.75,
+    style: 0.0,
+    use_speaker_boost: true
+};
+
+const SECTIONS = [
+    { id: 'ch1-01-introduction', name: '01 - Introduction', text: `Welcome to the SAR Boat Book audio guide. This is Chapter One: Crew Welfare. This chapter covers essential knowledge for anyone operating on a Coastguard rescue vessel. We'll go through your personal responsibility for fitness, how to manage crew effectively, the health and safety requirements you need to know, and the support services available to you. Coastguard has a responsibility to ensure the safety and wellbeing of all crew. The goal is simple: everyone goes home healthy and safe. That's not negotiable. Let's get started.` },
+    { id: 'ch1-02-imsafe-overview', name: '02 - IMSAFE Overview', text: `Before every departure, you need to run a self-assessment called IMSAFE. This isn't optional. IMSAFE is a system that helps crew assess their fitness for duty. Prior to departure, all crew must confirm to the Master that they've undertaken a self-assessment and believe they are safe to work on the vessel. This should be recorded in the ship's log. IMSAFE is an acronym that helps you systematically check your fitness across six key areas. Let's go through each one.` },
+    { id: 'ch1-03-imsafe-detail', name: '03 - IMSAFE The Six Checks', text: `I is for Illness. Ask yourself: Am I free of illness, symptoms, and medically fit? M is for Medication. Am I taking any medication and is it safe? Will it affect my ability to drive or use machinery? And importantly - is there any medication I should have with me? S is for Stress. Am I managing stress well at home and at work? Stress affects judgment, and judgment keeps people alive. A is for Alcohol. Am I free of alcohol and drugs, and free of their effects? This means not just "have I had a drink today" but "am I still affected from last night?" F is for Fatigue Management. Am I rested and sleeping well? We'll talk more about fatigue shortly because it's critical. E is for Eating. Am I fed, watered, and ready to go? You can't perform if you're running on empty. That's IMSAFE. Illness, Medication, Stress, Alcohol, Fatigue, Eating. Run through it before every job.` },
+    { id: 'ch1-04-fatigue-risk', name: '04 - Fatigue The Critical Risk', text: `Now let's dig into fatigue, because Coastguard deems this a critical risk. Not just a risk - a critical one. It must be carefully monitored when conducting activities on board the vessel. Fatigue must be discussed as part of the pre-departure briefing. Not after you're already out there struggling to stay alert - before you leave. And it needs to be actively monitored while underway. The Master is ultimately responsible for the safety and wellbeing of the crew, but everyone needs to be honest about how they're tracking.` },
+    { id: 'ch1-05-fatigue-factors', name: '05 - Seven Fatigue Factors', text: `When managing fatigue, you need to ensure there's sufficient crew on board the vessel. But what does "sufficient" mean? It depends on seven key factors. First: Nature of the tasking. What kind of job is it? A straightforward tow is different from a complex search pattern in rough conditions. Second: Duration of the tasking. How long is this going to take? A quick job close to base is very different from an extended operation. Third: Location from base. How far are you going? The further out you are, the longer the return journey when everyone's already tired. Fourth: Expected weather conditions. Rough weather is exhausting. It demands constant physical effort and mental focus. Fifth: Crew's existing state of fatigue. What state is everyone in right now, before you even leave? Has someone just finished a night shift at their day job? Sixth: Crew state of health. Is anyone carrying a niggling injury or feeling under the weather? And seventh: Crew training and experience. Less experienced crew may fatigue faster because everything requires more conscious effort.` },
+    { id: 'ch1-06-fatigue-tips', name: '06 - Fatigue Practical Tips', text: `Here are practical things you can do to manage fatigue during operations. Regularly talk with crew about their state of alertness. Check in with each other. Don't wait for someone to speak up - ask them directly. Rotate tasks between crew. Don't leave one person on helm for hours. Switch things up to keep everyone fresh. Ensure healthy food and drinks are available. But don't over-eat - a heavy meal can make you drowsy. Stay hydrated. Rest or sleep when possible. If the operation allows it and you're not needed, grab some rest. It all helps.` },
+    { id: 'ch1-07-hs-basics', name: '07 - Health and Safety Key Definitions', text: `Let's talk about health and safety, starting with some key definitions. A PCBU - that's Person Conducting a Business or Undertaking - has a primary duty of care to ensure, so far as reasonably practicable, that the health and safety of workers and other people is not put at risk by the work it does. Coastguard is a PCBU. A Worker is an individual who carries out work in any capacity for a PCBU. That includes you as a volunteer. Coastguard has to operate within the boundaries of the Health and Safety at Work Act 2015, known as HSWA. This means we have clear health and safety processes in place to ensure the wellbeing of all people. Operating within the Act means Coastguard proactively tries to identify and manage risks so those involved within the organisation are safe and healthy.` },
+    { id: 'ch1-08-hs-rights', name: '08 - Your Rights Under HSWA', text: `Under the Health and Safety at Work Act, the HSWA states that it is the responsibility of Coastguard to ensure workers have rights to: Work in a healthy and safe environment. Get appropriate training. Work with safe machinery, vehicles, vessels, tools and equipment. Be provided with Personal Protective Equipment - PPE. Stop or refuse to carry out dangerous work. Have access to health and safety information. Speak up about any health and safety issues. Be given a chance to have input into health and safety matters. Be represented through Health and Safety Representatives, known as HSRs, and Health and Safety Committees, known as HSCs. And understand what to do in an emergency. These aren't suggestions - they're your rights.` },
+    { id: 'ch1-09-hs-responsibilities', name: '09 - Your Responsibilities', text: `Along with rights come responsibilities. As a volunteer, you have two key duties. First: Take reasonable care for your own health and safety. Look after yourself. Second: Take reasonable care that what you do or don't do does not adversely affect the health and safety of others. Your actions - or inactions - matter to everyone around you.` },
+    { id: 'ch1-10-vault', name: '10 - VAULT Reporting', text: `VAULT is the health and safety management system that Coastguard has put in place to capture reporting of injury, incidents and near misses. It also includes the identification and management of hazards and risks. Anyone can use VAULT to report injuries, incidents, near misses, hazards and risks. These can be reported using the VAULT portal found in Teams, on the Coastguard Intranet, or via the VAULT Notify app. There are four types of reports: Report Injury - have you seen or been involved in an incident that has caused injury to a person? Report Incident - have you seen or been involved in an incident that could have caused harm to a person, or caused damage to property or the environment? Report Near Miss - have you seen or been involved in an event that had the potential to cause an injury or an incident? Report Risk or Hazard - have you observed something that has the potential to cause harm to a person, property, or environment? If in doubt, report it.` },
+    { id: 'ch1-11-trauma', name: '11 - Traumatic Events', text: `Although most Coastguard operations don't involve major injuries, sometimes you will be asked to attend a critical incident that may expose you to trauma. A critical incident is any event that has a significant emotional power to overwhelm usual coping methods. It can involve any situation or event that causes a distressing, dramatic or profound change or disruption in physical or psychological functioning. There are often unusually strong emotions attached to the event which have the potential to interfere with a person's ability to function either at the scene or away from it. Critical incidents can produce characteristic sets of psychological and physiological reactions in people, although not all will be displayed by all people. Common symptoms of critical incident stress include: restlessness, moodiness, irritability, muscle tremors, excessive fatigue, difficulties concentrating, sleep disturbances, nightmares, anxiety, vomiting, startle reactions, diarrhoea, depression, and suspiciousness. These symptoms are especially destructive when a person denies their presence or misinterprets the stress responses as something going wrong with them.` },
+    { id: 'ch1-12-support', name: '12 - Support Services and Conclusion', text: `A critical incident debrief is a specific technique designed to assist others in dealing with the physical or psychological symptoms that are generally associated with trauma exposure. Debriefing allows those involved with the incident to process the event and reflect on its impact. It is understood that people deal with trauma in different ways, and Coastguard provides professional support services to help with this. Confidential external counselling support is available, and volunteers are encouraged to take advantage of it. Details can be provided via Unit leadership, the Coastguard People Team, or your Unit Support Manager. Remember - seeking help is a sign of strength, not weakness. That's Chapter One: Crew Welfare. The key takeaways? Run IMSAFE before every departure. Take fatigue seriously - it's a critical risk. Know your rights and responsibilities under health and safety law. Report incidents through VAULT. And if you're affected by a traumatic event, reach out for support. It's there for you. The goal is always the same: everyone goes home healthy and safe.` }
+];
+
+// Build section list
+const sectionsDiv = document.getElementById('sections');
+SECTIONS.forEach(s => {
+    const div = document.createElement('div');
+    div.className = 'section';
+    div.id = `section-${s.id}`;
+    div.innerHTML = `<span>${s.name}</span><span class="section-status">Pending</span>`;
+    sectionsDiv.appendChild(div);
+});
+
+async function generateAll() {
+    const btn = document.getElementById('generateBtn');
+    const status = document.getElementById('status');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    for (let i = 0; i < SECTIONS.length; i++) {
+        const s = SECTIONS[i];
+        const el = document.getElementById(`section-${s.id}`);
+        const statusSpan = el.querySelector('.section-status');
+
+        el.className = 'section generating';
+        statusSpan.textContent = 'Generating...';
+        status.textContent = `Generating ${i + 1} of ${SECTIONS.length}: ${s.name}`;
+
+        try {
+            const response = await fetch(`${WORKER_URL}/speak`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: s.text,
+                    voiceSettings: VOICE
+                })
+            });
+
+            if (!response.ok) throw new Error('API error');
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${s.id}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            el.className = 'section done';
+            statusSpan.textContent = 'Downloaded ✓';
+
+            // Small delay between calls
+            if (i < SECTIONS.length - 1) {
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        } catch (err) {
+            el.className = 'section error';
+            statusSpan.textContent = 'Error - retry manually';
+            console.error(err);
+        }
+    }
+
+    status.textContent = 'All done! Move the downloaded MP3 files into sar-boat-book-audio/audio/';
+    btn.textContent = 'Done!';
+}
+    </script>
+</body>
+</html>
