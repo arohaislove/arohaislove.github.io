@@ -1,383 +1,208 @@
 /**
- * SAR Boat Book - Audio Learning Guide Generator
- * Uses ElevenLabs via vox-api worker to generate professional narration
- *
- * Chapter 1: Crew Welfare - 12 sections, ~15-20 minutes total
+ * SAR Boat Book - Audio Learning Guide
+ * One button per chapter: generates all sections, combines, and plays.
  */
 
 const CONFIG = {
     workerUrl: 'https://vox-api.zammel.workers.dev',
-    // Voice configurations for different narrator styles
-    voices: {
-        'calm-professional': {
-            // Using a calm, clear voice - Roger is professional and smooth
-            voiceId: 'CwhRBWXzGAHq8TQ4Fs17',
-            stability: 0.75,
-            similarity_boost: 0.75,
-            style: 0.0,
-            use_speaker_boost: true
-        },
-        'warm-narrator': {
-            // Bella - warm and storytelling style
-            voiceId: 'EXAVITQu4vr4xnSDxMaL',
-            stability: 0.7,
-            similarity_boost: 0.8,
-            style: 0.1,
-            use_speaker_boost: true
-        },
-        'clear-instructor': {
-            // Josh - clear and authoritative
-            voiceId: 'TxGEqnHWrfWFTfGW9XjX',
-            stability: 0.8,
-            similarity_boost: 0.7,
-            style: 0.0,
-            use_speaker_boost: true
-        }
+    voice: {
+        voiceId: 'CwhRBWXzGAHq8TQ4Fs17', // Roger - calm & professional
+        stability: 0.75,
+        similarity_boost: 0.75,
+        style: 0.0,
+        use_speaker_boost: true
     },
-    // Chapter 1 section order for combining audio
-    chapter1Sections: [
-        'ch1-intro',
-        'ch1-imsafe-overview',
-        'ch1-imsafe-detail',
-        'ch1-fatigue-risk',
-        'ch1-fatigue-factors',
-        'ch1-fatigue-tips',
-        'ch1-hs-basics',
-        'ch1-hs-rights',
-        'ch1-hs-responsibilities',
-        'ch1-vault',
-        'ch1-trauma',
-        'ch1-support'
-    ]
+    chapters: {
+        1: [
+            'ch1-intro',
+            'ch1-imsafe-overview',
+            'ch1-imsafe-detail',
+            'ch1-fatigue-risk',
+            'ch1-fatigue-factors',
+            'ch1-fatigue-tips',
+            'ch1-hs-basics',
+            'ch1-hs-rights',
+            'ch1-hs-responsibilities',
+            'ch1-vault',
+            'ch1-trauma',
+            'ch1-support'
+        ]
+    },
+    sectionNames: {
+        'ch1-intro': 'Introduction',
+        'ch1-imsafe-overview': 'IMSAFE - Your Personal Checklist',
+        'ch1-imsafe-detail': 'IMSAFE - The Six Checks',
+        'ch1-fatigue-risk': 'Fatigue - The Critical Risk',
+        'ch1-fatigue-factors': 'The Seven Fatigue Factors',
+        'ch1-fatigue-tips': 'Managing Fatigue - Practical Tips',
+        'ch1-hs-basics': 'Health & Safety - Key Definitions',
+        'ch1-hs-rights': 'Your Rights Under Health & Safety Law',
+        'ch1-hs-responsibilities': 'Your Responsibilities as a Volunteer',
+        'ch1-vault': 'VAULT - Reporting Incidents',
+        'ch1-trauma': 'Understanding Traumatic Events',
+        'ch1-support': 'Support Services & Conclusion'
+    }
 };
 
 // State
 const state = {
-    generatedAudio: {},  // section -> blob
-    isGenerating: false,
-    currentVoice: 'calm-professional',
-    combinedAudioBlob: null
+    audioCache: {},      // sectionId -> blob (persists across plays)
+    isGenerating: false
 };
 
-// DOM elements
-const elements = {
-    generateAllBtn: document.getElementById('generateAllBtn'),
-    downloadAllBtn: document.getElementById('downloadAllBtn'),
-    voiceSelect: document.getElementById('voiceSelect'),
-    status: document.getElementById('status'),
-    progressContainer: document.getElementById('progressContainer'),
-    progressBar: document.getElementById('progressBar'),
-    progressText: document.getElementById('progressText'),
-    combinedPlayer: document.getElementById('combinedPlayer'),
-    fullAudio: document.getElementById('fullAudio'),
-    sections: document.querySelectorAll('.script-section')
-};
+// DOM refs
+const statusEl = document.getElementById('status');
+const progressContainer = document.getElementById('progressContainer');
+const progressBar = document.getElementById('progressBar');
+const progressText = document.getElementById('progressText');
 
-/**
- * Initialize the application
- */
 function init() {
-    setupEventListeners();
+    document.querySelectorAll('.btn-play-chapter').forEach(btn => {
+        btn.addEventListener('click', () => playChapter(btn.dataset.chapter));
+    });
 }
 
 /**
- * Set up event listeners
+ * Play an entire chapter: generate any missing audio, combine, and play
  */
-function setupEventListeners() {
-    // Voice selection
-    elements.voiceSelect.addEventListener('change', (e) => {
-        state.currentVoice = e.target.value;
-    });
+async function playChapter(chapterNum) {
+    if (state.isGenerating) return;
 
-    // Generate all button
-    elements.generateAllBtn.addEventListener('click', generateAllAudio);
+    const sections = CONFIG.chapters[chapterNum];
+    if (!sections) return;
 
-    // Download all button
-    elements.downloadAllBtn.addEventListener('click', downloadCombinedAudio);
+    const btn = document.getElementById(`playChapter${chapterNum}`);
+    const playerDiv = document.getElementById(`player${chapterNum}`);
+    const audioEl = document.getElementById(`audio${chapterNum}`);
+    const nowPlaying = document.getElementById(`nowPlaying${chapterNum}`);
 
-    // Individual section buttons
-    elements.sections.forEach(section => {
-        const generateBtn = section.querySelector('.btn-generate');
-        const playBtn = section.querySelector('.btn-play');
-        const downloadBtn = section.querySelector('.btn-download-section');
-        const audio = section.querySelector('.section-audio');
-        const sectionId = section.dataset.section;
+    // Check if we already have all audio cached
+    const allCached = sections.every(id => state.audioCache[id]);
 
-        generateBtn.addEventListener('click', () => generateSectionAudio(sectionId));
+    if (allCached) {
+        // Already generated - just combine and play
+        const combined = combineBlobs(sections);
+        audioEl.src = URL.createObjectURL(combined);
+        playerDiv.classList.remove('hidden');
+        nowPlaying.textContent = 'Playing Chapter ' + chapterNum;
+        audioEl.play();
+        return;
+    }
 
-        playBtn.addEventListener('click', () => {
-            if (audio.paused) {
-                audio.play();
-                playBtn.textContent = '⏸';
-            } else {
-                audio.pause();
-                playBtn.textContent = '▶';
+    // Need to generate
+    state.isGenerating = true;
+    btn.querySelector('.play-icon').textContent = '⏳';
+    btn.querySelector('.play-label').textContent = 'Generating...';
+    btn.disabled = true;
+
+    showStatus('Generating audio...', 'info');
+    showProgress(0);
+
+    try {
+        for (let i = 0; i < sections.length; i++) {
+            const sectionId = sections[i];
+            const sectionName = CONFIG.sectionNames[sectionId] || sectionId;
+
+            if (!state.audioCache[sectionId]) {
+                showStatus(`Generating: ${sectionName} (${i + 1}/${sections.length})`, 'info');
+                const text = getSectionText(sectionId);
+                const blob = await callAPI(text);
+                state.audioCache[sectionId] = blob;
             }
-        });
 
-        audio.addEventListener('ended', () => {
-            playBtn.textContent = '▶';
-        });
+            showProgress(((i + 1) / sections.length) * 100);
+        }
 
-        downloadBtn.addEventListener('click', () => downloadSectionAudio(sectionId));
-    });
+        // Combine and play
+        const combined = combineBlobs(sections);
+        audioEl.src = URL.createObjectURL(combined);
+        playerDiv.classList.remove('hidden');
+        nowPlaying.textContent = 'Playing Chapter ' + chapterNum;
+        audioEl.play();
+
+        showStatus('Playing Chapter ' + chapterNum, 'success');
+        setTimeout(hideStatus, 3000);
+
+    } catch (err) {
+        console.error('Error:', err);
+        showStatus('Error generating audio. Please try again.', 'error');
+    } finally {
+        state.isGenerating = false;
+        hideProgress();
+        btn.querySelector('.play-icon').textContent = '▶';
+        btn.querySelector('.play-label').textContent = 'Play Chapter';
+        btn.disabled = false;
+    }
 }
 
 /**
- * Get text content from a section
+ * Get script text for a section from the hidden content divs
  */
 function getSectionText(sectionId) {
-    const section = document.querySelector(`[data-section="${sectionId}"]`);
-    if (!section) return '';
-
-    const contentDiv = section.querySelector('.section-content');
-    // Get all paragraph text, joining with spaces
-    const paragraphs = contentDiv.querySelectorAll('p');
+    const div = document.querySelector(`#chapter-scripts [data-section="${sectionId}"]`);
+    if (!div) return '';
+    const paragraphs = div.querySelectorAll('p');
     return Array.from(paragraphs).map(p => p.textContent.trim()).join(' ');
 }
 
 /**
- * Get section title
+ * Combine multiple audio blobs into one
  */
-function getSectionTitle(sectionId) {
-    const section = document.querySelector(`[data-section="${sectionId}"]`);
-    if (!section) return sectionId;
-    const h3 = section.querySelector('h3');
-    return h3 ? h3.textContent : sectionId;
-}
-
-/**
- * Show status message
- */
-function showStatus(message, type = 'info') {
-    elements.status.textContent = message;
-    elements.status.className = `status ${type}`;
-    elements.status.classList.remove('hidden');
-}
-
-/**
- * Hide status
- */
-function hideStatus() {
-    elements.status.classList.add('hidden');
-}
-
-/**
- * Update progress bar
- */
-function updateProgress(percent) {
-    elements.progressContainer.classList.remove('hidden');
-    elements.progressBar.style.width = `${percent}%`;
-    elements.progressText.textContent = `${Math.round(percent)}%`;
-}
-
-/**
- * Hide progress bar
- */
-function hideProgress() {
-    elements.progressContainer.classList.add('hidden');
-}
-
-/**
- * Generate audio for a single section
- */
-async function generateSectionAudio(sectionId) {
-    const section = document.querySelector(`[data-section="${sectionId}"]`);
-    const generateBtn = section.querySelector('.btn-generate');
-    const playBtn = section.querySelector('.btn-play');
-    const downloadBtn = section.querySelector('.btn-download-section');
-    const audio = section.querySelector('.section-audio');
-
-    try {
-        // Update UI
-        generateBtn.disabled = true;
-        generateBtn.textContent = '...';
-        const title = getSectionTitle(sectionId);
-        showStatus(`Generating audio: ${title}...`, 'info');
-
-        // Get text content
-        const text = getSectionText(sectionId);
-        if (!text) {
-            throw new Error('No text content found');
-        }
-
-        // Generate audio
-        const audioBlob = await callElevenLabsAPI(text);
-
-        if (!audioBlob) {
-            throw new Error('Failed to generate audio');
-        }
-
-        // Store the blob
-        state.generatedAudio[sectionId] = audioBlob;
-
-        // Set up audio element
-        const audioUrl = URL.createObjectURL(audioBlob);
-        audio.src = audioUrl;
-
-        // Show play and download buttons
-        playBtn.classList.remove('hidden');
-        downloadBtn.classList.remove('hidden');
-        generateBtn.textContent = '✓';
-        generateBtn.classList.add('done');
-
-        showStatus(`Audio generated: ${title}`, 'success');
-        setTimeout(hideStatus, 3000);
-
-    } catch (error) {
-        console.error('Error generating section audio:', error);
-        showStatus(`Error: ${error.message}`, 'error');
-        generateBtn.textContent = '🎙';
-        generateBtn.disabled = false;
-    }
-}
-
-/**
- * Generate all audio sections
- */
-async function generateAllAudio() {
-    if (state.isGenerating) return;
-    state.isGenerating = true;
-
-    elements.generateAllBtn.disabled = true;
-    elements.generateAllBtn.innerHTML = '<span class="btn-icon">⏳</span> Generating...';
-
-    const sectionIds = CONFIG.chapter1Sections;
-    const totalSections = sectionIds.length;
-    let completedSections = 0;
-
-    showStatus('Generating all audio sections (this may take a few minutes)...', 'info');
-    updateProgress(0);
-
-    try {
-        for (const sectionId of sectionIds) {
-            // Check if already generated
-            if (!state.generatedAudio[sectionId]) {
-                await generateSectionAudio(sectionId);
-                // Add a small delay between API calls to be respectful
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            completedSections++;
-            updateProgress((completedSections / totalSections) * 100);
-        }
-
-        // Combine all audio into one
-        await combineAllAudio();
-
-        showStatus('All audio sections generated! Click play to listen to the full chapter.', 'success');
-        elements.combinedPlayer.classList.remove('hidden');
-
-    } catch (error) {
-        console.error('Error generating all audio:', error);
-        showStatus(`Error: ${error.message}`, 'error');
-    } finally {
-        state.isGenerating = false;
-        elements.generateAllBtn.disabled = false;
-        elements.generateAllBtn.innerHTML = '<span class="btn-icon">🎙</span> Generate Chapter Audio';
-        hideProgress();
-    }
-}
-
-/**
- * Combine all generated audio into one file
- */
-async function combineAllAudio() {
-    const sectionIds = CONFIG.chapter1Sections;
-    const audioBlobs = [];
-
-    for (const sectionId of sectionIds) {
-        if (state.generatedAudio[sectionId]) {
-            audioBlobs.push(state.generatedAudio[sectionId]);
-        }
-    }
-
-    if (audioBlobs.length === 0) {
-        throw new Error('No audio sections available to combine');
-    }
-
-    // Combine blobs (simple concatenation works for MP3)
-    const combinedBlob = new Blob(audioBlobs, { type: 'audio/mpeg' });
-    const combinedUrl = URL.createObjectURL(combinedBlob);
-    elements.fullAudio.src = combinedUrl;
-
-    // Store for download
-    state.combinedAudioBlob = combinedBlob;
-}
-
-/**
- * Download combined audio
- */
-function downloadCombinedAudio() {
-    if (!state.combinedAudioBlob) {
-        showStatus('Please generate audio first', 'error');
-        return;
-    }
-
-    downloadBlob(state.combinedAudioBlob, 'SAR-Boat-Book-Chapter1-Crew-Welfare.mp3');
-}
-
-/**
- * Download a single section's audio
- */
-function downloadSectionAudio(sectionId) {
-    const blob = state.generatedAudio[sectionId];
-    if (!blob) {
-        showStatus('Please generate this section first', 'error');
-        return;
-    }
-
-    // Create a clean filename from the section ID
-    const filename = `SAR-Boat-Book-${sectionId}.mp3`;
-    downloadBlob(blob, filename);
-}
-
-/**
- * Download a blob as a file
- */
-function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+function combineBlobs(sectionIds) {
+    const blobs = sectionIds
+        .map(id => state.audioCache[id])
+        .filter(Boolean);
+    return new Blob(blobs, { type: 'audio/mpeg' });
 }
 
 /**
  * Call ElevenLabs API via worker
  */
-async function callElevenLabsAPI(text) {
-    const voiceConfig = CONFIG.voices[state.currentVoice];
-
+async function callAPI(text) {
     const response = await fetch(`${CONFIG.workerUrl}/speak`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             text: text,
             voiceSettings: {
-                voiceId: voiceConfig.voiceId,
-                stability: voiceConfig.stability,
-                similarity_boost: voiceConfig.similarity_boost,
-                style: voiceConfig.style,
-                use_speaker_boost: voiceConfig.use_speaker_boost
+                voiceId: CONFIG.voice.voiceId,
+                stability: CONFIG.voice.stability,
+                similarity_boost: CONFIG.voice.similarity_boost,
+                style: CONFIG.voice.style,
+                use_speaker_boost: CONFIG.voice.use_speaker_boost
             }
         })
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        console.error('ElevenLabs API error:', errorText);
-        throw new Error('Failed to generate audio. Please try again.');
+        throw new Error('Audio generation failed');
     }
 
     return await response.blob();
 }
 
-// Initialize when DOM is ready
+// UI helpers
+function showStatus(msg, type) {
+    statusEl.textContent = msg;
+    statusEl.className = `status ${type}`;
+    statusEl.classList.remove('hidden');
+}
+
+function hideStatus() {
+    statusEl.classList.add('hidden');
+}
+
+function showProgress(pct) {
+    progressContainer.classList.remove('hidden');
+    progressBar.style.width = `${pct}%`;
+    progressText.textContent = `${Math.round(pct)}%`;
+}
+
+function hideProgress() {
+    progressContainer.classList.add('hidden');
+}
+
+// Init
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
