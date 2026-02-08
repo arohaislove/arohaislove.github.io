@@ -464,8 +464,11 @@ async function handleCapture(request, env) {
     return jsonResponse({ error: 'Missing or invalid input' }, 400);
   }
 
-  if (input.length > 5000) {
-    return jsonResponse({ error: 'Input too long (max 5000 characters)' }, 400);
+  const maxLength = input.startsWith('[Claude conversation]') ||
+                     input.startsWith('[Gemini conversation]') ||
+                     input.startsWith('[Kimi conversation]') ? 10000 : 5000;
+  if (input.length > maxLength) {
+    return jsonResponse({ error: `Input too long (max ${maxLength} characters)` }, 400);
   }
 
   // Classify the input using Claude (with vision if image provided)
@@ -602,12 +605,16 @@ Classify the input into ONE of these types:
 - note: General information worth remembering
 - person: Information about a person (contact, relationship note)
 - project: Related to an ongoing project
+- ai-conversation: A captured conversation with an AI assistant (Claude, Gemini, Kimi, ChatGPT, etc.)
+
+DETECTING AI CONVERSATIONS:
+Input prefixed with [Claude conversation], [Gemini conversation], [Kimi conversation], etc. is a screen capture from an AI chat app grabbed via Tasker/AutoInput. It will contain alternating human/assistant messages, possibly with code blocks, markdown, or long-form reasoning. Classify these as "ai-conversation" and extract the signal - don't just store the raw dump.
 
 ${image ? 'The user has provided an IMAGE along with optional text. Analyze the image carefully and classify based on what you see. Extract any text from receipts, notes, or documents. Describe visual content for creative captures.' : ''}
 
 Respond with JSON only:
 {
-  "type": "todo|expense|calendar|creative|note|person|project",
+  "type": "todo|expense|calendar|creative|note|person|project|ai-conversation",
   "structured": {
     // type-specific fields, examples:
     // todo: { "task": "...", "priority": "high|medium|low", "dueHint": "..." }
@@ -617,6 +624,7 @@ Respond with JSON only:
     // note: { "summary": "...", "tags": [...] }
     // person: { "name": "...", "context": "...", "detail": "..." }
     // project: { "project": "...", "update": "...", "nextAction": "..." }
+    // ai-conversation: { "app": "Claude|Gemini|Kimi|ChatGPT|other", "topics": ["..."], "keyTakeaways": ["..."], "actionItems": ["..."], "mood": "exploratory|productive|troubleshooting|creative|planning" }
   },
   "notes": "Brief AI observation - what you saw in the image, patterns noticed, connections, suggestions"
 }`;
@@ -1150,14 +1158,24 @@ async function generateMorningBriefing(env) {
   // Get Claude's working memory
   const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
 
-  // Separate comms from other captures
+  // Separate comms, AI conversations, and other captures
   const commsItems = items.filter(i => i.type === 'comms');
-  const otherItems = items.filter(i => i.type !== 'comms');
+  const aiConvoItems = items.filter(i => i.type === 'ai-conversation');
+  const otherItems = items.filter(i => i.type !== 'comms' && i.type !== 'ai-conversation');
 
   // Format regular captures for briefing (using timezone-aware dates)
   const recentCaptures = otherItems.map(i =>
     `[${i.type.toUpperCase()}] ${getDateInTimezone(i.createdAt)}\nInput: ${i.input}\nAI Notes: ${i.aiNotes || 'none'}`
   ).join('\n\n');
+
+  // Format AI conversation captures for briefing
+  const aiConvoData = aiConvoItems.map(i => {
+    const structured = i.structured || {};
+    const topics = (structured.topics || []).join(', ');
+    const takeaways = (structured.keyTakeaways || []).join('; ');
+    const actions = (structured.actionItems || []).join('; ');
+    return `[${structured.app || 'AI'}] ${getDateInTimezone(i.createdAt)} ${formatDateInTimezone(i.createdAt, 'time')} (${structured.mood || 'unknown'} mood)\nTopics: ${topics || 'none extracted'}\nKey takeaways: ${takeaways || 'none extracted'}\nAction items: ${actions || 'none'}\nAI Notes: ${i.aiNotes || 'none'}`;
+  }).join('\n\n');
 
   // Format comms data for analysis (using timezone-aware dates)
   const commsData = commsItems.map(i => {
@@ -1208,6 +1226,9 @@ TODAY'S DATE: ${getTodayInTimezone()} (${CONFIG.timezone})
 
 RECENT CAPTURES (manual voice/text entries):
 ${recentCaptures || '(no recent captures)'}
+
+AI CONVERSATIONS (captured from Claude, Gemini, Kimi, etc.):
+${aiConvoData || '(no AI conversations captured yet)'}
 
 COMMUNICATIONS DATA (from Tasker - last 48 hours):
 ${commsData || '(no comms data yet)'}
@@ -1272,6 +1293,14 @@ If no signal readings, say "No flagged interactions this period."]
 
 ### **[Pattern 2 Name]**
 - More observations
+
+### **AI Conversations** 🤖
+[If AI conversation data available:
+- What was explored and with which AI
+- Key decisions or insights that emerged
+- Action items that came out of the conversations
+- Threads worth continuing today
+If no AI conversations captured, skip this section entirely.]
 
 ### **Communication Patterns** 📱
 [If comms data available:
