@@ -1,0 +1,16 @@
+name = "sheets-sync"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Daily sync at 6 AM UTC (6pm NZDT / 7pm NZST)
+[triggers]
+crons = ["0 6 * * *"]
+
+# Same KV namespace as the second-brain worker
+[[kv_namespaces]]
+binding = "BRAIN_KV"
+id = "38349bc2045a4168aa94ce50d1f8e19b"
+
+# Secrets (configured via GitHub Actions / wrangler secret put):
+#   GOOGLE_SERVICE_ACCOUNT_KEY - full JSON contents of the service account key file
+#   SPREADSHEET_ID - the Google Sheet ID from the URL

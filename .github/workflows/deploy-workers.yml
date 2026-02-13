@@ -97,6 +97,24 @@ jobs:
             echo "ℹ️  Worker does not use NTFY_TOPIC - skipping secret configuration"
           fi
 
+          # Check if worker code references GOOGLE_SERVICE_ACCOUNT_KEY
+          if grep -q "GOOGLE_SERVICE_ACCOUNT_KEY" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-google-sa-key=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses GOOGLE_SERVICE_ACCOUNT_KEY - will configure secret"
+          else
+            echo "needs-google-sa-key=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use GOOGLE_SERVICE_ACCOUNT_KEY - skipping secret configuration"
+          fi
+
+          # Check if worker code references SPREADSHEET_ID
+          if grep -q "SPREADSHEET_ID" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
+            echo "needs-spreadsheet-id=true" >> $GITHUB_OUTPUT
+            echo "🔑 Worker uses SPREADSHEET_ID - will configure secret"
+          else
+            echo "needs-spreadsheet-id=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  Worker does not use SPREADSHEET_ID - skipping secret configuration"
+          fi
+
       - name: Set ANTHROPIC_API_KEY secret
         if: steps.check-secrets.outputs.needs-anthropic-key == 'true'
         env:
@@ -132,6 +150,24 @@ jobs:
         run: |
           cd workers/${{ matrix.worker }}
           echo "${{ secrets.NTFY_TOPIC }}" | wrangler secret put NTFY_TOPIC
+
+      - name: Set GOOGLE_SERVICE_ACCOUNT_KEY secret
+        if: steps.check-secrets.outputs.needs-google-sa-key == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd workers/${{ matrix.worker }}
+          echo '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}' | wrangler secret put GOOGLE_SERVICE_ACCOUNT_KEY
+
+      - name: Set SPREADSHEET_ID secret
+        if: steps.check-secrets.outputs.needs-spreadsheet-id == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cd workers/${{ matrix.worker }}
+          echo "${{ secrets.SPREADSHEET_ID }}" | wrangler secret put SPREADSHEET_ID
 
       - name: Deploy worker
         env:
