@@ -29,11 +29,25 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/health') {
+      let serviceAccountEmail = null;
+      if (env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+        try {
+          const sa = JSON.parse(env.GOOGLE_SERVICE_ACCOUNT_KEY);
+          serviceAccountEmail = sa.client_email;
+        } catch (e) {
+          serviceAccountEmail = 'error parsing key';
+        }
+      }
+
       return jsonResponse({
         status: 'ok',
         timestamp: new Date().toISOString(),
         kvConfigured: !!env.BRAIN_KV,
-        sheetsConfigured: !!env.GOOGLE_SERVICE_ACCOUNT_KEY && !!env.SPREADSHEET_ID
+        sheetsConfigured: !!env.GOOGLE_SERVICE_ACCOUNT_KEY && !!env.SPREADSHEET_ID,
+        serviceAccountEmail: serviceAccountEmail,
+        shareInstructions: serviceAccountEmail
+          ? `Open your Google Sheet → tap Share → paste this email: ${serviceAccountEmail} → set to Editor → tap Send`
+          : 'GOOGLE_SERVICE_ACCOUNT_KEY not configured yet'
       });
     }
 
