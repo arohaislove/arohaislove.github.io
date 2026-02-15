@@ -1,0 +1,8 @@
+name = "sheets-sync"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# The APPS_SCRIPT_URL secret must be set via:
+#   wrangler secret put APPS_SCRIPT_URL
+# Value: your deployed Google Apps Script web app URL
+# (automatically configured by GitHub Actions if added as a repo secret)
