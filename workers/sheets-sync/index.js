@@ -1,23 +1,22 @@
 /**
  * SHEETS SYNC - Cloudflare Worker
  *
- * Reads data from Second Brain's KV store and pushes it directly
- * to Google Sheets using the Google Sheets API with service account auth.
- * No Apps Script needed.
+ * Reads data from Second Brain's KV store and serves it as CSV.
+ * Use Google Sheets IMPORTDATA formula to pull data automatically.
  *
  * Endpoints:
- *   POST /sync       - Trigger a full sync to Google Sheets
- *   GET  /health     - Health check
- *   GET  /preview    - Preview what would be synced (JSON)
- *
- * Cron: Runs every 6 hours automatically
- *
- * Secrets:
- *   GOOGLE_SERVICE_ACCOUNT_KEY - Service account JSON
- *   SPREADSHEET_ID             - Target Google Sheet ID
+ *   GET /csv          - All items as CSV
+ *   GET /csv/notes    - Claude notes as CSV
+ *   GET /csv/:type    - Items filtered by type (expense, todo, calendar, comms, etc.)
+ *   GET /preview      - Preview data as JSON
+ *   GET /health       - Health check
+ *   GET /             - Instructions page
  *
  * KV Binding:
  *   BRAIN_KV - Second Brain's KV namespace
+ *
+ * Usage in Google Sheets:
+ *   =IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv")
  */
 
 export default {
@@ -27,97 +26,104 @@ export default {
     }
 
     const url = new URL(request.url);
+    const path = url.pathname;
 
-    if (url.pathname === '/health') {
+    if (path === '/health') {
       return jsonResponse({
         status: 'ok',
         timestamp: new Date().toISOString(),
-        kvConfigured: !!env.BRAIN_KV,
-        sheetsConfigured: !!env.GOOGLE_SERVICE_ACCOUNT_KEY && !!env.SPREADSHEET_ID
+        kvConfigured: !!env.BRAIN_KV
       });
     }
 
-    if (url.pathname === '/preview' && request.method === 'GET') {
+    if (path === '/preview') {
       return await handlePreview(env);
     }
 
-    if (url.pathname === '/sync' && request.method === 'POST') {
-      return await handleSync(env);
+    if (path === '/csv') {
+      return await handleCsv(env, 'all');
     }
 
-    return jsonResponse({
-      worker: 'sheets-sync',
-      endpoints: {
-        'POST /sync': 'Sync KV data to Google Sheets',
-        'GET /preview': 'Preview data that would be synced',
-        'GET /health': 'Health check'
-      }
-    });
-  },
+    if (path === '/csv/notes') {
+      return await handleNotesCsv(env);
+    }
 
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(syncToSheets(env));
+    if (path.startsWith('/csv/')) {
+      const type = path.replace('/csv/', '');
+      return await handleCsv(env, type);
+    }
+
+    // Landing page with instructions
+    return new Response(landingPage(), {
+      headers: { 'Content-Type': 'text/html', ...corsHeaders() }
+    });
   }
 };
 
-// ─── SYNC LOGIC ──────────────────────────────────────────────
+// ─── CSV HANDLERS ────────────────────────────────────────────
 
-async function handleSync(env) {
+async function handleCsv(env, type) {
   try {
-    const result = await syncToSheets(env);
-    return jsonResponse(result);
+    if (!env.BRAIN_KV) {
+      return csvResponse('Error: KV not configured');
+    }
+
+    const data = await readAllFromKV(env);
+    let items = data.items;
+
+    if (type !== 'all') {
+      items = items.filter(item => item.type === type);
+    }
+
+    const csv = itemsToCsv(items, type);
+    return csvResponse(csv);
   } catch (error) {
-    return jsonResponse({ error: error.message }, 500);
+    return csvResponse(`Error: ${error.message}`);
+  }
+}
+
+async function handleNotesCsv(env) {
+  try {
+    if (!env.BRAIN_KV) {
+      return csvResponse('Error: KV not configured');
+    }
+
+    const data = await readAllFromKV(env);
+    const csv = notesToCsv(data.claudeNotes);
+    return csvResponse(csv);
+  } catch (error) {
+    return csvResponse(`Error: ${error.message}`);
   }
 }
 
 async function handlePreview(env) {
   try {
+    if (!env.BRAIN_KV) {
+      return jsonResponse({ error: 'KV not configured' }, 500);
+    }
+
     const data = await readAllFromKV(env);
+    const types = {};
+    data.items.forEach(item => {
+      types[item.type] = (types[item.type] || 0) + 1;
+    });
+
     return jsonResponse({
       totalItems: data.items.length,
-      byType: countByType(data.items),
-      sampleHeaders: ['ID', 'Type', 'Input', 'Created At', 'Status', 'Source', 'AI Notes'],
-      sampleRows: data.items.slice(0, 3).map(formatItemRow)
+      totalNotes: data.claudeNotes.length,
+      byType: types,
+      availableCsvEndpoints: {
+        '/csv': 'All items',
+        '/csv/notes': 'Claude notes',
+        ...Object.keys(types).reduce((acc, t) => {
+          acc[`/csv/${t}`] = `${t} items only`;
+          return acc;
+        }, {})
+      }
     });
   } catch (error) {
     return jsonResponse({ error: error.message }, 500);
   }
-}
-
-async function syncToSheets(env) {
-  if (!env.BRAIN_KV) {
-    throw new Error('BRAIN_KV not configured');
-  }
-  if (!env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not configured');
-  }
-  if (!env.SPREADSHEET_ID) {
-    throw new Error('SPREADSHEET_ID not configured');
-  }
-
-  // 1. Read all data from KV
-  const data = await readAllFromKV(env);
-
-  // 2. Get Google access token
-  const accessToken = await getGoogleAccessToken(env.GOOGLE_SERVICE_ACCOUNT_KEY);
-
-  // 3. Prepare sheet data
-  const sheets = buildSheetData(data);
-
-  // 4. Write to Google Sheets
-  const results = {};
-  for (const [sheetName, rows] of Object.entries(sheets)) {
-    await ensureSheet(env.SPREADSHEET_ID, accessToken, sheetName);
-    await writeToSheet(env.SPREADSHEET_ID, accessToken, sheetName, rows);
-    results[sheetName] = rows.length - 1; // minus header row
-  }
-
-  return {
-    success: true,
-    syncedAt: new Date().toISOString(),
-    sheets: results
-  };
 }
 
 // ─── KV DATA READING ────────────────────────────────────────
@@ -135,280 +141,151 @@ async function readAllFromKV(env) {
   return { items, claudeNotes: claudeNotes.notes || [] };
 }
 
-function countByType(items) {
-  const counts = {};
-  items.forEach(item => {
-    counts[item.type] = (counts[item.type] || 0) + 1;
-  });
-  return counts;
+// ─── CSV FORMATTING ─────────────────────────────────────────
+
+function escapeCsv(val) {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return '"' + str.replace(/"/g, '""') + '"';
+  }
+  return str;
 }
 
-// ─── SHEET DATA FORMATTING ──────────────────────────────────
-
-function buildSheetData(data) {
-  const sheets = {};
-
-  // Main items sheet
-  const itemHeaders = ['ID', 'Type', 'Input', 'Created At', 'Status', 'Source', 'AI Notes', 'Structured Data'];
-  const itemRows = [itemHeaders];
-  for (const item of data.items) {
-    itemRows.push(formatItemRow(item));
-  }
-  sheets['All Items'] = itemRows;
-
-  // Per-type sheets for types with enough items
-  const byType = {};
-  data.items.forEach(item => {
-    if (!byType[item.type]) byType[item.type] = [];
-    byType[item.type].push(item);
-  });
-
-  for (const [type, items] of Object.entries(byType)) {
-    if (items.length >= 2) {
-      const typeHeaders = buildTypeHeaders(type);
-      const typeRows = [typeHeaders];
-      for (const item of items) {
-        typeRows.push(formatTypedRow(type, item));
-      }
-      const sheetName = type.charAt(0).toUpperCase() + type.slice(1) + 's';
-      sheets[sheetName] = typeRows;
-    }
-  }
-
-  // Claude notes sheet
-  if (data.claudeNotes.length > 0) {
-    const noteHeaders = ['Note ID', 'Category', 'Content', 'Created At', 'Expires At'];
-    const noteRows = [noteHeaders];
-    for (const note of data.claudeNotes) {
-      noteRows.push([
-        note.id || '',
-        note.category || '',
-        note.content || '',
-        note.createdAt || '',
-        note.expiresAt || ''
-      ]);
-    }
-    sheets['Claude Notes'] = noteRows;
-  }
-
-  return sheets;
+function rowToCsv(fields) {
+  return fields.map(escapeCsv).join(',');
 }
 
-function formatItemRow(item) {
-  return [
-    item.id || '',
-    item.type || '',
-    item.input || '',
-    item.createdAt || '',
-    item.status || '',
-    item.source || '',
-    item.aiNotes || '',
-    item.structured ? JSON.stringify(item.structured) : ''
-  ];
-}
-
-function buildTypeHeaders(type) {
-  const base = ['ID', 'Input', 'Created At', 'Status', 'AI Notes'];
-  switch (type) {
-    case 'expense':
-      return [...base, 'Amount', 'Currency', 'Category', 'Vendor'];
-    case 'todo':
-      return [...base, 'Priority', 'Due Date'];
-    case 'calendar':
-      return [...base, 'Date', 'Time', 'Location'];
-    case 'comms':
-      return [...base, 'Contact', 'App', 'Direction', 'Message Count'];
-    default:
-      return [...base, 'Structured Data'];
-  }
-}
-
-function formatTypedRow(type, item) {
-  const base = [
-    item.id || '',
-    item.input || '',
-    item.createdAt || '',
-    item.status || '',
-    item.aiNotes || ''
-  ];
-  const s = item.structured || {};
-
-  switch (type) {
-    case 'expense':
-      return [...base, s.amount || '', s.currency || 'NZD', s.category || '', s.vendor || ''];
-    case 'todo':
-      return [...base, s.priority || '', s.dueDate || ''];
-    case 'calendar':
-      return [...base, s.date || '', s.time || '', s.location || ''];
-    case 'comms':
-      return [...base, s.contactName || '', s.app || '', s.direction || '', s.messageCount || ''];
-    default:
-      return [...base, JSON.stringify(s)];
-  }
-}
-
-// ─── GOOGLE SHEETS API ──────────────────────────────────────
-
-async function getGoogleAccessToken(serviceAccountKeyJson) {
-  const sa = JSON.parse(serviceAccountKeyJson);
-  const now = Math.floor(Date.now() / 1000);
-
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const claims = {
-    iss: sa.client_email,
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600
-  };
-
-  const encodedHeader = base64url(JSON.stringify(header));
-  const encodedClaims = base64url(JSON.stringify(claims));
-  const signInput = `${encodedHeader}.${encodedClaims}`;
-
-  // Import the private key
-  const privateKey = await importPrivateKey(sa.private_key);
-
-  // Sign the JWT
-  const signature = await crypto.subtle.sign(
-    'RSASSA-PKCS1-v1_5',
-    privateKey,
-    new TextEncoder().encode(signInput)
-  );
-
-  const encodedSignature = base64urlFromBuffer(signature);
-  const jwt = `${signInput}.${encodedSignature}`;
-
-  // Exchange JWT for access token
-  const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
-  });
-
-  if (!tokenResponse.ok) {
-    const err = await tokenResponse.text();
-    throw new Error(`Google auth failed: ${err}`);
+function itemsToCsv(items, type) {
+  if (items.length === 0) {
+    return 'No items found';
   }
 
-  const tokenData = await tokenResponse.json();
-  return tokenData.access_token;
-}
+  const rows = [];
 
-async function importPrivateKey(pem) {
-  // Strip PEM headers and decode
-  const pemContents = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/g, '')
-    .replace(/-----END PRIVATE KEY-----/g, '')
-    .replace(/\s/g, '');
-
-  const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
-
-  return await crypto.subtle.importKey(
-    'pkcs8',
-    binaryDer,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['sign']
-  );
-}
-
-async function ensureSheet(spreadsheetId, accessToken, sheetName) {
-  // First, check if sheet exists
-  const metaUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.title`;
-  const metaResponse = await fetch(metaUrl, {
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
-
-  if (!metaResponse.ok) {
-    const err = await metaResponse.text();
-    throw new Error(`Failed to get spreadsheet metadata: ${err}`);
-  }
-
-  const meta = await metaResponse.json();
-  const existing = meta.sheets.map(s => s.properties.title);
-
-  if (existing.includes(sheetName)) {
-    return; // Sheet already exists
-  }
-
-  // Create the sheet
-  const addUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`;
-  const addResponse = await fetch(addUrl, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      requests: [{
-        addSheet: {
-          properties: { title: sheetName }
+  if (type !== 'all' && ['expense', 'todo', 'calendar', 'comms'].includes(type)) {
+    // Type-specific headers with structured data columns
+    switch (type) {
+      case 'expense':
+        rows.push(rowToCsv(['ID', 'Input', 'Created', 'Status', 'AI Notes', 'Amount', 'Currency', 'Category', 'Vendor']));
+        for (const item of items) {
+          const s = item.structured || {};
+          rows.push(rowToCsv([item.id, item.input, item.createdAt, item.status, item.aiNotes, s.amount, s.currency || 'NZD', s.category, s.vendor]));
         }
-      }]
-    })
-  });
-
-  if (!addResponse.ok) {
-    const err = await addResponse.text();
-    throw new Error(`Failed to create sheet '${sheetName}': ${err}`);
+        break;
+      case 'todo':
+        rows.push(rowToCsv(['ID', 'Input', 'Created', 'Status', 'AI Notes', 'Priority', 'Due Date']));
+        for (const item of items) {
+          const s = item.structured || {};
+          rows.push(rowToCsv([item.id, item.input, item.createdAt, item.status, item.aiNotes, s.priority, s.dueDate]));
+        }
+        break;
+      case 'calendar':
+        rows.push(rowToCsv(['ID', 'Input', 'Created', 'Status', 'AI Notes', 'Date', 'Time', 'Location']));
+        for (const item of items) {
+          const s = item.structured || {};
+          rows.push(rowToCsv([item.id, item.input, item.createdAt, item.status, item.aiNotes, s.date, s.time, s.location]));
+        }
+        break;
+      case 'comms':
+        rows.push(rowToCsv(['ID', 'Input', 'Created', 'Status', 'AI Notes', 'Contact', 'App', 'Direction', 'Message Count']));
+        for (const item of items) {
+          const s = item.structured || {};
+          rows.push(rowToCsv([item.id, item.input, item.createdAt, item.status, item.aiNotes, s.contactName, s.app, s.direction, s.messageCount]));
+        }
+        break;
+    }
+  } else {
+    // Generic headers
+    rows.push(rowToCsv(['ID', 'Type', 'Input', 'Created', 'Status', 'Source', 'AI Notes']));
+    for (const item of items) {
+      rows.push(rowToCsv([item.id, item.type, item.input, item.createdAt, item.status, item.source, item.aiNotes]));
+    }
   }
+
+  return rows.join('\n');
 }
 
-async function writeToSheet(spreadsheetId, accessToken, sheetName, rows) {
-  const range = `'${sheetName}'`;
+function notesToCsv(notes) {
+  if (notes.length === 0) {
+    return 'No notes found';
+  }
 
-  // Clear existing data first
-  const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:clear`;
-  await fetch(clearUrl, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${accessToken}` }
-  });
+  const rows = [];
+  rows.push(rowToCsv(['Note ID', 'Category', 'Content', 'Created', 'Expires']));
+  for (const note of notes) {
+    rows.push(rowToCsv([note.id, note.category, note.content, note.createdAt, note.expiresAt]));
+  }
+  return rows.join('\n');
+}
 
-  // Write new data
-  const updateUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`;
-  const response = await fetch(updateUrl, {
-    method: 'PUT',
+// ─── LANDING PAGE ────────────────────────────────────────────
+
+function landingPage() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sheets Sync</title>
+<style>
+  body { font-family: -apple-system, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; background: #0d1117; color: #c9d1d9; }
+  h1 { color: #58a6ff; }
+  code { background: #161b22; padding: 2px 8px; border-radius: 4px; color: #79c0ff; }
+  pre { background: #161b22; padding: 16px; border-radius: 8px; overflow-x: auto; }
+  .step { background: #161b22; padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #58a6ff; }
+  a { color: #58a6ff; }
+</style>
+</head>
+<body>
+<h1>Sheets Sync</h1>
+<p>Sync your Second Brain data to Google Sheets with one formula.</p>
+
+<h2>Setup (30 seconds)</h2>
+<div class="step">
+  <strong>1.</strong> Open Google Sheets (new or existing)<br>
+  <strong>2.</strong> Tap cell A1<br>
+  <strong>3.</strong> Paste this formula:
+  <pre>=IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv")</pre>
+  <strong>4.</strong> Done! Data auto-refreshes.
+</div>
+
+<h2>Available Feeds</h2>
+<div class="step">
+  <code>/csv</code> — All items<br>
+  <code>/csv/expense</code> — Expenses only<br>
+  <code>/csv/todo</code> — Todos only<br>
+  <code>/csv/calendar</code> — Calendar items<br>
+  <code>/csv/comms</code> — Communications<br>
+  <code>/csv/notes</code> — Claude's notes
+</div>
+
+<p><strong>Tip:</strong> Use separate sheets/tabs for each feed. Put one IMPORTDATA formula per tab.</p>
+
+<h2>Links</h2>
+<p><a href="/preview">Preview data as JSON</a> · <a href="/csv">View raw CSV</a> · <a href="/health">Health check</a></p>
+</body>
+</html>`;
+}
+
+// ─── UTILS ───────────────────────────────────────────────────
+
+function csvResponse(csv) {
+  return new Response(csv, {
     headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      range: range,
-      majorDimension: 'ROWS',
-      values: rows
-    })
+      'Content-Type': 'text/csv; charset=utf-8',
+      'Cache-Control': 'public, max-age=300',
+      ...corsHeaders()
+    }
   });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Failed to write to sheet '${sheetName}': ${err}`);
-  }
-
-  return await response.json();
-}
-
-// ─── UTILS ──────────────────────────────────────────────────
-
-function base64url(str) {
-  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function base64urlFromBuffer(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function jsonResponse(data, status = 200) {
   return new Response(JSON.stringify(data, null, 2), {
     status,
     headers: {
-      ...corsHeaders(),
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...corsHeaders()
     }
   });
 }

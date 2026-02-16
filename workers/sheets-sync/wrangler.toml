@@ -6,11 +6,3 @@ compatibility_date = "2024-01-01"
 [[kv_namespaces]]
 binding = "BRAIN_KV"
 id = "38349bc2045a4168aa94ce50d1f8e19b"
-
-# Secrets (auto-configured by GitHub Actions):
-#   GOOGLE_SERVICE_ACCOUNT_KEY - Google service account JSON for Sheets API auth
-#   SPREADSHEET_ID - Target Google Sheet ID
-
-# Optional cron trigger for auto-sync
-[triggers]
-crons = ["0 */6 * * *"]
