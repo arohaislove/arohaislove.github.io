@@ -75,6 +75,7 @@ When you create a worker, GitHub Actions automatically injects the `ANTHROPIC_AP
 |--------|-----|---------|
 | `cors-proxy` | `https://cors-proxy.zammel.workers.dev` | CORS proxy for Anthropic API calls (used by Ekphrasis, Oneiros) |
 | `second-brain` | `https://second-brain.zammel.workers.dev` | AI-powered personal knowledge capture and analysis system (used by Second Brain) |
+| `sheets-sync` | `https://sheets-sync.zammel.workers.dev` | The Pool - exports Second Brain KV data as CSV for Google Sheets. Key endpoint: `/csv/pool` gives any AI (especially Gemini via Sheets) full context |
 
 ### How to Create a New Worker
 
