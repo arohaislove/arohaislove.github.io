@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Share to Second Brain</title>
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e8e8e8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        h1 { text-align: center; font-size: 1.5rem; opacity: 0.9; }
+        .source-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .source-btn {
+            padding: 10px 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            background: rgba(255,255,255,0.05);
+            color: #e8e8e8;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .source-btn.active {
+            border-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+        .source-btn:hover { border-color: rgba(255,255,255,0.4); }
+        .preview {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .preview .truncated {
+            color: #667eea;
+            font-style: italic;
+            margin-top: 8px;
+        }
+        .char-count {
+            text-align: right;
+            font-size: 12px;
+            opacity: 0.5;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+        }
+        .actions button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .send-btn {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+        }
+        .send-btn:active { transform: scale(0.95); }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .cancel-btn {
+            background: rgba(255,255,255,0.1);
+            color: #e8e8e8;
+            flex: 0.5;
+        }
+        .status {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .status.show { opacity: 1; }
+        .status.success { background: rgba(78, 205, 196, 0.2); color: #4ecdc4; }
+        .status.error { background: rgba(245, 87, 108, 0.2); color: #f5576c; }
+        .status.info { background: rgba(102, 126, 234, 0.2); color: #667eea; }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Share to Second Brain</h1>
+
+        <div id="sourceSelector" class="source-selector">
+            <button class="source-btn active" data-source="gemini">Gemini</button>
+            <button class="source-btn" data-source="claude">Claude</button>
+            <button class="source-btn" data-source="kimi">Kimi</button>
+            <button class="source-btn" data-source="chatgpt">ChatGPT</button>
+            <button class="source-btn" data-source="other">Other</button>
+        </div>
+
+        <div id="previewArea">
+            <div class="empty-state" id="emptyState">
+                <p>No shared content received.</p>
+                <p style="margin-top: 8px; font-size: 13px;">Share a conversation from Gemini or another app to capture it here.</p>
+            </div>
+            <div id="contentPreview" class="preview" style="display: none;"></div>
+            <div id="charCount" class="char-count" style="display: none;"></div>
+        </div>
+
+        <div class="actions" id="actions" style="display: none;">
+            <button class="cancel-btn" id="cancelBtn">Cancel</button>
+            <button class="send-btn" id="sendBtn">Capture to KV</button>
+        </div>
+
+        <div class="status" id="status"></div>
+
+        <div style="text-align: center; font-size: 12px; opacity: 0.5; margin-top: 16px;">
+            <a href="/second-brain/" style="color: inherit;">Back to Capture</a> |
+            <a href="/second-brain/gemini.html" style="color: inherit;">Gemini Chat</a>
+        </div>
+    </div>
+
+    <script src="config.js" onerror="console.log('config.js not found')"></script>
+    <script>
+    // Config
+    function getConfig() {
+        const WORKER_URL = 'https://second-brain.zammel.workers.dev';
+        if (typeof window.SECOND_BRAIN_CONFIG !== 'undefined') return window.SECOND_BRAIN_CONFIG;
+        const storedToken = localStorage.getItem('SECOND_BRAIN_AUTH_TOKEN');
+        if (storedToken) return { WORKER_URL, AUTH_TOKEN: storedToken };
+        const defaultToken = 'd4226dc2dd7bff69c4272abdbe43ee3984bcee798dd3e9629f3973fd3e230027';
+        const token = prompt('Auth token:', defaultToken);
+        if (!token) throw new Error('No token');
+        localStorage.setItem('SECOND_BRAIN_AUTH_TOKEN', token.trim());
+        return { WORKER_URL, AUTH_TOKEN: token.trim() };
+    }
+
+    const CONFIG = getConfig();
+    let selectedSource = 'gemini';
+    let sharedContent = '';
+
+    // Source selector
+    document.querySelectorAll('.source-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedSource = btn.dataset.source;
+        });
+    });
+
+    // Load shared content from service worker cache
+    async function loadSharedContent() {
+        try {
+            const cache = await caches.open('share-target');
+            const response = await cache.match('/second-brain/shared-content');
+            if (response) {
+                const data = await response.json();
+                // Only use if recent (within 30 seconds)
+                if (Date.now() - data.timestamp < 30000) {
+                    sharedContent = data.content;
+                    showContent(sharedContent);
+                }
+                // Clean up
+                await cache.delete('/second-brain/shared-content');
+            }
+        } catch (e) {
+            console.error('Failed to load shared content:', e);
+        }
+
+        // Also check URL params (fallback for GET shares)
+        const params = new URLSearchParams(window.location.search);
+        const text = params.get('text');
+        const title = params.get('title');
+        if (text || title) {
+            sharedContent = '';
+            if (title) sharedContent += title + '\n\n';
+            if (text) sharedContent += text;
+            showContent(sharedContent);
+        }
+    }
+
+    function showContent(content) {
+        if (!content) return;
+
+        document.getElementById('emptyState').style.display = 'none';
+        const preview = document.getElementById('contentPreview');
+        const charCount = document.getElementById('charCount');
+        const actions = document.getElementById('actions');
+
+        // Show first 2000 chars in preview
+        let displayText = content;
+        let truncatedMsg = '';
+        if (content.length > 2000) {
+            displayText = content.substring(0, 2000);
+            truncatedMsg = `... (${content.length - 2000} more characters)`;
+        }
+
+        preview.textContent = displayText;
+        if (truncatedMsg) {
+            const span = document.createElement('div');
+            span.className = 'truncated';
+            span.textContent = truncatedMsg;
+            preview.appendChild(span);
+        }
+
+        preview.style.display = 'block';
+        charCount.textContent = `${content.length} characters`;
+        charCount.style.display = 'block';
+        actions.style.display = 'flex';
+
+        // Try to auto-detect source
+        if (content.toLowerCase().includes('gemini')) selectedSource = 'gemini';
+        else if (content.toLowerCase().includes('claude')) selectedSource = 'claude';
+        else if (content.toLowerCase().includes('kimi')) selectedSource = 'kimi';
+        else if (content.toLowerCase().includes('chatgpt') || content.toLowerCase().includes('openai')) selectedSource = 'chatgpt';
+
+        document.querySelectorAll('.source-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.source === selectedSource);
+        });
+    }
+
+    // Send to Second Brain
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+        if (!sharedContent) return;
+
+        const btn = document.getElementById('sendBtn');
+        btn.disabled = true;
+        showStatus('Sending to Second Brain...', 'info');
+
+        // Build the prefixed content
+        const sourceMap = {
+            gemini: 'Gemini',
+            claude: 'Claude',
+            kimi: 'Kimi',
+            chatgpt: 'ChatGPT',
+            other: 'AI'
+        };
+        const prefix = `[${sourceMap[selectedSource]} conversation]`;
+        const fullContent = `${prefix}\n${sharedContent}`;
+
+        try {
+            const response = await fetch(CONFIG.WORKER_URL + '/capture', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                },
+                body: JSON.stringify({
+                    input: fullContent.slice(0, 10000),
+                    source: 'share-target'
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                showStatus(`Captured as ${data.item.type}! Topics: ${(data.item.structured?.topics || []).join(', ') || 'analyzing...'}`, 'success');
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                // Auto-close after 2 seconds
+                setTimeout(() => {
+                    window.close();
+                    // If window.close doesn't work (common), redirect
+                    window.location.href = '/second-brain/';
+                }, 2000);
+            } else {
+                showStatus('Error: ' + (data.error || 'Unknown'), 'error');
+                btn.disabled = false;
+            }
+        } catch (error) {
+            showStatus('Failed to connect: ' + error.message, 'error');
+            btn.disabled = false;
+        }
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+        window.close();
+        window.location.href = '/second-brain/';
+    });
+
+    function showStatus(message, type) {
+        const el = document.getElementById('status');
+        el.textContent = message;
+        el.className = 'status show ' + type;
+    }
+
+    // Initialize
+    loadSharedContent();
+    </script>
+</body>
+</html>

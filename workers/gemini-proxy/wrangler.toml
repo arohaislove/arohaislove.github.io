@@ -1,0 +1,8 @@
+name = "gemini-proxy"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Shares the same KV namespace as Second Brain - one pool
+[[kv_namespaces]]
+binding = "BRAIN_KV"
+id = "38349bc2045a4168aa94ce50d1f8e19b"

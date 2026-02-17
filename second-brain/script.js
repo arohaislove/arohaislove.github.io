@@ -529,8 +529,9 @@ if (checkConfiguration()) {
     loadRecent();
 }
 
-// Register service worker for PWA support (if available)
+// Register service worker for PWA + Share Target support
 if ('serviceWorker' in navigator) {
-    // Optional: register service worker for offline support
-    // navigator.serviceWorker.register('/second-brain/sw.js');
+    navigator.serviceWorker.register('/second-brain/sw.js')
+        .then(reg => console.log('SW registered:', reg.scope))
+        .catch(err => console.log('SW registration failed:', err));
 }
