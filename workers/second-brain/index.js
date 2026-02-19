@@ -265,6 +265,10 @@ export default {
         return await handleSaveGoals(request, env);
       }
 
+      if (path === '/chat' && request.method === 'POST') {
+        return await handleChat(request, env);
+      }
+
       // Default response
       return jsonResponse({
         error: 'Not found',
@@ -287,6 +291,7 @@ export default {
           'POST /signal-exclusions': 'Add exclusion',
           'GET /goals': 'Get versioned goals & context',
           'POST /goals': 'Save new goals version',
+          'POST /chat': 'Ask a question about your Second Brain data',
           'GET /health': 'Health check'
         }
       }, 404);
@@ -1848,6 +1853,109 @@ async function addToIndex(item, env) {
   if (!typeIndex.items.includes(item.id)) {
     typeIndex.items.push(item.id);
     await env.BRAIN_KV.put(`index:type:${item.type}`, JSON.stringify(typeIndex));
+  }
+}
+
+/**
+ * Handle POST /chat — conversational Q&A over Second Brain data
+ * Accepts { question, history: [{role, content}] }
+ */
+async function handleChat(request, env) {
+  const body = await request.json();
+  const question = (body.question || '').trim();
+  const history = Array.isArray(body.history) ? body.history : [];
+
+  if (!question) {
+    return jsonResponse({ error: 'question is required' }, 400);
+  }
+
+  // Fetch context in parallel
+  const [indexData, claudeNotes, goalsContext] = await Promise.all([
+    env.BRAIN_KV.get('index:all', 'json').then(d => d || { items: [] }),
+    env.BRAIN_KV.get('claude:notes', 'json').then(d => d || { notes: [] }),
+    getGoalsContext(env)
+  ]);
+
+  // Get recent items (last 40)
+  const recentIds = indexData.items.slice(-40);
+  const items = [];
+  for (const id of recentIds) {
+    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (item) items.push(item);
+  }
+
+  // Group by type for readable context
+  const byType = {};
+  items.forEach(item => {
+    if (!byType[item.type]) byType[item.type] = [];
+    byType[item.type].push(item);
+  });
+
+  const itemsSummary = Object.entries(byType).map(([type, typeItems]) => {
+    const lines = typeItems.map(i => {
+      const date = getDateInTimezone(i.createdAt);
+      const extra = i.structured?.amount ? ` ($${i.structured.amount})` : '';
+      const done = i.status === 'done' ? ' [done]' : '';
+      return `  - [${date}] ${i.input}${extra}${done}`;
+    }).join('\n');
+    return `${type.toUpperCase()} (${typeItems.length}):\n${lines}`;
+  }).join('\n\n');
+
+  const myNotes = claudeNotes.notes
+    .filter(n => !n.expiresAt || new Date(n.expiresAt) > new Date())
+    .map(n => `[${n.category}] ${n.content}`)
+    .join('\n');
+
+  const systemContext = `You are the intelligence inside Aroha's Second Brain — a personal knowledge system she uses to capture thoughts, todos, expenses, communications, and ideas.
+
+She's asking you questions about her own data. Answer conversationally and honestly. Be specific — reference actual items, dates, amounts, names where relevant. If the data doesn't contain what she's asking about, say so directly. Don't pad or invent.
+
+AROHA'S GOALS & CONTEXT:
+${goalsContext || '(not set yet)'}
+
+HER RECENT CAPTURES (last 40 items, grouped by type):
+${itemsSummary || '(no items captured yet)'}
+
+YOUR WORKING MEMORY (patterns noticed across her captures):
+${myNotes || '(none yet)'}
+
+TODAY'S DATE: ${getTodayInTimezone()} (${CONFIG.timezone})
+
+Answer directly and conversationally. If you spot something worth flagging beyond her direct question, mention it briefly. Keep responses tight — she's on mobile most of the time.`;
+
+  // Build messages array: system context as first user message, then history, then current question
+  const messages = [
+    { role: 'user', content: systemContext },
+    { role: 'assistant', content: 'Understood — I have your Second Brain context loaded. What would you like to know?' },
+    ...history,
+    { role: 'user', content: question }
+  ];
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        messages
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Claude API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const answer = data.content[0].text;
+
+    return jsonResponse({ answer, askedAt: new Date().toISOString() });
+  } catch (error) {
+    return jsonResponse({ error: error.message }, 500);
   }
 }
 
