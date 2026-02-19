@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask — Second Brain</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            background: rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        header a {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        header a:hover { color: #e0e0e0; }
+
+        header h1 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #e0e0e0;
+        }
+
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem 0 0.75rem;
+        }
+
+        .suggestion-chip {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 0.4rem 0.9rem;
+            font-size: 0.82rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+
+        .suggestion-chip:hover {
+            background: rgba(102,126,234,0.25);
+            border-color: rgba(102,126,234,0.5);
+            color: #e0e0e0;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 88%;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            padding: 0.75rem 1rem;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-bubble {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.72rem;
+            color: #666;
+            margin-top: 0.3rem;
+            padding: 0 0.25rem;
+        }
+
+        .thinking {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            font-size: 0.85rem;
+            color: #888;
+            align-self: flex-start;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .dot-pulse {
+            display: flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .dot-pulse span {
+            width: 5px;
+            height: 5px;
+            background: #888;
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+        }
+
+        .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+        .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 60%, 100% { opacity: 0.3; transform: scale(0.8); }
+            30% { opacity: 1; transform: scale(1); }
+        }
+
+        .input-area {
+            padding: 1rem 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            background: rgba(0,0,0,0.2);
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+            flex-shrink: 0;
+        }
+
+        textarea#questionInput {
+            flex: 1;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: none;
+            min-height: 44px;
+            max-height: 140px;
+            line-height: 1.5;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        textarea#questionInput:focus {
+            border-color: rgba(102,126,234,0.5);
+        }
+
+        textarea#questionInput::placeholder { color: #555; }
+
+        button#sendBtn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: opacity 0.15s;
+        }
+
+        button#sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        button#sendBtn svg {
+            width: 18px;
+            height: 18px;
+            fill: white;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            color: #555;
+            gap: 0.5rem;
+        }
+
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .empty-state p { font-size: 0.9rem; line-height: 1.6; max-width: 280px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="dashboard.html">← Dashboard</a>
+    <h1>💬 Ask your Second Brain</h1>
+</header>
+
+<div class="chat-area" id="chatArea">
+    <div class="empty-state" id="emptyState">
+        <div class="icon">🧠</div>
+        <p>Ask anything about your captures — todos, patterns, expenses, ideas, what's been on your mind.</p>
+    </div>
+
+    <div class="suggestions" id="suggestions">
+        <div class="suggestion-chip" onclick="ask('What todos do I have open right now?')">Open todos</div>
+        <div class="suggestion-chip" onclick="ask('What have I been thinking about most this week?')">This week's themes</div>
+        <div class="suggestion-chip" onclick="ask('What patterns has Claude noticed about me?')">Claude's patterns</div>
+        <div class="suggestion-chip" onclick="ask('Any expenses I should know about?')">Expenses</div>
+        <div class="suggestion-chip" onclick="ask('What creative ideas have I captured lately?')">Creative ideas</div>
+        <div class="suggestion-chip" onclick="ask('What should I focus on today?')">What to focus on</div>
+    </div>
+</div>
+
+<div class="input-area">
+    <textarea id="questionInput" placeholder="Ask anything…" rows="1"></textarea>
+    <button id="sendBtn" onclick="sendQuestion()" title="Send">
+        <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+</div>
+
+<script>
+    function getConfig() {
+        const WORKER_URL = 'https://second-brain.zammel.workers.dev';
+        if (typeof window.SECOND_BRAIN_CONFIG !== 'undefined') return window.SECOND_BRAIN_CONFIG;
+        const storedToken = localStorage.getItem('SECOND_BRAIN_AUTH_TOKEN');
+        if (storedToken) return { WORKER_URL, AUTH_TOKEN: storedToken };
+        const defaultToken = 'd4226dc2dd7bff69c4272abdbe43ee3984bcee798dd3e9629f3973fd3e230027';
+        const token = prompt('🔐 Second Brain\n\nAuth token:', defaultToken);
+        if (!token) throw new Error('No token');
+        localStorage.setItem('SECOND_BRAIN_AUTH_TOKEN', token.trim());
+        return { WORKER_URL, AUTH_TOKEN: token.trim() };
+    }
+
+    const CONFIG = getConfig();
+    let conversationHistory = [];
+    let isThinking = false;
+
+    const chatArea = document.getElementById('chatArea');
+    const questionInput = document.getElementById('questionInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Auto-grow textarea
+    questionInput.addEventListener('input', () => {
+        questionInput.style.height = 'auto';
+        questionInput.style.height = Math.min(questionInput.scrollHeight, 140) + 'px';
+    });
+
+    // Send on Enter (not Shift+Enter)
+    questionInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendQuestion();
+        }
+    });
+
+    function ask(question) {
+        questionInput.value = question;
+        sendQuestion();
+    }
+
+    function hideSuggestions() {
+        const s = document.getElementById('suggestions');
+        const e = document.getElementById('emptyState');
+        if (s) s.style.display = 'none';
+        if (e) e.style.display = 'none';
+    }
+
+    function appendMessage(role, text) {
+        const msg = document.createElement('div');
+        msg.className = `message ${role}`;
+
+        const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.textContent = text;
+
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = now;
+
+        msg.appendChild(bubble);
+        msg.appendChild(time);
+        chatArea.appendChild(msg);
+        scrollToBottom();
+        return msg;
+    }
+
+    function showThinking() {
+        const el = document.createElement('div');
+        el.className = 'thinking';
+        el.id = 'thinkingIndicator';
+        el.innerHTML = `
+            <div class="dot-pulse">
+                <span></span><span></span><span></span>
+            </div>
+            thinking…
+        `;
+        chatArea.appendChild(el);
+        scrollToBottom();
+    }
+
+    function hideThinking() {
+        const el = document.getElementById('thinkingIndicator');
+        if (el) el.remove();
+    }
+
+    function scrollToBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    async function sendQuestion() {
+        const question = questionInput.value.trim();
+        if (!question || isThinking) return;
+
+        hideSuggestions();
+        isThinking = true;
+        sendBtn.disabled = true;
+        questionInput.value = '';
+        questionInput.style.height = 'auto';
+
+        appendMessage('user', question);
+        showThinking();
+
+        try {
+            const res = await fetch(`${CONFIG.WORKER_URL}/chat`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question,
+                    history: conversationHistory
+                })
+            });
+
+            hideThinking();
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({ error: 'Request failed' }));
+                appendMessage('assistant', `Something went wrong: ${err.error || res.statusText}`);
+                return;
+            }
+
+            const data = await res.json();
+            appendMessage('assistant', data.answer);
+
+            // Maintain conversation history (keep last 10 exchanges = 20 messages)
+            conversationHistory.push({ role: 'user', content: question });
+            conversationHistory.push({ role: 'assistant', content: data.answer });
+            if (conversationHistory.length > 20) {
+                conversationHistory = conversationHistory.slice(-20);
+            }
+
+        } catch (err) {
+            hideThinking();
+            appendMessage('assistant', `Network error: ${err.message}`);
+        } finally {
+            isThinking = false;
+            sendBtn.disabled = false;
+            questionInput.focus();
+        }
+    }
+
+    // Focus input on load
+    questionInput.focus();
+</script>
+
+</body>
+</html>
