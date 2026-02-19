@@ -257,6 +257,14 @@ export default {
         return await handleAddExclusion(request, env);
       }
 
+      if (path === '/goals' && request.method === 'GET') {
+        return await handleGetGoals(env);
+      }
+
+      if (path === '/goals' && request.method === 'POST') {
+        return await handleSaveGoals(request, env);
+      }
+
       // Default response
       return jsonResponse({
         error: 'Not found',
@@ -277,6 +285,8 @@ export default {
           'POST /signal/:id/feedback': 'Add feedback to signal analysis',
           'GET /signal-exclusions': 'Get excluded contacts/apps',
           'POST /signal-exclusions': 'Add exclusion',
+          'GET /goals': 'Get versioned goals & context',
+          'POST /goals': 'Save new goals version',
           'GET /health': 'Health check'
         }
       }, 404);
@@ -970,6 +980,9 @@ async function runAnalysis(env, canNotify) {
     return { analyzed: false, reason: 'No items or notes to analyze' };
   }
 
+  // Get versioned goals context
+  const goalsContext = await getGoalsContext(env);
+
   // Prepare summary for Claude
   const summary = items.map(i =>
     `[${i.type}] ${i.input} (${i.createdAt}, status: ${i.status})`
@@ -979,6 +992,9 @@ async function runAnalysis(env, canNotify) {
   const analysisPrompt = `You are reviewing a personal knowledge capture system. Your job is not just to flag overdue items - it's to be a thoughtful thinking partner who notices what the human might miss.
 
 You have access to:
+
+AROHA'S GOALS & CONTEXT (versioned — older entries represent more settled values; recent updates carry genuine weight but less certainty — the longer something has been held, the more it's been tested):
+${goalsContext || '(no goals set yet)'}
 
 RECENT CAPTURES:
 ${summary || '(none)'}
@@ -1020,7 +1036,10 @@ Guidelines:
 - Connect dots the human might not have connected
 - Your suggestions should sometimes be "have you considered..." not just "don't forget..."
 - Be warm and curious, not robotic
-- If your previous notes are now outdated or resolved, don't carry them forward`;
+- If your previous notes are now outdated or resolved, don't carry them forward
+- Use her goals & context as a north star — surface insights that matter to what she actually cares about
+- If recent goals differ from older ones, notice the shift with curiosity, not judgment
+- The "opportunities" field should be filtered through her stated goals — relevance over comprehensiveness`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1220,9 +1239,15 @@ Pattern note: ${s.analysis.patternNote || 'n/a'}
 Action: ${s.analysis.action}`
   ).join('\n\n---\n\n');
 
-  const briefingPrompt = `You are Dave's AI life coach, delivering his daily 4am morning briefing. This is a conversational, thoughtful analysis of his Second Brain captures, communication patterns, and life rhythms.
+  // Get versioned goals context
+  const goalsContext = await getGoalsContext(env);
+
+  const briefingPrompt = `You are Aroha's AI life coach, delivering her daily 4am morning briefing. This is a conversational, thoughtful analysis of her Second Brain captures, communication patterns, and life rhythms.
 
 TODAY'S DATE: ${getTodayInTimezone()} (${CONFIG.timezone})
+
+AROHA'S GOALS & CONTEXT (versioned — older entries represent more settled values; recent updates carry genuine weight but less certainty — the longer something has been held, the more it's been tested):
+${goalsContext || '(no goals set yet — she may not have written them yet)'}
 
 RECENT CAPTURES (manual voice/text entries):
 ${recentCaptures || '(no recent captures)'}
@@ -1243,7 +1268,7 @@ Generate a morning briefing in this exact structure:
 
 # ☀️ MORNING BRIEFING - ${formatDateInTimezone(new Date().toISOString(), 'long')}
 
-Dave. Morning.
+Aroha. Morning.
 
 ## One Provocation
 [A gentle challenge or observation that might spark reflection. Start with this - it's the most important thing.]
@@ -1321,12 +1346,13 @@ CRITICAL: Put the WISDOM at the TOP (provocation, what needs attention, one thin
 TONE:
 - Direct but warm
 - Pattern-spotter, not task-manager
-- Notice what energizes them, not just what's broken
+- Notice what energizes her, not just what's broken
 - Ask questions, don't just remind
 - Be honest, even if uncomfortable
-- Connect dots they might miss
+- Connect dots she might miss
+- Filter everything through her goals — what matters to her, not just what's active
 
-Keep it concise but insightful. This should feel like talking to a smart friend who's been paying attention.`;
+Keep it concise but insightful. This should feel like talking to a smart friend who's been paying attention and knows what she's trying to build.`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1823,6 +1849,69 @@ async function addToIndex(item, env) {
     typeIndex.items.push(item.id);
     await env.BRAIN_KV.put(`index:type:${item.type}`, JSON.stringify(typeIndex));
   }
+}
+
+/**
+ * Get versioned goals context formatted for Claude prompts
+ * Older versions carry more weight as they've been held longer
+ */
+async function getGoalsContext(env) {
+  const data = await env.BRAIN_KV.get('goals:versions', 'json');
+  if (!data || !data.versions || data.versions.length === 0) return null;
+
+  const now = new Date();
+  return data.versions.map((v, i) => {
+    const savedAt = new Date(v.savedAt);
+    const daysAgo = Math.floor((now - savedAt) / (1000 * 60 * 60 * 24));
+    const ageLabel = daysAgo === 0 ? 'today'
+      : daysAgo === 1 ? '1 day ago'
+      : daysAgo < 30 ? `${daysAgo} days ago`
+      : daysAgo < 60 ? '~1 month ago'
+      : `${Math.floor(daysAgo / 30)} months ago`;
+    const isLatest = i === data.versions.length - 1;
+    const prefix = isLatest ? `[Current — saved ${ageLabel}]` : `[Previous — saved ${ageLabel}]`;
+    return `${prefix}\n${v.text}`;
+  }).join('\n\n---\n\n');
+}
+
+/**
+ * Handle GET /goals — return full version history
+ */
+async function handleGetGoals(env) {
+  const data = await env.BRAIN_KV.get('goals:versions', 'json') || { versions: [] };
+  return jsonResponse(data);
+}
+
+/**
+ * Handle POST /goals — append a new version (max 10 kept)
+ */
+async function handleSaveGoals(request, env) {
+  const body = await request.json();
+  const text = (body.text || '').trim();
+
+  if (!text) {
+    return jsonResponse({ error: 'text is required' }, 400);
+  }
+
+  const data = await env.BRAIN_KV.get('goals:versions', 'json') || { versions: [] };
+
+  data.versions.push({
+    text,
+    savedAt: new Date().toISOString()
+  });
+
+  // Keep last 10 versions
+  if (data.versions.length > 10) {
+    data.versions = data.versions.slice(-10);
+  }
+
+  await env.BRAIN_KV.put('goals:versions', JSON.stringify(data));
+
+  return jsonResponse({
+    success: true,
+    totalVersions: data.versions.length,
+    savedAt: data.versions[data.versions.length - 1].savedAt
+  });
 }
 
 /**

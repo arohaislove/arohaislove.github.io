@@ -490,6 +490,8 @@
 
         <div id="briefingSection"></div>
 
+        <div id="goalsSection"></div>
+
         <div id="claudeNotesSection"></div>
 
         <div id="analysisSection"></div>
@@ -561,6 +563,7 @@
         let allItems = [];
         let claudeNotes = [];
         let latestAnalysis = null;
+        let goalsData = { versions: [] };
         let latestBriefing = null;
         let currentFilter = 'all';
 
@@ -595,7 +598,7 @@
 
                 // Fetch essential data in parallel (items + notes only, skip export for speed)
                 // Reduced to 50 items for faster initial load
-                const [itemsResponse, notesResponse] = await Promise.all([
+                const [itemsResponse, notesResponse, goalsResponse] = await Promise.all([
                     fetchWithTimeout(`${CONFIG.WORKER_URL}/items?limit=50`, {
                         headers: {
                             'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
@@ -610,6 +613,14 @@
                         }
                     }).catch(e => {
                         console.warn('Failed to load Claude notes:', e);
+                        return null;
+                    }),
+                    fetchWithTimeout(`${CONFIG.WORKER_URL}/goals`, {
+                        headers: {
+                            'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`
+                        }
+                    }).catch(e => {
+                        console.warn('Failed to load goals:', e);
                         return null;
                     })
                 ]);
@@ -634,6 +645,12 @@
                     console.log(`Loaded ${claudeNotes.length} Claude notes`);
                 }
 
+                // Process goals (optional)
+                if (goalsResponse && goalsResponse.ok) {
+                    goalsData = await goalsResponse.json();
+                    console.log(`Loaded ${goalsData.versions?.length || 0} goal versions`);
+                }
+
                 // Skip loading analysis/briefing for now (was causing 30s timeout)
                 // TODO: Add separate lightweight endpoints for these
                 latestAnalysis = null;
@@ -641,6 +658,7 @@
 
                 renderStats();
                 renderBriefing();
+                renderGoals();
                 renderClaudeNotes();
                 renderAnalysis();
                 renderItems();
@@ -685,6 +703,85 @@
             `;
 
             document.getElementById('stats').innerHTML = statsHtml;
+        }
+
+        // Render Goals & Context section
+        function renderGoals() {
+            const section = document.getElementById('goalsSection');
+            const versions = goalsData.versions || [];
+            const latest = versions[versions.length - 1] || null;
+
+            const relativeTime = (isoStr) => {
+                const days = Math.floor((Date.now() - new Date(isoStr)) / 86400000);
+                if (days === 0) return 'today';
+                if (days === 1) return '1 day ago';
+                if (days < 30) return `${days} days ago`;
+                if (days < 60) return '~1 month ago';
+                return `${Math.floor(days / 30)} months ago`;
+            };
+
+            const historyHtml = versions.length > 1
+                ? versions.slice(0, -1).reverse().map(v => `
+                    <div style="margin-top:1rem; padding:0.75rem; background:rgba(255,255,255,0.03); border-radius:8px; border-left:3px solid rgba(255,255,255,0.1);">
+                        <div style="font-size:0.75rem; color:#888; margin-bottom:0.4rem;">saved ${relativeTime(v.savedAt)}</div>
+                        <div style="font-size:0.85rem; color:#aaa; white-space:pre-wrap; line-height:1.5;">${escapeHtml(v.text)}</div>
+                    </div>`).join('')
+                : '';
+
+            section.innerHTML = `
+                <div style="margin-bottom:2rem; padding:1.5rem; background:rgba(255,255,255,0.03); border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h2 style="margin:0; font-size:1.1rem;">🧭 Goals & Context</h2>
+                        ${latest ? `<span style="font-size:0.8rem; color:#888;">last updated ${relativeTime(latest.savedAt)}</span>` : ''}
+                    </div>
+                    <textarea id="goalsTextarea" style="width:100%; min-height:140px; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.12); border-radius:8px; padding:0.75rem; color:#e0e0e0; font-size:0.9rem; line-height:1.6; resize:vertical; font-family:inherit; box-sizing:border-box;" placeholder="Write your current goals, values, and context here. This is Aroha's north star — Claude reads it in every analysis and briefing.">${latest ? escapeHtml(latest.text) : ''}</textarea>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem;">
+                        <button onclick="saveGoals()" style="padding:0.5rem 1.25rem; background:linear-gradient(135deg,#667eea,#764ba2); border:none; border-radius:6px; color:white; font-size:0.9rem; cursor:pointer;">Save new version</button>
+                        ${versions.length > 1 ? `<button onclick="toggleGoalsHistory()" style="background:none; border:none; color:#888; font-size:0.8rem; cursor:pointer; text-decoration:underline;" id="goalsHistoryToggle">show history (${versions.length - 1} older versions)</button>` : '<span></span>'}
+                    </div>
+                    <div id="goalsHistory" style="display:none;">${historyHtml}</div>
+                </div>
+            `;
+        }
+
+        async function saveGoals() {
+            const text = document.getElementById('goalsTextarea').value.trim();
+            if (!text) return;
+            const btn = document.querySelector('[onclick="saveGoals()"]');
+            btn.textContent = 'Saving...';
+            btn.disabled = true;
+            try {
+                const res = await fetchWithTimeout(`${CONFIG.WORKER_URL}/goals`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+                if (!res.ok) throw new Error('Save failed');
+                goalsData = await (await fetchWithTimeout(`${CONFIG.WORKER_URL}/goals`, {
+                    headers: { 'Authorization': `Bearer ${CONFIG.AUTH_TOKEN}` }
+                })).json();
+                renderGoals();
+            } catch (e) {
+                btn.textContent = 'Save new version';
+                btn.disabled = false;
+                alert('Failed to save goals: ' + e.message);
+            }
+        }
+
+        function toggleGoalsHistory() {
+            const el = document.getElementById('goalsHistory');
+            const btn = document.getElementById('goalsHistoryToggle');
+            if (el.style.display === 'none') {
+                el.style.display = 'block';
+                btn.textContent = 'hide history';
+            } else {
+                el.style.display = 'none';
+                const count = (goalsData.versions?.length || 1) - 1;
+                btn.textContent = `show history (${count} older versions)`;
+            }
         }
 
         // Render Claude notes
