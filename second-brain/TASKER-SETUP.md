@@ -2,16 +2,26 @@
 
 This guide shows you how to capture your phone communications (WhatsApp, SMS, calls) and automatically send them to your Second Brain worker for analysis.
 
+## What Gets Captured
+
+| Source | Direction | Method |
+|--------|-----------|--------|
+| WhatsApp, Messenger, etc. | Incoming | AutoNotification (notification intercept) |
+| Native SMS | Incoming | Tasker native "Received Text" event |
+| Native SMS | **Outgoing** | Tasker native "SMS Sent" event |
+
 ## What You'll Need
 
 1. **Tasker** ($3.49 on Play Store) - Main automation app
-2. **AutoNotification** (free/paid on Play Store) - Reads notifications
+2. **AutoNotification** (free/paid on Play Store) - Reads notifications (for WhatsApp etc.)
 3. **Your Second Brain AUTH_TOKEN** - Same token you use for the capture interface
 
 ## How It Works
 
 ```
 Phone receives message → AutoNotification intercepts → Tasker captures details → POSTs to Second Brain → Analyzed in morning briefing
+
+You send SMS → Android fires SMS_SENT broadcast → Tasker captures it → POSTs to Second Brain
 ```
 
 ## Installation Steps
@@ -106,42 +116,93 @@ Tap **✓** (checkmark) to save
 2. You should see a brief flash: "Captured: [sender]"
 3. Check your Second Brain dashboard - the message should appear as a new comms item
 
-### Step 5: Create Profile for Outgoing Messages (Optional - Advanced)
+### Step 5: Capture Native SMS — Both Directions
 
-This is trickier because Tasker can't directly intercept your sent messages. Here are two approaches:
+The AutoNotification setup above captures messaging app notifications (WhatsApp, Messenger, etc.), but for **native Android SMS** you can use Tasker's built-in phone events instead. These are more reliable for SMS and, crucially, can capture **outgoing** messages too.
 
-#### Option A: Exit Event Capture (Simple)
+#### Profile A: Incoming SMS (Native Tasker — no AutoNotification needed)
 
-1. Create new **Profile** → **"Event"** → **"App"** → **"Exit Application"**
-2. Select apps: WhatsApp, Messages, etc.
-3. Create task: **"Capture Exit Snapshot"**
-4. Add action: **Plugin → AutoInput → UI Query**
-   - Configure to read on-screen text
-   - Extract recent messages
-   - POST to `/comms` with `"direction": "outgoing"`
+This captures SMS from your Messages app directly, including the sender's phone number.
 
-**Note**: This is imprecise and may capture messages you're viewing, not just sending.
+1. Tap **"+"** → **"Event"** → **"Phone"** → **"Received Text"**
+2. Leave all fields blank (captures all SMS)
+3. Tap **✓** → name the task **"Capture Incoming SMS"**
 
-#### Option B: Manual Quick Tile (Recommended)
+**Add HTTP Request action:**
+- **Method**: POST
+- **URL**: `https://second-brain.zammel.workers.dev/comms`
+- **Headers**:
+  ```
+  Content-Type:application/json
+  Authorization:Bearer YOUR_AUTH_TOKEN_HERE
+  ```
+- **Body**:
+  ```json
+  {
+    "message": "%SMSRB",
+    "direction": "incoming",
+    "app": "sms",
+    "contact": "%SMSRF"
+  }
+  ```
 
-Create a manual capture button for when you send important messages:
+Tasker variables:
+- `%SMSRB` — the message body
+- `%SMSRF` — the sender's phone number
 
-1. Create **Task** (not Profile): **"Capture Last Message"**
-2. Add **AutoInput UI Query** to read clipboard or screen
-3. Add **HTTP Request** with `"direction": "outgoing"`
-4. Go to **Tasker → Preferences → Action Tab**
-5. Add this task as a **Quick Settings Tile**
-6. Tap the tile after sending important messages
+#### Profile B: Outgoing SMS
+
+This captures messages you send from the native Messages app.
+
+1. Tap **"+"** → **"Event"** → **"Phone"** → **"SMS Sent"**
+   - If "SMS Sent" isn't visible, search for it in the event list
+2. Leave fields blank (captures all outgoing SMS)
+3. Tap **✓** → name the task **"Capture Outgoing SMS"**
+
+**Add HTTP Request action:**
+- **Method**: POST
+- **URL**: `https://second-brain.zammel.workers.dev/comms`
+- **Headers**:
+  ```
+  Content-Type:application/json
+  Authorization:Bearer YOUR_AUTH_TOKEN_HERE
+  ```
+- **Body**:
+  ```json
+  {
+    "message": "%SMSRB",
+    "direction": "outgoing",
+    "app": "sms",
+    "contact": "%SMSTO"
+  }
+  ```
+
+Tasker variables:
+- `%SMSRB` — the message body you sent
+- `%SMSTO` — the recipient's phone number
+
+**Note:** The `SMS Sent` event requires Tasker to have SMS permissions. Go to **Settings → Apps → Tasker → Permissions** and enable **SMS** if prompted.
+
+#### Tip: SMS vs. AutoNotification
+
+- Use **AutoNotification** for WhatsApp, Messenger, Signal, and other messaging apps (notification-based)
+- Use **native SMS events** for regular SMS/MMS (more reliable, captures phone numbers, supports outgoing)
+- You can have both running simultaneously — the worker deduplicates based on message content + contact + time window
 
 ## Tasker Variables Reference
 
-AutoNotification provides these variables you can use:
-
+### AutoNotification variables (messaging apps):
 - `%antitle` - Notification title (usually sender name)
 - `%antext` - Notification text (message content)
 - `%anapp` - App package name (e.g., "com.whatsapp")
 - `%anid` - Notification ID
 - `%antime` - Timestamp
+
+### Native SMS variables:
+- `%SMSRB` - SMS body text (incoming or outgoing)
+- `%SMSRF` - Sender's phone number (incoming)
+- `%SMSTO` - Recipient's phone number (outgoing)
+- `%SMSRD` - Received date/time
 
 ## Troubleshooting
 
