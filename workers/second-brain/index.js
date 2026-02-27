@@ -8,6 +8,10 @@
  * Endpoints:
  * POST /capture - receive and classify input (requires auth)
  * POST /comms - capture communication data from Tasker (requires auth)
+ * POST /ingest-email - ingest email from Apps Script or OAuth sync (requires auth)
+ * POST /ingest-youtube - ingest YouTube item from Apps Script or OAuth sync (requires auth)
+ * GET /gmail-sync - pull Gmail via OAuth (requires GMAIL_REFRESH_TOKEN etc.) (requires auth)
+ * GET /youtube-sync - pull YouTube via OAuth (requires YOUTUBE_REFRESH_TOKEN etc.) (requires auth)
  * GET /items - list all items (requires auth)
  * GET /item/:id - get single item (requires auth)
  * GET /export - export all data as JSON (requires auth)
@@ -23,6 +27,10 @@
  * - ANTHROPIC_API_KEY: Anthropic API key for classification
  * - NTFY_TOPIC: Ntfy.sh topic for notifications
  * - AUTH_TOKEN: Bearer token for authentication
+ * - GMAIL_REFRESH_TOKEN: (optional) Google OAuth refresh token for direct Gmail sync
+ * - YOUTUBE_REFRESH_TOKEN: (optional) Google OAuth refresh token for direct YouTube sync
+ * - GOOGLE_CLIENT_ID: (optional) Google OAuth client ID (for direct sync)
+ * - GOOGLE_CLIENT_SECRET: (optional) Google OAuth client secret (for direct sync)
  *
  * Used by: second-brain capture interface
  */
@@ -198,6 +206,22 @@ export default {
         return await handleComms(request, env);
       }
 
+      if (path === '/ingest-email' && request.method === 'POST') {
+        return await handleIngestEmail(request, env);
+      }
+
+      if (path === '/ingest-youtube' && request.method === 'POST') {
+        return await handleIngestYoutube(request, env);
+      }
+
+      if (path === '/gmail-sync' && request.method === 'GET') {
+        return await handleGmailSync(url, env);
+      }
+
+      if (path === '/youtube-sync' && request.method === 'GET') {
+        return await handleYoutubeSync(url, env);
+      }
+
       if (path === '/items' && request.method === 'GET') {
         return await handleListItems(url, env);
       }
@@ -275,6 +299,10 @@ export default {
         endpoints: {
           'POST /capture': 'Capture new item',
           'POST /comms': 'Capture communication data (Tasker)',
+          'POST /ingest-email': 'Ingest email from Gmail (Apps Script or direct)',
+          'POST /ingest-youtube': 'Ingest YouTube item (liked video, upload, comment)',
+          'GET /gmail-sync': 'Sync Gmail via OAuth (requires secrets)',
+          'GET /youtube-sync': 'Sync YouTube via OAuth (requires secrets)',
           'GET /items': 'List items (query: type, status, limit)',
           'GET /item/:id': 'Get single item',
           'PATCH /item/:id': 'Update item classification',
@@ -604,6 +632,430 @@ async function handleComms(request, env) {
     item: item,
     message: `Captured ${direction} ${app} message${shouldFlag ? ' [flagged for signal analysis]' : ''}`
   });
+}
+
+/**
+ * EMAIL INGESTION - receive email data from Google Apps Script or direct OAuth sync
+ *
+ * Called by:
+ * - Google Apps Script (gmail-sync.gs) running on a schedule
+ * - GET /gmail-sync endpoint (direct OAuth path)
+ *
+ * Payload: { messageId, subject, from, to, date, snippet, direction, labels }
+ */
+async function handleIngestEmail(request, env) {
+  const body = await request.json();
+  const {
+    messageId,
+    subject = '',
+    from: fromAddr = 'unknown',
+    to: toAddr = '',
+    date = null,
+    snippet = '',
+    direction = 'incoming',
+    labels = []
+  } = body;
+
+  if (!messageId) {
+    return jsonResponse({ error: 'Missing messageId' }, 400);
+  }
+
+  // Deduplication: check if this messageId was already ingested
+  const dedupKey = `dedup:email:${messageId}`;
+  const existingId = await env.BRAIN_KV.get(dedupKey);
+  if (existingId) {
+    return jsonResponse({ success: true, message: 'Already ingested', duplicate: true, existingId });
+  }
+
+  // Determine the contact (sender for incoming, primary recipient for outgoing)
+  const contact = direction === 'incoming'
+    ? fromAddr
+    : (toAddr ? toAddr.split(',')[0].trim() : 'unknown');
+
+  const truncatedSnippet = snippet.length > 2000 ? snippet.substring(0, 2000) + '...' : snippet;
+  const truncatedSubject = subject.length > 200 ? subject.substring(0, 200) + '...' : subject;
+
+  const item = {
+    id: generateId(),
+    input: `[Email] ${direction === 'outgoing' ? 'To' : 'From'}: ${contact}\nSubject: ${truncatedSubject}\n\n${truncatedSnippet}`,
+    type: 'comms',
+    structured: {
+      channel: 'email',
+      direction,
+      contact,
+      subject: truncatedSubject,
+      snippet: truncatedSnippet,
+      messageId,
+      labels: Array.isArray(labels) ? labels : []
+    },
+    aiNotes: null,
+    source: 'gmail',
+    createdAt: date || new Date().toISOString(),
+    status: 'active'
+  };
+
+  await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
+  await addToIndex(item, env);
+  await env.BRAIN_KV.put(dedupKey, item.id);
+  await addToContactHistory(contact, item.id, env);
+
+  return jsonResponse({
+    success: true,
+    item,
+    message: `Ingested ${direction} email: ${truncatedSubject}`
+  });
+}
+
+/**
+ * YOUTUBE INGESTION - receive YouTube data from Google Apps Script or direct OAuth sync
+ *
+ * Called by:
+ * - Google Apps Script (youtube-sync.gs) running on a schedule
+ * - GET /youtube-sync endpoint (direct OAuth path)
+ *
+ * Payload: { videoId, title, channelTitle, captureType, publishedAt, url, description, commentText }
+ * captureType: 'liked' | 'upload' | 'comment'
+ */
+async function handleIngestYoutube(request, env) {
+  const body = await request.json();
+  const {
+    videoId,
+    title = '',
+    channelTitle = '',
+    captureType = 'liked',
+    publishedAt = null,
+    url = '',
+    description = '',
+    commentText = ''
+  } = body;
+
+  if (!videoId) {
+    return jsonResponse({ error: 'Missing videoId' }, 400);
+  }
+
+  // Deduplication: videoId + captureType (a video can be both liked and uploaded)
+  const dedupKey = `dedup:youtube:${videoId}:${captureType}`;
+  const existingId = await env.BRAIN_KV.get(dedupKey);
+  if (existingId) {
+    return jsonResponse({ success: true, message: 'Already ingested', duplicate: true, existingId });
+  }
+
+  const videoUrl = url || `https://www.youtube.com/watch?v=${videoId}`;
+  const truncatedDesc = description.length > 1000 ? description.substring(0, 1000) + '...' : description;
+
+  let inputText;
+  if (captureType === 'comment') {
+    inputText = `[YouTube Comment] "${commentText}"\nOn: ${title} by ${channelTitle}\n${videoUrl}`;
+  } else if (captureType === 'upload') {
+    inputText = `[YouTube Upload] ${title}\nChannel: ${channelTitle}\n${videoUrl}\n\n${description.substring(0, 500)}`;
+  } else {
+    inputText = `[YouTube Liked] ${title} by ${channelTitle}\n${videoUrl}`;
+  }
+
+  const item = {
+    id: generateId(),
+    input: inputText,
+    type: 'youtube',
+    structured: {
+      videoId,
+      title,
+      channelTitle,
+      captureType,
+      url: videoUrl,
+      description: truncatedDesc,
+      commentText: captureType === 'comment' ? commentText : undefined
+    },
+    aiNotes: null,
+    source: 'youtube',
+    createdAt: publishedAt || new Date().toISOString(),
+    status: 'active'
+  };
+
+  await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
+  await addToIndex(item, env);
+  await env.BRAIN_KV.put(dedupKey, item.id);
+
+  return jsonResponse({
+    success: true,
+    item,
+    message: `Ingested YouTube ${captureType}: ${title}`
+  });
+}
+
+/**
+ * GMAIL SYNC - pull emails directly from Gmail API using stored OAuth credentials
+ *
+ * Requires secrets: GMAIL_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+ * Alternative: use Google Apps Script (see workers/second-brain/google-apps-scripts/gmail-sync.gs)
+ *
+ * Query params:
+ * - days: number of days to look back (default 7, max 90)
+ * - limit: max emails to process per call (default 50, max 200)
+ */
+async function handleGmailSync(url, env) {
+  if (!env.GMAIL_REFRESH_TOKEN || !env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    return jsonResponse({
+      error: 'Gmail OAuth not configured',
+      message: 'Set GMAIL_REFRESH_TOKEN, GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET as worker secrets',
+      alternative: 'Use Google Apps Script instead — see workers/second-brain/google-apps-scripts/gmail-sync.gs for a simpler setup that needs no OAuth credentials in the worker'
+    }, 503);
+  }
+
+  const days = Math.min(parseInt(url.searchParams.get('days') || '7'), 90);
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+
+  try {
+    const accessToken = await getGoogleAccessToken(env, 'https://www.googleapis.com/auth/gmail.readonly', env.GMAIL_REFRESH_TOKEN);
+
+    // Build date cutoff in Unix seconds for Gmail search
+    const cutoff = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
+    const listUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=after:${cutoff}&maxResults=${limit}`;
+
+    const listResponse = await fetch(listUrl, {
+      headers: { 'Authorization': `Bearer ${accessToken}` }
+    });
+
+    if (!listResponse.ok) {
+      throw new Error(`Gmail list API error: ${listResponse.status} ${await listResponse.text()}`);
+    }
+
+    const listData = await listResponse.json();
+    const messages = listData.messages || [];
+
+    let ingested = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const msg of messages) {
+      // Check dedup before fetching full message details
+      const dedupKey = `dedup:email:${msg.id}`;
+      const existing = await env.BRAIN_KV.get(dedupKey);
+      if (existing) { skipped++; continue; }
+
+      try {
+        // Fetch metadata only (much faster than full message)
+        const msgUrl = `https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=To&metadataHeaders=Subject&metadataHeaders=Date`;
+        const msgResponse = await fetch(msgUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+
+        if (!msgResponse.ok) { errors++; continue; }
+
+        const msgData = await msgResponse.json();
+        const headers = {};
+        (msgData.payload?.headers || []).forEach(h => {
+          headers[h.name.toLowerCase()] = h.value;
+        });
+
+        const labelIds = msgData.labelIds || [];
+        const direction = labelIds.includes('SENT') ? 'outgoing' : 'incoming';
+        const contact = direction === 'incoming'
+          ? (headers['from'] || 'unknown')
+          : (headers['to'] || 'unknown').split(',')[0].trim();
+
+        const emailDate = headers['date'] ? new Date(headers['date']).toISOString() : new Date().toISOString();
+
+        const item = {
+          id: generateId(),
+          input: `[Email] ${direction === 'outgoing' ? 'To' : 'From'}: ${contact}\nSubject: ${headers['subject'] || '(no subject)'}\n\n${msgData.snippet || ''}`,
+          type: 'comms',
+          structured: {
+            channel: 'email',
+            direction,
+            contact,
+            subject: headers['subject'] || '(no subject)',
+            snippet: msgData.snippet || '',
+            messageId: msg.id,
+            labels: labelIds
+          },
+          aiNotes: null,
+          source: 'gmail',
+          createdAt: emailDate,
+          status: 'active'
+        };
+
+        await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
+        await addToIndex(item, env);
+        await env.BRAIN_KV.put(dedupKey, item.id);
+        await addToContactHistory(contact, item.id, env);
+        ingested++;
+
+      } catch (msgErr) {
+        console.error('Error processing message', msg.id, msgErr.message);
+        errors++;
+      }
+    }
+
+    return jsonResponse({
+      success: true,
+      ingested,
+      skipped,
+      errors,
+      total: messages.length,
+      nextPageToken: listData.nextPageToken || null,
+      message: `Gmail sync complete: ${ingested} new, ${skipped} already ingested, ${errors} errors`
+    });
+
+  } catch (error) {
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
+/**
+ * YOUTUBE SYNC - pull YouTube data directly using stored OAuth credentials
+ *
+ * Requires secrets: YOUTUBE_REFRESH_TOKEN (or GMAIL_REFRESH_TOKEN if combined scope),
+ *                   GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+ * Alternative: use Google Apps Script (see workers/second-brain/google-apps-scripts/youtube-sync.gs)
+ *
+ * Syncs: liked videos + user's own uploads
+ */
+async function handleYoutubeSync(url, env) {
+  const refreshToken = env.YOUTUBE_REFRESH_TOKEN || env.GMAIL_REFRESH_TOKEN;
+
+  if (!refreshToken || !env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    return jsonResponse({
+      error: 'YouTube OAuth not configured',
+      message: 'Set YOUTUBE_REFRESH_TOKEN (or GMAIL_REFRESH_TOKEN with youtube scope), GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET as worker secrets',
+      alternative: 'Use Google Apps Script instead — see workers/second-brain/google-apps-scripts/youtube-sync.gs for a simpler setup that needs no OAuth credentials in the worker'
+    }, 503);
+  }
+
+  try {
+    const accessToken = await getGoogleAccessToken(
+      env,
+      'https://www.googleapis.com/auth/youtube.readonly',
+      refreshToken
+    );
+
+    let ingested = 0;
+    let skipped = 0;
+
+    // --- Liked videos ---
+    const likedResponse = await fetch(
+      'https://www.googleapis.com/youtube/v3/videos?part=snippet&myRating=like&maxResults=50',
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+
+    if (likedResponse.ok) {
+      const likedData = await likedResponse.json();
+      for (const video of (likedData.items || [])) {
+        const result = await ingestYoutubeItem({
+          videoId: video.id,
+          title: video.snippet?.title || '',
+          channelTitle: video.snippet?.channelTitle || '',
+          captureType: 'liked',
+          publishedAt: video.snippet?.publishedAt || null,
+          description: video.snippet?.description || ''
+        }, env);
+        result.duplicate ? skipped++ : ingested++;
+      }
+    }
+
+    // --- User's uploads (via uploads playlist) ---
+    const channelResponse = await fetch(
+      'https://www.googleapis.com/youtube/v3/channels?part=contentDetails&mine=true',
+      { headers: { 'Authorization': `Bearer ${accessToken}` } }
+    );
+
+    if (channelResponse.ok) {
+      const channelData = await channelResponse.json();
+      const uploadsPlaylistId = channelData.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
+
+      if (uploadsPlaylistId) {
+        const uploadsResponse = await fetch(
+          `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50`,
+          { headers: { 'Authorization': `Bearer ${accessToken}` } }
+        );
+
+        if (uploadsResponse.ok) {
+          const uploadsData = await uploadsResponse.json();
+          for (const item of (uploadsData.items || [])) {
+            const snippet = item.snippet || {};
+            const videoId = snippet.resourceId?.videoId;
+            if (!videoId) continue;
+
+            const result = await ingestYoutubeItem({
+              videoId,
+              title: snippet.title || '',
+              channelTitle: snippet.channelTitle || '',
+              captureType: 'upload',
+              publishedAt: snippet.publishedAt || null,
+              description: snippet.description || ''
+            }, env);
+            result.duplicate ? skipped++ : ingested++;
+          }
+        }
+      }
+    }
+
+    return jsonResponse({
+      success: true,
+      ingested,
+      skipped,
+      message: `YouTube sync complete: ${ingested} new items, ${skipped} already ingested`
+    });
+
+  } catch (error) {
+    return jsonResponse({ error: error.message }, 500);
+  }
+}
+
+/**
+ * Helper: ingest a single YouTube item (used by handleYoutubeSync and handleIngestYoutube internals)
+ */
+async function ingestYoutubeItem({ videoId, title, channelTitle, captureType, publishedAt, description }, env) {
+  const dedupKey = `dedup:youtube:${videoId}:${captureType}`;
+  const existing = await env.BRAIN_KV.get(dedupKey);
+  if (existing) return { duplicate: true };
+
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const truncatedDesc = description.length > 1000 ? description.substring(0, 1000) + '...' : description;
+
+  const inputText = captureType === 'upload'
+    ? `[YouTube Upload] ${title}\nChannel: ${channelTitle}\n${videoUrl}\n\n${description.substring(0, 500)}`
+    : `[YouTube Liked] ${title} by ${channelTitle}\n${videoUrl}`;
+
+  const item = {
+    id: generateId(),
+    input: inputText,
+    type: 'youtube',
+    structured: { videoId, title, channelTitle, captureType, url: videoUrl, description: truncatedDesc },
+    aiNotes: null,
+    source: 'youtube',
+    createdAt: publishedAt || new Date().toISOString(),
+    status: 'active'
+  };
+
+  await env.BRAIN_KV.put(`item:${item.id}`, JSON.stringify(item));
+  await addToIndex(item, env);
+  await env.BRAIN_KV.put(dedupKey, item.id);
+
+  return { duplicate: false, item };
+}
+
+/**
+ * Get a Google OAuth2 access token using a stored refresh token
+ */
+async function getGoogleAccessToken(env, scope, refreshToken) {
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: env.GOOGLE_CLIENT_ID,
+      client_secret: env.GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token'
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Google token refresh failed: ${err}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
 }
 
 /**
