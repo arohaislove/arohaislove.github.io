@@ -289,6 +289,10 @@ export default {
         return await handleSaveGoals(request, env);
       }
 
+      if (path === '/calories' && request.method === 'GET') {
+        return await handleGetCalories(url, env);
+      }
+
       if (path === '/chat' && request.method === 'POST') {
         return await handleChat(request, env);
       }
@@ -319,6 +323,7 @@ export default {
           'POST /signal-exclusions': 'Add exclusion',
           'GET /goals': 'Get versioned goals & context',
           'POST /goals': 'Save new goals version',
+          'GET /calories': 'Get calorie summary for today (or ?date=YYYY-MM-DD)',
           'POST /chat': 'Ask a question about your Second Brain data',
           'GET /health': 'Health check'
         }
@@ -540,10 +545,23 @@ async function handleCapture(request, env) {
   // Add to index
   await addToIndex(item, env);
 
+  // For calorie captures: compute daily total and notify
+  let calorieTotal = null;
+  if (item.type === 'calorie') {
+    calorieTotal = await getDailyCalorieTotal(env);
+    const thisMeal = item.structured?.estimatedCalories || 0;
+    const foods = (item.structured?.foods || []).join(', ') || item.input;
+    const mealType = item.structured?.mealType || 'snack';
+    const confidence = item.structured?.confidence || 'medium';
+    const notifMsg = `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}: ${foods}\n~${thisMeal} cal (${confidence} confidence)\nToday's total: ${calorieTotal} cal`;
+    await sendCalorieNotification(notifMsg, calorieTotal, env);
+  }
+
   return jsonResponse({
     success: true,
     item: item,
-    message: `Captured as ${item.type}`
+    message: `Captured as ${item.type}`,
+    ...(calorieTotal !== null && { dailyTotal: calorieTotal })
   });
 }
 
@@ -1073,15 +1091,16 @@ Classify the input into ONE of these types:
 - person: Information about a person (contact, relationship note)
 - project: Related to an ongoing project
 - ai-conversation: A captured conversation with an AI assistant (Claude, Gemini, Kimi, ChatGPT, etc.)
+- calorie: Food or drink consumed for calorie tracking. Use this when the input describes food eaten, a meal, a snack, or includes a photo of food.
 
 DETECTING AI CONVERSATIONS:
 Input prefixed with [Claude conversation], [Gemini conversation], [Kimi conversation], etc. is a screen capture from an AI chat app grabbed via Tasker/AutoInput. It will contain alternating human/assistant messages, possibly with code blocks, markdown, or long-form reasoning. Classify these as "ai-conversation" and extract the signal - don't just store the raw dump.
 
-${image ? 'The user has provided an IMAGE along with optional text. Analyze the image carefully and classify based on what you see. Extract any text from receipts, notes, or documents. Describe visual content for creative captures.' : ''}
+${image ? 'The user has provided an IMAGE along with optional text. Analyze the image carefully and classify based on what you see. Extract any text from receipts, notes, or documents. Describe visual content for creative captures. If the image shows food or drink, classify as "calorie" and estimate the calorie content as carefully as possible.' : ''}
 
 Respond with JSON only:
 {
-  "type": "todo|expense|calendar|creative|note|person|project|ai-conversation",
+  "type": "todo|expense|calendar|creative|note|person|project|ai-conversation|calorie",
   "structured": {
     // type-specific fields, examples:
     // todo: { "task": "...", "priority": "high|medium|low", "dueHint": "..." }
@@ -1092,6 +1111,7 @@ Respond with JSON only:
     // person: { "name": "...", "context": "...", "detail": "..." }
     // project: { "project": "...", "update": "...", "nextAction": "..." }
     // ai-conversation: { "app": "Claude|Gemini|Kimi|ChatGPT|other", "topics": ["..."], "keyTakeaways": ["..."], "actionItems": ["..."], "mood": "exploratory|productive|troubleshooting|creative|planning" }
+    // calorie: { "foods": ["food item 1", "food item 2"], "estimatedCalories": 350, "mealType": "breakfast|lunch|dinner|snack", "confidence": "high|medium|low" }
   },
   "notes": "Brief AI observation - what you saw in the image, patterns noticed, connections, suggestions"
 }`;
@@ -2472,6 +2492,89 @@ async function handleSaveGoals(request, env) {
     totalVersions: data.versions.length,
     savedAt: data.versions[data.versions.length - 1].savedAt
   });
+}
+
+/**
+ * CALORIE TRACKING
+ * GET /calories?date=YYYY-MM-DD (optional, defaults to today)
+ */
+async function handleGetCalories(url, env) {
+  const dateParam = url.searchParams.get('date');
+  const targetDate = dateParam || getTodayInTimezone();
+
+  const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
+
+  const calorieItems = [];
+  for (const id of indexData.items) {
+    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (item && item.type === 'calorie' && getDateInTimezone(item.createdAt) === targetDate) {
+      calorieItems.push(item);
+    }
+  }
+
+  const total = calorieItems.reduce((sum, item) => sum + (item.structured?.estimatedCalories || 0), 0);
+  const target = 1800; // daily target for ~0.5kg/week deficit
+  const remaining = target - total;
+
+  const breakdown = calorieItems.map(item => ({
+    time: formatDateInTimezone(item.createdAt, 'time'),
+    mealType: item.structured?.mealType || 'unknown',
+    foods: item.structured?.foods || [item.input],
+    calories: item.structured?.estimatedCalories || 0,
+    confidence: item.structured?.confidence || 'unknown'
+  }));
+
+  return jsonResponse({
+    date: targetDate,
+    totalCalories: total,
+    dailyTarget: target,
+    remaining: remaining,
+    status: remaining > 0 ? `${remaining} cal remaining` : `${Math.abs(remaining)} cal over target`,
+    onTrack: total <= target,
+    meals: breakdown,
+    itemCount: calorieItems.length
+  });
+}
+
+/**
+ * Compute today's total calories from KV
+ */
+async function getDailyCalorieTotal(env) {
+  const today = getTodayInTimezone();
+  const indexData = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
+
+  let total = 0;
+  for (const id of indexData.items) {
+    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
+    if (item && item.type === 'calorie' && getDateInTimezone(item.createdAt) === today) {
+      total += item.structured?.estimatedCalories || 0;
+    }
+  }
+  return total;
+}
+
+/**
+ * Send calorie-specific ntfy notification
+ */
+async function sendCalorieNotification(message, dailyTotal, env) {
+  const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
+  const target = 1800;
+  const remaining = target - dailyTotal;
+  const tag = dailyTotal > target ? 'warning' : 'white_check_mark';
+
+  try {
+    await fetch(`https://ntfy.sh/${ntfyTopic}`, {
+      method: 'POST',
+      headers: {
+        'Title': `Calories logged (${remaining > 0 ? remaining + ' remaining' : 'over target!'})`,
+        'Priority': dailyTotal > target ? 'high' : 'default',
+        'Tags': `fork_and_knife,${tag}`
+      },
+      body: message
+    });
+  } catch (e) {
+    console.error('Failed to send calorie notification:', e);
+  }
 }
 
 /**
