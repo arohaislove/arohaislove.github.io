@@ -163,7 +163,7 @@ function itemsToCsv(items, type) {
 
   const rows = [];
 
-  if (type !== 'all' && ['expense', 'todo', 'calendar', 'comms'].includes(type)) {
+  if (type !== 'all' && ['expense', 'todo', 'calendar', 'comms', 'calorie'].includes(type)) {
     // Type-specific headers with structured data columns
     switch (type) {
       case 'expense':
@@ -192,6 +192,14 @@ function itemsToCsv(items, type) {
         for (const item of items) {
           const s = item.structured || {};
           rows.push(rowToCsv([item.id, item.input, item.createdAt, item.status, item.aiNotes, s.contactName, s.app, s.direction, s.messageCount]));
+        }
+        break;
+      case 'calorie':
+        rows.push(rowToCsv(['ID', 'Created', 'Meal Type', 'Foods', 'Estimated Calories', 'Confidence', 'AI Notes']));
+        for (const item of items) {
+          const s = item.structured || {};
+          const foods = Array.isArray(s.foods) ? s.foods.join('; ') : (s.foods || item.input);
+          rows.push(rowToCsv([item.id, item.createdAt, s.mealType, foods, s.estimatedCalories, s.confidence, item.aiNotes]));
         }
         break;
     }
@@ -257,6 +265,7 @@ function landingPage() {
   <code>/csv/todo</code> — Todos only<br>
   <code>/csv/calendar</code> — Calendar items<br>
   <code>/csv/comms</code> — Communications<br>
+  <code>/csv/calorie</code> — Calorie log<br>
   <code>/csv/notes</code> — Claude's notes
 </div>
 
