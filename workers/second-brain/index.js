@@ -2513,7 +2513,7 @@ async function handleGetCalories(url, env) {
   }
 
   const total = calorieItems.reduce((sum, item) => sum + (item.structured?.estimatedCalories || 0), 0);
-  const target = 1800; // daily target for ~0.5kg/week deficit
+  const target = 2000; // daily calorie target
   const remaining = target - total;
 
   const breakdown = calorieItems.map(item => ({
@@ -2558,7 +2558,7 @@ async function getDailyCalorieTotal(env) {
  */
 async function sendCalorieNotification(message, dailyTotal, env) {
   const ntfyTopic = env.NTFY_TOPIC || 'second-brain-default';
-  const target = 1800;
+  const target = 2000;
   const remaining = target - dailyTotal;
   const tag = dailyTotal > target ? 'warning' : 'white_check_mark';
 
