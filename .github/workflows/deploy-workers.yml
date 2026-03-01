@@ -60,6 +60,11 @@ jobs:
 
       - name: Check if secrets are needed
         id: check-secrets
+        env:
+          GMAIL_REFRESH_TOKEN: ${{ secrets.GMAIL_REFRESH_TOKEN }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         run: |
           # Check if worker code references ANTHROPIC_API_KEY
           if grep -q "ANTHROPIC_API_KEY" workers/${{ matrix.worker }}/index.js 2>/dev/null; then
@@ -160,6 +165,12 @@ jobs:
             echo "ℹ️  Worker does not use GOOGLE_CLIENT_SECRET - skipping secret configuration"
           fi
 
+          # Check if optional secrets are actually configured (env vars set in step env above)
+          [ -n "$GMAIL_REFRESH_TOKEN" ] && echo "has-gmail-token=true" >> $GITHUB_OUTPUT || echo "has-gmail-token=false" >> $GITHUB_OUTPUT
+          [ -n "$YOUTUBE_REFRESH_TOKEN" ] && echo "has-youtube-token=true" >> $GITHUB_OUTPUT || echo "has-youtube-token=false" >> $GITHUB_OUTPUT
+          [ -n "$GOOGLE_CLIENT_ID" ] && echo "has-google-client-id=true" >> $GITHUB_OUTPUT || echo "has-google-client-id=false" >> $GITHUB_OUTPUT
+          [ -n "$GOOGLE_CLIENT_SECRET" ] && echo "has-google-client-secret=true" >> $GITHUB_OUTPUT || echo "has-google-client-secret=false" >> $GITHUB_OUTPUT
+
       - name: Set ANTHROPIC_API_KEY secret
         if: steps.check-secrets.outputs.needs-anthropic-key == 'true'
         env:
@@ -224,7 +235,7 @@ jobs:
           echo "${{ secrets.APPS_SCRIPT_URL }}" | wrangler secret put APPS_SCRIPT_URL
 
       - name: Set GMAIL_REFRESH_TOKEN secret
-        if: steps.check-secrets.outputs.needs-gmail-refresh-token == 'true' && secrets.GMAIL_REFRESH_TOKEN != ''
+        if: steps.check-secrets.outputs.needs-gmail-refresh-token == 'true' && steps.check-secrets.outputs.has-gmail-token == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -233,7 +244,7 @@ jobs:
           echo "${{ secrets.GMAIL_REFRESH_TOKEN }}" | wrangler secret put GMAIL_REFRESH_TOKEN
 
       - name: Set YOUTUBE_REFRESH_TOKEN secret
-        if: steps.check-secrets.outputs.needs-youtube-refresh-token == 'true' && secrets.YOUTUBE_REFRESH_TOKEN != ''
+        if: steps.check-secrets.outputs.needs-youtube-refresh-token == 'true' && steps.check-secrets.outputs.has-youtube-token == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -242,7 +253,7 @@ jobs:
           echo "${{ secrets.YOUTUBE_REFRESH_TOKEN }}" | wrangler secret put YOUTUBE_REFRESH_TOKEN
 
       - name: Set GOOGLE_CLIENT_ID secret
-        if: steps.check-secrets.outputs.needs-google-client-id == 'true' && secrets.GOOGLE_CLIENT_ID != ''
+        if: steps.check-secrets.outputs.needs-google-client-id == 'true' && steps.check-secrets.outputs.has-google-client-id == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
@@ -251,7 +262,7 @@ jobs:
           echo "${{ secrets.GOOGLE_CLIENT_ID }}" | wrangler secret put GOOGLE_CLIENT_ID
 
       - name: Set GOOGLE_CLIENT_SECRET secret
-        if: steps.check-secrets.outputs.needs-google-client-secret == 'true' && secrets.GOOGLE_CLIENT_SECRET != ''
+        if: steps.check-secrets.outputs.needs-google-client-secret == 'true' && steps.check-secrets.outputs.has-google-client-secret == 'true'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_KEY }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
