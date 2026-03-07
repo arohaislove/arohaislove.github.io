@@ -340,11 +340,12 @@ export default {
 
   // Cron trigger - runs every 4 hours + morning briefing at configured hour in user's timezone
   async scheduled(event, env, ctx) {
-    console.log('Cron triggered at:', new Date().toISOString());
+    console.log('Cron triggered at:', new Date().toISOString(), 'cron:', event.cron);
 
-    // Check if this is the morning briefing time using timezone-aware logic
-    const currentHour = getCurrentHourInTimezone();
-    const isMorningBriefing = currentHour === CONFIG.morningBriefingHour;
+    // Check if this is the morning briefing cron (0 15 * * * = 4am NZDT / 0 16 * * * = 4am NZST)
+    // Using event.cron is more reliable than timezone hour detection in edge runtimes
+    const morningBriefingCrons = ['0 15 * * *', '0 16 * * *'];
+    const isMorningBriefing = morningBriefingCrons.includes(event.cron);
 
     if (isMorningBriefing) {
       // Generate and send full morning briefing
