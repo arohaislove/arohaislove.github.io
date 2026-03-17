@@ -1,0 +1,10 @@
+{
+    "name": "Work Diary",
+    "short_name": "Work Diary",
+    "description": "Log your work day and time",
+    "start_url": "/work-diary/",
+    "display": "standalone",
+    "background_color": "#e0e7ff",
+    "theme_color": "#667eea",
+    "icons": []
+}

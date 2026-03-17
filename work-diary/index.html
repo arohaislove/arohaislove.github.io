@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Diary - Aroha's Projects</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <nav>
+        <a href="/">← Back to Projects</a>
+    </nav>
+
+    <main>
+        <header>
+            <h1>Work Diary</h1>
+            <p class="subtitle">Log your day. Review it later.</p>
+        </header>
+
+        <!-- Config warning -->
+        <div id="config-warning" class="warning hidden">
+            Worker URL not configured. Edit <code>script.js</code> to add your token.
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="diary">Diary Entry</button>
+            <button class="tab" data-tab="times">Log Time</button>
+        </div>
+
+        <!-- Diary tab -->
+        <section id="tab-diary" class="tab-panel active">
+            <div class="card">
+                <div class="voice-row">
+                    <button id="diary-voice-btn" class="voice-btn" title="Speak your entry">
+                        <span class="mic-icon">🎤</span>
+                        <span class="mic-label">Speak</span>
+                    </button>
+                    <span class="voice-hint">or type below</span>
+                </div>
+
+                <textarea
+                    id="diary-entry"
+                    placeholder="What happened today? How are things going? Any thoughts worth keeping..."
+                    rows="6"
+                ></textarea>
+
+                <div class="tags-row">
+                    <label>Tags (optional)</label>
+                    <input type="text" id="diary-tags" placeholder="e.g. meeting, coastguard, ideas">
+                    <span class="tag-hint">comma separated</span>
+                </div>
+
+                <button id="diary-submit" class="submit-btn">Save to Diary</button>
+
+                <div id="diary-status" class="status hidden"></div>
+            </div>
+        </section>
+
+        <!-- Times tab -->
+        <section id="tab-times" class="tab-panel hidden">
+            <div class="card">
+                <div class="time-grid">
+                    <div class="field">
+                        <label>Date</label>
+                        <input type="date" id="times-date">
+                    </div>
+                    <div class="field">
+                        <label>Start Time</label>
+                        <input type="time" id="times-start">
+                    </div>
+                    <div class="field">
+                        <label>End Time</label>
+                        <input type="time" id="times-end">
+                    </div>
+                </div>
+
+                <div class="voice-row">
+                    <button id="times-voice-btn" class="voice-btn" title="Speak your activity">
+                        <span class="mic-icon">🎤</span>
+                        <span class="mic-label">Speak</span>
+                    </button>
+                    <span class="voice-hint">or type below</span>
+                </div>
+
+                <textarea
+                    id="times-activity"
+                    placeholder="What were you working on? e.g. Coastguard training session, crew briefing, vessel checks..."
+                    rows="4"
+                ></textarea>
+
+                <button id="times-submit" class="submit-btn">Log Time</button>
+
+                <div id="times-status" class="status hidden"></div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

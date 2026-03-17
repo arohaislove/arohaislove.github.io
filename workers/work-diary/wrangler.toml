@@ -1,0 +1,9 @@
+name = "work-diary"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# Deployed at: https://work-diary.zammel.workers.dev
+#
+# Required secrets (set via GitHub repo settings):
+#   APPS_SCRIPT_URL  - The Google Apps Script web app URL
+#   WORK_DIARY_TOKEN - Auth token for the web app (generate with: openssl rand -hex 32)
