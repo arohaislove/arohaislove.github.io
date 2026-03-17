@@ -6,3 +6,7 @@ compatibility_date = "2024-01-01"
 [[kv_namespaces]]
 binding = "BRAIN_KV"
 id = "38349bc2045a4168aa94ce50d1f8e19b"
+
+# Weekly digest: every Monday at 7am NZT (Sunday 6pm UTC)
+[triggers]
+crons = ["0 18 * * 0"]

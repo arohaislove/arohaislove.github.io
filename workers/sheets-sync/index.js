@@ -5,18 +5,21 @@
  * Use Google Sheets IMPORTDATA formula to pull data automatically.
  *
  * Endpoints:
- *   GET /csv          - All items as CSV
- *   GET /csv/notes    - Claude notes as CSV
- *   GET /csv/:type    - Items filtered by type (expense, todo, calendar, comms, etc.)
- *   GET /preview      - Preview data as JSON
- *   GET /health       - Health check
- *   GET /             - Instructions page
+ *   GET /csv              - All items as CSV
+ *   GET /csv/recent       - Last 7 days only (use this for IMPORTDATA - stays under size limit)
+ *   GET /csv/notes        - Claude notes as CSV
+ *   GET /csv/:type        - Items filtered by type (expense, todo, calendar, comms, etc.)
+ *   GET /preview          - Preview data as JSON
+ *   GET /health           - Health check
+ *   GET /                 - Instructions page
  *
  * KV Binding:
  *   BRAIN_KV - Second Brain's KV namespace
  *
- * Usage in Google Sheets:
- *   =IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv")
+ * Cron: Every Sunday 6pm UTC (Monday 7am NZT) - sends weekly digest via ntfy
+ *
+ * Usage in Google Sheets (recommended - stays small):
+ *   =IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv/recent")
  */
 
 export default {
@@ -27,6 +30,7 @@ export default {
 
     const url = new URL(request.url);
     const path = url.pathname;
+    const days = parseInt(url.searchParams.get('days') || '7', 10);
 
     if (path === '/health') {
       return jsonResponse({
@@ -41,7 +45,11 @@ export default {
     }
 
     if (path === '/csv') {
-      return await handleCsv(env, 'all');
+      return await handleCsv(env, 'all', null);
+    }
+
+    if (path === '/csv/recent') {
+      return await handleCsv(env, 'all', days);
     }
 
     if (path === '/csv/notes') {
@@ -50,19 +58,56 @@ export default {
 
     if (path.startsWith('/csv/')) {
       const type = path.replace('/csv/', '');
-      return await handleCsv(env, type);
+      return await handleCsv(env, type, null);
     }
 
     // Landing page with instructions
     return new Response(landingPage(), {
       headers: { 'Content-Type': 'text/html', ...corsHeaders() }
     });
+  },
+
+  // Weekly cron: sends a digest to ntfy so you get a Monday morning summary
+  async scheduled(event, env, ctx) {
+    try {
+      const data = await readAllFromKV(env);
+      const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const weekItems = data.items.filter(item => new Date(item.createdAt) > cutoff);
+
+      if (!env.NTFY_TOPIC || weekItems.length === 0) return;
+
+      // Count by type
+      const counts = {};
+      weekItems.forEach(item => {
+        counts[item.type] = (counts[item.type] || 0) + 1;
+      });
+
+      const summary = Object.entries(counts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([type, n]) => `${n} ${type}`)
+        .join(', ');
+
+      const message = `${weekItems.length} captures this week: ${summary}\n\nOpen your sheet to see it all.`;
+
+      await fetch(`https://ntfy.sh/${env.NTFY_TOPIC}`, {
+        method: 'POST',
+        headers: {
+          'Title': '📊 Weekly Second Brain Digest',
+          'Tags': 'brain,weekly',
+          'Priority': '2',
+          'Content-Type': 'text/plain'
+        },
+        body: message
+      });
+    } catch (e) {
+      // Cron failures are silent - don't break anything
+    }
   }
 };
 
 // ─── CSV HANDLERS ────────────────────────────────────────────
 
-async function handleCsv(env, type) {
+async function handleCsv(env, type, recentDays) {
   try {
     if (!env.BRAIN_KV) {
       return csvResponse('Error: KV not configured');
@@ -70,6 +115,12 @@ async function handleCsv(env, type) {
 
     const data = await readAllFromKV(env);
     let items = data.items;
+
+    // Filter by recency if requested
+    if (recentDays) {
+      const cutoff = new Date(Date.now() - recentDays * 24 * 60 * 60 * 1000);
+      items = items.filter(item => new Date(item.createdAt) > cutoff);
+    }
 
     if (type !== 'all') {
       items = items.filter(item => item.type === type);
@@ -253,14 +304,17 @@ function landingPage() {
 <div class="step">
   <strong>1.</strong> Open Google Sheets (new or existing)<br>
   <strong>2.</strong> Tap cell A1<br>
-  <strong>3.</strong> Paste this formula:
-  <pre>=IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv")</pre>
-  <strong>4.</strong> Done! Data auto-refreshes.
+  <strong>3.</strong> Paste this formula (last 7 days — stays small and fast):
+  <pre>=IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv/recent")</pre>
+  <strong>4.</strong> Done! Refreshes automatically when you open the sheet.<br><br>
+  <em>For all-time history: <code>=IMPORTDATA("https://sheets-sync.zammel.workers.dev/csv")</code> — note this may be slow for large data</em>
 </div>
 
 <h2>Available Feeds</h2>
 <div class="step">
-  <code>/csv</code> — All items<br>
+  <code>/csv/recent</code> — Last 7 days (recommended for IMPORTDATA)<br>
+  <code>/csv/recent?days=30</code> — Last 30 days<br>
+  <code>/csv</code> — All items (may be slow)<br>
   <code>/csv/expense</code> — Expenses only<br>
   <code>/csv/todo</code> — Todos only<br>
   <code>/csv/calendar</code> — Calendar items<br>
@@ -269,6 +323,7 @@ function landingPage() {
   <code>/csv/notes</code> — Claude's notes
 </div>
 
+<p><strong>Weekly digest:</strong> Every Monday morning you'll get a ntfy notification summarising what was captured during the week.</p>
 <p><strong>Tip:</strong> Use separate sheets/tabs for each feed. Put one IMPORTDATA formula per tab.</p>
 
 <h2>Links</h2>
