@@ -180,16 +180,16 @@ async function handlePreview(env) {
 // ─── KV DATA READING ────────────────────────────────────────
 
 async function readAllFromKV(env) {
-  const allIndex = await env.BRAIN_KV.get('index:all', 'json') || { items: [] };
-  const claudeNotes = await env.BRAIN_KV.get('claude:notes', 'json') || { notes: [] };
+  // Read snapshot + notes in parallel (2 KV reads total, not N)
+  const [snapshot, claudeNotes] = await Promise.all([
+    env.BRAIN_KV.get('items:snapshot', 'json'),
+    env.BRAIN_KV.get('claude:notes', 'json')
+  ]);
 
-  const items = [];
-  for (const id of allIndex.items) {
-    const item = await env.BRAIN_KV.get(`item:${id}`, 'json');
-    if (item) items.push(item);
-  }
-
-  return { items, claudeNotes: claudeNotes.notes || [] };
+  return {
+    items: snapshot?.items || [],
+    claudeNotes: claudeNotes?.notes || []
+  };
 }
 
 // ─── CSV FORMATTING ─────────────────────────────────────────

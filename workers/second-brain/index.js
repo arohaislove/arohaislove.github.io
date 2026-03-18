@@ -2327,6 +2327,19 @@ async function addToIndex(item, env) {
     typeIndex.items.push(item.id);
     await env.BRAIN_KV.put(`index:type:${item.type}`, JSON.stringify(typeIndex));
   }
+
+  // Flat snapshot for sheets-sync (avoids N individual KV reads per request)
+  const snapshot = await env.BRAIN_KV.get('items:snapshot', 'json') || { items: [] };
+  const existingIdx = snapshot.items.findIndex(i => i.id === item.id);
+  if (existingIdx >= 0) {
+    snapshot.items[existingIdx] = item;
+  } else {
+    snapshot.items.push(item);
+    if (snapshot.items.length > 500) {
+      snapshot.items = snapshot.items.slice(-500);
+    }
+  }
+  await env.BRAIN_KV.put('items:snapshot', JSON.stringify(snapshot));
 }
 
 /**
