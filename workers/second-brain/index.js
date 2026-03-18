@@ -821,7 +821,9 @@ async function handleGmailSync(url, env) {
   }
 
   const days = Math.min(parseInt(url.searchParams.get('days') || '7'), 90);
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+  // Cap at 45 to stay under Cloudflare's 50 subrequest limit per invocation
+  // (1 OAuth token fetch + 1 list fetch + N message fetches = N+2 total)
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '45'), 45);
 
   try {
     const accessToken = await getGoogleAccessToken(env, 'https://www.googleapis.com/auth/gmail.readonly', env.GMAIL_REFRESH_TOKEN);
